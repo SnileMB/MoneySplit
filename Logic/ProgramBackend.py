@@ -88,15 +88,15 @@ def calculate_tax(individual, group, origin, option) -> float:
 tax = calculate_tax(individual_income, group_income, tax_origin, tax_option)
 
 if tax_option == 1: 
-    print(f"\nEffective tax rate: {(tax / individual_income) * 100:.2f}%") 
-    print(f"\nIndividual income: ${individual_income:.2f}")
-    print(f"Tax per person: ${tax:.2f}")
-    print(f"Net income per person: ${individual_income - tax:.2f}")
-    print(f"Total tax for all people: ${tax * num_people:.2f}")
+    print(f"\nEffective tax rate: {(tax / individual_income) * 100:,.2f}%") 
+    print(f"\nIndividual income: ${individual_income:,.2f}")
+    print(f"Tax per person: ${tax:,.2f}")
+    print(f"Net income per person: ${individual_income - tax:,.2f}")
+    print(f"Total tax for all people: ${tax * num_people:,.2f}")
 
 else:  
-    print(f"Effective tax rate: {(tax / group_income) * 100:.2f}%")
-    print(f"\nBusiness income: ${group_income:.2f}")
-    print(f"Business tax: ${tax:.2f}")
-    print(f"Net Business income: ${group_income - tax:.2f}")
-    print(f"\nNet income per person: ${(group_income - tax) / num_people:.2f}")
+    print(f"Effective tax rate: {(tax / group_income) * 100:,.2f}%")
+    print(f"\nBusiness income: ${group_income:,.2f}")
+    print(f"Business tax: ${tax:,.2f}")
+    print(f"Net Business income: ${group_income - tax:,.2f}")
+    print(f"\nNet income per person: ${(group_income - tax) / num_people:,.2f}")
