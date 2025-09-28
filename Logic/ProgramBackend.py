@@ -1,4 +1,4 @@
-# Input
+# - Inputs -
 num_people = int(input("Enter the number of people: "))
 revenue = float(input("Enter the revenue: "))
 
@@ -18,7 +18,7 @@ tax_origin = int(input("Enter the country (1 for US, 2 for Spain): "))
 tax_option = int(input("Enter tax option (1 for individual, 2 for business): "))
 
 
-# --- Tax Functions ---
+# - Tax Functions -
 def us_individual_tax(income: float) -> float:
     brackets = [
         (10275, 0.10),
@@ -84,7 +84,7 @@ def calculate_tax(individual, group, origin, option) -> float:
     raise ValueError("Invalid tax origin or option")
 
 
-# --- Calculate and Display Results ---
+# - Calculate and Display Results -
 tax = calculate_tax(individual_income, group_income, tax_origin, tax_option)
 
 if tax_option == 1: 
