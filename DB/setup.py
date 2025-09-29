@@ -102,8 +102,8 @@ def delete_record(record_id: int):
 
 def update_record(record_id: int, field: str, new_value):
     """
-    Update a single field in a record.
-    field must match one of the table's column names.
+    Update a record by ID. If revenue/total_costs/num_people changes,
+    automatically recalc group_income, individual_income, tax, and net values.
     """
     allowed_fields = {
         "num_people", "revenue", "total_costs",
@@ -117,7 +117,56 @@ def update_record(record_id: int, field: str, new_value):
 
     conn = sqlite3.connect("example.db")
     cursor = conn.cursor()
+
     cursor.execute(f"UPDATE tax_records SET {field} = ? WHERE id = ?", (new_value, record_id))
+
+    cursor.execute("""
+        SELECT num_people, revenue, total_costs, tax_origin, tax_option
+        FROM tax_records WHERE id = ?
+    """, (record_id,))
+    row = cursor.fetchone()
+
+    if row:
+        num_people, revenue, total_costs, origin, option = row
+        try:
+            revenue = float(revenue)
+            total_costs = float(total_costs)
+            num_people = int(num_people)
+        except Exception:
+            conn.commit()
+            conn.close()
+            return
+
+        income = revenue - total_costs
+        group_income = income
+        individual_income = income / num_people if num_people > 0 else 0
+
+        from MoneySplit.Logic import ProgramBackend
+        if origin == "US":
+            if option == "Individual":
+                tax = ProgramBackend.us_individual_tax(individual_income)
+            else:
+                tax = ProgramBackend.us_business_tax(group_income)
+        else:  # Spain
+            if option == "Individual":
+                tax = ProgramBackend.spain_individual_tax(individual_income)
+            else:
+                tax = ProgramBackend.spain_business_tax(group_income)
+
+        if option == "Individual":
+            net_income_per_person = individual_income - tax
+            net_income_group = net_income_per_person * num_people
+        else:
+            net_income_group = group_income - tax
+            net_income_per_person = net_income_group / num_people if num_people > 0 else 0
+
+        cursor.execute("""
+            UPDATE tax_records
+            SET group_income=?, individual_income=?, tax_amount=?, 
+                net_income_per_person=?, net_income_group=?
+            WHERE id=?
+        """, (group_income, individual_income, tax, net_income_per_person, net_income_group, record_id))
+
     conn.commit()
     conn.close()
-    print(f"✏️ Record {record_id} updated: {field} → {new_value}")
+    print(f"✏️ Record {record_id} updated and recalculated ({field} → {new_value})")
