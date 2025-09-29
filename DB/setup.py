@@ -1,11 +1,8 @@
-import sys
 import sqlite3
+import sys
 
 def _pb():
-    """
-    Return the already-loaded ProgramBackend module without importing it again.
-    If it isn't loaded, the user hasn't run a calculation yet.
-    """
+    """Return already-loaded ProgramBackend module without re-importing it."""
     m = sys.modules.get("MoneySplit.Logic.ProgramBackend")
     if m is None:
         raise RuntimeError("ProgramBackend not loaded; run a calculation first (option 1).")
@@ -80,3 +77,47 @@ def fetch_last_records(n=5):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def get_record_by_id(record_id: int):
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, tax_origin, tax_option,
+               revenue, total_costs,
+               tax_amount, net_income_group, net_income_per_person, created_at
+        FROM tax_records
+        WHERE id = ?
+    """, (record_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+def delete_record(record_id: int):
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tax_records WHERE id = ?", (record_id,))
+    conn.commit()
+    conn.close()
+    print(f"🗑️ Record {record_id} deleted (if it existed).")
+
+def update_record(record_id: int, field: str, new_value):
+    """
+    Update a single field in a record.
+    field must match one of the table's column names.
+    """
+    allowed_fields = {
+        "num_people", "revenue", "total_costs",
+        "group_income", "individual_income",
+        "tax_origin", "tax_option",
+        "tax_amount", "net_income_per_person", "net_income_group"
+    }
+
+    if field not in allowed_fields:
+        raise ValueError(f"Invalid field: {field}. Allowed: {', '.join(allowed_fields)}")
+
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute(f"UPDATE tax_records SET {field} = ? WHERE id = ?", (new_value, record_id))
+    conn.commit()
+    conn.close()
+    print(f"✏️ Record {record_id} updated: {field} → {new_value}")
