@@ -24,6 +24,32 @@ def show_last_records(n=5):
             f"{float(net_group):>12,.2f} | {float(net_person):>12,.2f} | {created}"
         )
 
+
+def show_people_for_record():
+    try:
+        record_id = int(input("Enter the ID of the record to view people: "))
+        people = setup.fetch_people_by_record(record_id)
+
+        if not people:
+            print(f"❌ No people found for record {record_id}.")
+            return
+
+        print(f"\n=== People for Record {record_id} ===")
+        header = f"{'ID':<3} | {'Name':<10} | {'Work Share':>10} | {'Gross':>12} | {'Tax Paid':>10} | {'Net Income':>12}"
+        print(header)
+        print("-" * len(header))
+
+        for p in people:
+            pid, name, work_share, gross, tax_paid, net_income = p
+            print(
+                f"{pid:<3} | {name:<10} | {work_share:>10.2f} | "
+                f"{gross:>12,.2f} | {tax_paid:>10,.2f} | {net_income:>12,.2f}"
+            )
+
+    except ValueError:
+        print("❌ Invalid input. Please enter a number.")
+
+
 def delete_record_menu():
     try:
         record_id = int(input("Enter the ID of the record to delete: "))
@@ -33,15 +59,7 @@ def delete_record_menu():
             print(f"❌ No record found with ID {record_id}.")
             return
 
-        # Show the record details before deleting
-        id, origin, option, revenue, costs, tax, net_group, net_person, created = record
-        print("\nRecord details:")
-        print(f"ID: {id}, Origin: {origin}, Option: {option}, "
-              f"Revenue: {float(revenue):,.2f}, Costs: {float(costs):,.2f}, "
-              f"Tax: {float(tax):,.2f}, Net Group: {float(net_group):,.2f}, "
-              f"Net Person: {float(net_person):,.2f}, Created At: {created}")
-
-        confirm = input("Are you sure you want to delete this record? (y/n): ").strip().lower()
+        confirm = input(f"Are you sure you want to delete record {record_id} (and all linked people)? (y/n): ").strip().lower()
         if confirm == "y":
             setup.delete_record(record_id)
         else:
@@ -49,27 +67,6 @@ def delete_record_menu():
 
     except ValueError:
         print("❌ Invalid ID. Please enter a number.")
-
-def show_db_menu():
-    while True:
-        print("\n=== DB Menu ===")
-        print("1. View last 5 records")
-        print("2. Update record by ID")
-        print("3. Delete record by ID")
-        print("4. Back to main menu")
-
-        choice = input("Choose an option (1-4): ").strip()
-
-        if choice == "1":
-            show_last_records(5)
-        elif choice == "2":
-            update_record_menu()
-        elif choice == "3":
-            delete_record_menu()
-        elif choice == "4":
-            break
-        else:
-            print("❌ Invalid choice. Please enter 1-4.")
 
 
 def update_record_menu():
@@ -81,28 +78,126 @@ def update_record_menu():
             print(f"❌ No record found with ID {record_id}.")
             return
 
-        # Show current record
-        id, origin, option, revenue, costs, tax, net_group, net_person, created = record
-        print("\nCurrent record details:")
-        print(f"ID: {id}, Origin: {origin}, Option: {option}, "
-              f"Revenue: {float(revenue):,.2f}, Costs: {float(costs):,.2f}, "
-              f"Tax: {float(tax):,.2f}, Net Group: {float(net_group):,.2f}, "
-              f"Net Person: {float(net_person):,.2f}, Created At: {created}")
+        print("\nYou can update the following fields:")
+        for f in sorted(setup.ALLOWED_FIELDS):
+            print(f" - {f}")
 
-        # Ask what to update
-        field = input("Enter the field to update (e.g. revenue, total_costs, tax_amount): ").strip()
+        field = input("\nEnter the field to update: ").strip()
+
+        if field not in setup.ALLOWED_FIELDS:
+            print(f"❌ '{field}' is not editable. Allowed: {', '.join(sorted(setup.ALLOWED_FIELDS))}")
+            return
+
         new_value = input(f"Enter new value for {field}: ").strip()
 
-        # Try to cast numeric fields to float/int automatically
-        if field in ["num_people"]:
+        if field == "num_people":
             new_value = int(new_value)
-        elif field not in ["tax_origin", "tax_option"]:  # these stay as text
-            try:
-                new_value = float(new_value)
-            except ValueError:
-                pass  # keep as text if conversion fails
+        elif field in ["revenue", "total_costs"]:
+            new_value = float(new_value)
 
         setup.update_record(record_id, field, new_value)
 
     except ValueError:
         print("❌ Invalid input. Please enter a number where required.")
+
+def show_person_history():
+    name = input("Enter the person's name: ").strip()
+    records = setup.fetch_records_by_person(name)
+
+    if not records:
+        print(f"❌ No records found for {name}.")
+        return
+
+    print(f"\n=== Records for {name} ===")
+    header = f"{'PersonID':<8} | {'RecordID':<8} | {'Work Share':>10} | {'Gross':>12} | {'Tax Paid':>10} | {'Net Income':>12} | {'Created At'}"
+    print(header)
+    print("-" * len(header))
+
+    total_gross = total_tax = total_net = 0
+
+    for r in records:
+        pid, record_id, pname, work_share, gross, tax_paid, net_income, created = r
+        print(
+            f"{pid:<8} | {record_id:<8} | {work_share:>10.2f} | "
+            f"{gross:>12,.2f} | {tax_paid:>10,.2f} | {net_income:>12,.2f} | {created}"
+        )
+        total_gross += gross
+        total_tax += tax_paid
+        total_net += net_income
+
+    print("\n--- Totals ---")
+    print(f"Total Gross: {total_gross:,.2f}")
+    print(f"Total Tax:   {total_tax:,.2f}")
+    print(f"Total Net:   {total_net:,.2f}")
+
+def update_person_menu():
+    try:
+        person_id = int(input("Enter the ID of the person to update: "))
+        print("\nYou can update the following fields:")
+        print(" - name")
+        print(" - work_share")
+
+        field = input("Enter the field to update: ").strip()
+        new_value = input(f"Enter new value for {field}: ").strip()
+
+        if field == "work_share":
+            new_value = float(new_value)  # cast to number
+
+        setup.update_person(person_id, field, new_value)
+
+    except ValueError:
+        print("❌ Invalid input. Please enter a number where required.")
+
+def delete_person_menu():
+    try:
+        person_id = int(input("Enter the ID of the person to delete: "))
+        confirm = input(f"Are you sure you want to delete person {person_id}? (y/n): ").strip().lower()
+        if confirm == "y":
+            setup.delete_person(person_id)
+        else:
+            print("❌ Deletion canceled.")
+    except ValueError:
+        print("❌ Invalid input. Please enter a number.")
+
+def reset_db_menu():
+    confirm = input("⚠️ This will DELETE ALL DATA. Type 'RESET' to confirm: ").strip()
+    if confirm == "RESET":
+        setup.reset_db()
+    else:
+        print("❌ Reset canceled.")
+
+def show_db_menu():
+    while True:
+        print("\n=== DB Menu ===")
+        print("1. View last 5 records")
+        print("2. View people for a record")
+        print("3. View person history across all records")
+        print("4. Update record by ID")
+        print("5. Update person by ID")
+        print("6. Delete record by ID")
+        print("7. Delete person by ID")
+        print("8. Reset database ⚠️")
+        print("9. Back to main menu")
+
+        choice = input("Choose an option (1-9): ").strip()
+
+        if choice == "1":
+            show_last_records(5)
+        elif choice == "2":
+            show_people_for_record()
+        elif choice == "3":
+            show_person_history()
+        elif choice == "4":
+            update_record_menu()
+        elif choice == "5":
+            update_person_menu()
+        elif choice == "6":
+            delete_record_menu()
+        elif choice == "7":
+            delete_person_menu()
+        elif choice == "8":
+            reset_db_menu()
+        elif choice == "9":
+            break
+        else:
+            print("❌ Invalid choice. Please enter 1-9.")
