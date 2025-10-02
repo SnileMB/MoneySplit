@@ -1,17 +1,16 @@
 from MoneySplit.DB import setup
+from MoneySplit.Logic import validators
 
-def show_tax_menu():
+def manage_brackets_menu():
     while True:
-        print("\n=== Tax Menu ===")
+        print("\n=== Manage Tax Brackets 📊 ===")
         print("1. Upload tax brackets")
         print("2. Update tax bracket")
         print("3. Delete tax bracket")
         print("4. View tax brackets")
-        print("5. Export CSV template")
-        print("6. Reset tax brackets ⚠️")
-        print("7. Back to main menu")
+        print("5. Back")
 
-        choice = input("Choose an option (1-7): ").strip()
+        choice = input("Choose an option (1-5): ").strip()
 
         if choice == "1":  # Upload
             print("\n=== Upload Options ===")
@@ -20,22 +19,29 @@ def show_tax_menu():
             print("3. Back")
             sub = input("Choose an option (1-3): ").strip()
 
-            if sub == "1":  # Manual
-                country = input("Enter country (e.g. US, Spain): ").strip()
-                tax_type = input("Enter type (Individual/Business): ").strip().title()
-                n = int(input("How many brackets to add? "))
-                for i in range(n):
-                    limit = input(f"Bracket {i+1} income limit (number or 'inf'): ").strip()
-                    income_limit = float("inf") if limit.lower() == "inf" else float(limit)
-                    rate = float(input(f"Bracket {i+1} rate (e.g. 0.21): "))
-                    setup.add_tax_bracket(country, tax_type, income_limit, rate)
-                print(f"✅ Added {n} brackets for {country} {tax_type}")
+            if sub == "1":  # Manual entry
+                try:
+                    country = validators.validate_country(input("Enter country (US/Spain): ").strip())
+                    tax_type = validators.validate_tax_type(input("Enter type (Individual/Business): ").strip())
+                    n = validators.safe_int_input("How many brackets to add? ", "Number of brackets", min_value=1)
+                    for i in range(n):
+                        limit = input(f"Bracket {i+1} income limit (number or 'inf'): ").strip()
+                        income_limit = float("inf") if limit.lower() == "inf" else validators.safe_float_input(f"Re-enter bracket {i+1} income limit: ", "Income limit")
+                        rate = validators.safe_float_input(f"Bracket {i+1} rate (0.0-1.0, e.g. 0.21): ", "Tax rate")
+                        rate = validators.validate_tax_rate(rate)
+                        setup.add_tax_bracket(country, tax_type, income_limit, rate)
+                    print(f"✅ Added {n} brackets for {country} {tax_type}")
+                except validators.ValidationError as e:
+                    print(f"❌ {e}")
 
             elif sub == "2":  # CSV
-                country = input("Enter country (e.g. US, Spain): ").strip()
-                tax_type = input("Enter type (Individual/Business): ").strip().title()
-                filepath = input("Enter path to CSV file: ").strip()
-                setup.add_tax_brackets_from_csv(country, tax_type, filepath)
+                try:
+                    country = validators.validate_country(input("Enter country (US/Spain): ").strip())
+                    tax_type = validators.validate_tax_type(input("Enter type (Individual/Business): ").strip())
+                    filepath = validators.safe_string_input("Enter path to CSV file: ", "File path")
+                    setup.add_tax_brackets_from_csv(country, tax_type, filepath)
+                except validators.ValidationError as e:
+                    print(f"❌ {e}")
 
             elif sub == "3":
                 continue
@@ -68,20 +74,43 @@ def show_tax_menu():
                     limit_txt = "∞" if limit == float("inf") else f"{limit:,.0f}"
                     print(f"{bid:<4} | {limit_txt:>15} | {rate*100:>7.2f}%")
 
-        elif choice == "5":  # Export CSV template
-            filepath = input("Enter filename for template (default: tax_template.csv): ").strip()
-            if not filepath:
-                filepath = "tax_template.csv"
-            setup.export_tax_template(filepath)
-
-        elif choice == "6":  # Reset
-            confirm = input("⚠️ This will delete ALL tax brackets and restore defaults. Continue? (y/n): ").strip().lower()
-            if confirm == "y":
-                setup.reset_tax_brackets()
-            else:
-                print("❌ Reset canceled.")
-
-        elif choice == "7":  # Back
+        elif choice == "5":  # Back
             break
         else:
-            print("❌ Invalid choice. Please enter 1-7.")
+            print("❌ Invalid choice. Please enter 1-5.")
+
+
+def maintenance_menu():
+    while True:
+        print("\n=== Tax Maintenance ⚙️ ===")
+        print("1. Reset tax brackets ⚠️")
+        print("2. Export CSV template")
+        print("3. Back")
+
+        choice = input("Choose an option (1-3): ").strip()
+        if choice == "1":
+            setup.reset_tax_brackets()
+        elif choice == "2":
+            setup.export_tax_template()
+        elif choice == "3":
+            break
+        else:
+            print("❌ Invalid choice. Please enter 1-3.")
+
+
+def show_tax_menu():
+    while True:
+        print("\n=== Tax Menu ===")
+        print("1. Manage Brackets 📊")
+        print("2. Maintenance ⚙️")
+        print("3. Back to main menu")
+
+        choice = input("Choose an option (1-3): ").strip()
+        if choice == "1":
+            manage_brackets_menu()
+        elif choice == "2":
+            maintenance_menu()
+        elif choice == "3":
+            break
+        else:
+            print("❌ Invalid choice. Please enter 1-3.")
