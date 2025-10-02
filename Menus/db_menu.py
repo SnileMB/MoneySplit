@@ -100,6 +100,7 @@ def update_record_menu():
     except ValueError:
         print("❌ Invalid input. Please enter a number where required.")
 
+
 def show_person_history():
     name = input("Enter the person's name: ").strip()
     records = setup.fetch_records_by_person(name)
@@ -130,6 +131,7 @@ def show_person_history():
     print(f"Total Tax:   {total_tax:,.2f}")
     print(f"Total Net:   {total_net:,.2f}")
 
+
 def update_person_menu():
     try:
         person_id = int(input("Enter the ID of the person to update: "))
@@ -141,12 +143,13 @@ def update_person_menu():
         new_value = input(f"Enter new value for {field}: ").strip()
 
         if field == "work_share":
-            new_value = float(new_value)  # cast to number
+            new_value = float(new_value)
 
         setup.update_person(person_id, field, new_value)
 
     except ValueError:
         print("❌ Invalid input. Please enter a number where required.")
+
 
 def delete_person_menu():
     try:
@@ -159,12 +162,44 @@ def delete_person_menu():
     except ValueError:
         print("❌ Invalid input. Please enter a number.")
 
+
 def reset_db_menu():
-    confirm = input("⚠️ This will DELETE ALL DATA. Type 'RESET' to confirm: ").strip()
+    confirm = input("⚠️ This will DELETE ALL tax records and people. Type 'RESET' to confirm: ").strip()
     if confirm == "RESET":
         setup.reset_db()
     else:
         print("❌ Reset canceled.")
+
+
+def reset_tax_brackets_menu():
+    confirm = input("⚠️ This will DELETE ALL tax brackets and restore defaults. Type 'RESET' to confirm: ").strip()
+    if confirm == "RESET":
+        setup.reset_tax_brackets()
+    else:
+        print("❌ Reset canceled.")
+
+
+def export_template_menu():
+    filepath = input("Enter filename for template (default: tax_template.csv): ").strip()
+    if not filepath:
+        filepath = "tax_template.csv"
+    setup.export_tax_template(filepath)
+
+
+def view_tax_brackets_menu():
+    country = input("Enter country (e.g. US, Spain): ").strip()
+    tax_type = input("Enter type (Individual/Business): ").strip().title()
+    rows = setup.get_tax_brackets(country, tax_type, include_id=True)
+    if not rows:
+        print("❌ No brackets found.")
+    else:
+        print(f"\nBrackets for {country} {tax_type}:")
+        print(f"{'ID':<4} | {'Income Limit':>15} | {'Rate':>8}")
+        print("-" * 35)
+        for bid, limit, rate in rows:
+            limit_txt = "∞" if limit == float("inf") else f"{limit:,.0f}"
+            print(f"{bid:<4} | {limit_txt:>15} | {rate*100:>7.2f}%")
+
 
 def show_db_menu():
     while True:
@@ -177,9 +212,12 @@ def show_db_menu():
         print("6. Delete record by ID")
         print("7. Delete person by ID")
         print("8. Reset database ⚠️")
-        print("9. Back to main menu")
+        print("9. Reset tax brackets ⚠️")
+        print("10. Export CSV template")
+        print("11. View tax brackets")
+        print("12. Back to main menu")
 
-        choice = input("Choose an option (1-9): ").strip()
+        choice = input("Choose an option (1-12): ").strip()
 
         if choice == "1":
             show_last_records(5)
@@ -198,6 +236,12 @@ def show_db_menu():
         elif choice == "8":
             reset_db_menu()
         elif choice == "9":
+            reset_tax_brackets_menu()
+        elif choice == "10":
+            export_template_menu()
+        elif choice == "11":
+            view_tax_brackets_menu()
+        elif choice == "12":
             break
         else:
-            print("❌ Invalid choice. Please enter 1-9.")
+            print("❌ Invalid choice. Please enter 1-12.")

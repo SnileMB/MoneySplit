@@ -63,12 +63,68 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tax_brackets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          country TEXT NOT NULL,
+          tax_type REAL NOT NULL,
+          income_limit REAL NOT NULL,
+          rate REAL NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
 init_db()
 
+def seed_default_brackets():
+    """Insert default US & Spain brackets if table is empty."""
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
 
+    # Check if any brackets exist already
+    cursor.execute("SELECT COUNT(*) FROM tax_brackets")
+    count = cursor.fetchone()[0]
+
+    if count > 0:
+        print("ℹ️ Tax brackets already exist. Skipping seeding.")
+        conn.close()
+        return
+
+    defaults = [
+        # US Individual
+        ("US", "Individual", 10275, 0.10),
+        ("US", "Individual", 41775, 0.12),
+        ("US", "Individual", 89075, 0.22),
+        ("US", "Individual", 170050, 0.24),
+        ("US", "Individual", 215950, 0.32),
+        ("US", "Individual", 539900, 0.35),
+        ("US", "Individual", float("inf"), 0.37),
+        # US Business
+        ("US", "Business", float("inf"), 0.21),
+
+        # Spain Individual
+        ("Spain", "Individual", 12450, 0.19),
+        ("Spain", "Individual", 20200, 0.24),
+        ("Spain", "Individual", 35200, 0.30),
+        ("Spain", "Individual", 60000, 0.37),
+        ("Spain", "Individual", 300000, 0.45),
+        ("Spain", "Individual", float("inf"), 0.47),
+        # Spain Business
+        ("Spain", "Business", float("inf"), 0.25),
+    ]
+
+    cursor.executemany("""
+        INSERT INTO tax_brackets (country, tax_type, income_limit, rate)
+        VALUES (?, ?, ?, ?)
+    """, defaults)
+
+    conn.commit()
+    conn.close()
+    print("✅ Default US & Spain tax brackets seeded.")
+
+seed_default_brackets()
 # -----------------------------
 # CRUD for tax_records
 # -----------------------------
@@ -408,3 +464,156 @@ def backup_db_to_csv():
 
     conn.close()
     print(f"📦 Backup complete → backup_tax_records_{timestamp}.csv, backup_people_{timestamp}.csv")
+
+
+# -----------------------------
+# Tax brackets management
+# -----------------------------
+
+def get_tax_brackets(country: str, tax_type: str, include_id: bool = False):
+    """
+    Fetch tax brackets for a given country/type.
+    If include_id=True, also return the bracket ID (for display/editing).
+    """
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    if include_id:
+        cursor.execute("""
+            SELECT id, income_limit, rate
+            FROM tax_brackets
+            WHERE country=? AND tax_type=?
+            ORDER BY income_limit ASC
+        """, (country, tax_type))
+    else:
+        cursor.execute("""
+            SELECT income_limit, rate
+            FROM tax_brackets
+            WHERE country=? AND tax_type=?
+            ORDER BY income_limit ASC
+        """, (country, tax_type))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
+
+def add_tax_bracket(country: str, tax_type: str, income_limit: float, rate: float):
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO tax_brackets (country, tax_type, income_limit, rate)
+        VALUES (?, ?, ?, ?)
+    """, (country, tax_type, income_limit, rate))
+    conn.commit()
+    conn.close()
+    print(f"✅ Added {country} {tax_type} bracket: up to {income_limit} at {rate*100:.2f}%")
+
+def update_tax_bracket(bracket_id: int, field: str, new_value):
+    allowed = {"country", "tax_type", "income_limit", "rate"}
+    if field not in allowed:
+        raise ValueError(f"Invalid field. Allowed: {', '.join(allowed)}")
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute(f"UPDATE tax_brackets SET {field}=? WHERE id=?", (new_value, bracket_id))
+    conn.commit()
+    conn.close()
+    print(f"✏️ Bracket {bracket_id} updated: {field} → {new_value}")
+
+def delete_tax_bracket(bracket_id: int):
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tax_brackets WHERE id=?", (bracket_id,))
+    conn.commit()
+    conn.close()
+    print(f"🗑️ Deleted tax bracket {bracket_id}")
+
+# def fetch_tax_brackets(country: str, tax_type: str):
+#     conn = sqlite3.connect("example.db")
+#     cursor = conn.cursor()
+#     cursor.execute("""
+#         SELECT id, income_limit, rate
+#         FROM tax_brackets
+#         WHERE country=? AND tax_type=?
+#         ORDER BY income_limit ASC
+#     """, (country, tax_type))
+#     rows = cursor.fetchall()
+#     conn.close()
+#     return rows
+
+def reset_tax_brackets():
+    """Delete all tax brackets and reseed defaults."""
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tax_brackets")
+    conn.commit()
+    conn.close()
+    print("🗑️ All tax brackets deleted.")
+    seed_default_brackets()
+
+
+import csv
+
+def add_tax_brackets_from_csv(country: str, tax_type: str, filepath: str):
+    """Upload multiple tax brackets from a CSV file with columns: income_limit, rate"""
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+
+    with open(filepath, newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            # Skip completely empty rows
+            if not row or not row.get("income_limit") or not row.get("rate"):
+                continue
+
+            # Normalize income_limit
+            limit_str = row["income_limit"].strip()
+            if limit_str.lower() == "inf":
+                limit = float("inf")
+            else:
+                try:
+                    limit = float(limit_str)
+                except ValueError:
+                    print(f"⚠️ Skipping invalid income_limit: {limit_str}")
+                    continue
+
+            # Normalize rate
+            try:
+                rate = float(row["rate"].strip())
+            except ValueError:
+                print(f"⚠️ Skipping invalid rate: {row['rate']}")
+                continue
+
+            cursor.execute("""
+                INSERT INTO tax_brackets (country, tax_type, income_limit, rate)
+                VALUES (?, ?, ?, ?)
+            """, (country, tax_type, limit, rate))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Tax brackets for {country} {tax_type} uploaded from {filepath}.")
+
+import csv
+
+def export_tax_template(filepath="tax_template.csv"):
+    """Export a clean CSV template for tax brackets."""
+    headers = ["income_limit", "rate"]
+    with open(filepath, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        writer.writerow(["12450", "0.19"])   # Example row
+        writer.writerow(["20200", "0.24"])   # Example row
+        writer.writerow(["inf", "0.45"])     # Example row
+    print(f"📄 Template exported to {filepath}")
+
+
+def reset_tax_brackets():
+    """Delete all brackets and re-seed defaults (US + Spain)."""
+    conn = sqlite3.connect("example.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tax_brackets")
+    conn.commit()
+    conn.close()
+
+    print("🗑️ All tax brackets deleted.")
+    seed_default_brackets()
+    print("✅ Default tax brackets restored.")
