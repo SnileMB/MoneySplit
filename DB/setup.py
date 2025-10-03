@@ -26,7 +26,9 @@ def _pb():
 
 def get_conn():
     """Get a SQLite connection with foreign keys enabled."""
-    conn = sqlite3.connect("example.db")
+    # Use test database when running tests
+    db_name = os.environ.get('TEST_DB', 'example.db') if os.environ.get('TESTING') else 'example.db'
+    conn = sqlite3.connect(db_name)
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 

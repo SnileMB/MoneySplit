@@ -70,16 +70,30 @@ const Projects: React.FC = () => {
   return (
     <div>
       <div className="page-header">
-        <h2>New Project</h2>
+        <h2>✨ New Project</h2>
         <p>Create a new commission splitting project</p>
       </div>
 
       {successMessage && (
-        <div className="alert alert-success">{successMessage}</div>
+        <div className="alert alert-success" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '24px' }}>✅</span>
+          <span>{successMessage}</span>
+        </div>
       )}
 
       {errorMessage && (
-        <div className="alert alert-error">{errorMessage}</div>
+        <div className="alert alert-error" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '24px' }}>❌</span>
+          <span>{errorMessage}</span>
+        </div>
       )}
 
       <div className="card">
@@ -137,9 +151,9 @@ const Projects: React.FC = () => {
             </select>
           </div>
 
-          <h3>Team Members</h3>
+          <h3 style={{ marginTop: '32px', marginBottom: '20px' }}>👥 Team Members</h3>
           {people.map((person, index) => (
-            <div key={index} style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+            <div key={index} className="person-card">
               <div className="form-group">
                 <label>Person {index + 1} - Name</label>
                 <input
@@ -161,6 +175,9 @@ const Projects: React.FC = () => {
                   onChange={(e) => handlePersonChange(index, 'work_share', parseFloat(e.target.value))}
                   required
                 />
+                <small style={{ display: 'block', marginTop: '8px', color: '#718096', fontWeight: 500 }}>
+                  {(person.work_share * 100).toFixed(0)}% of total work
+                </small>
               </div>
             </div>
           ))}

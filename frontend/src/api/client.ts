@@ -69,21 +69,57 @@ export interface Forecast {
     month: string;
     revenue: number;
     confidence: string;
+    lower_bound: number;
+    upper_bound: number;
+    range: string;
   }[];
   trend: string;
   trend_strength: number;
   r2_score: number;
   confidence: string;
+  confidence_description: string;
   historical_avg: number;
+  model_slope: number;
+  growth_rate: number;
+  model_type: string;
+  explanation: string;
+  data_quality: string;
   recommendations?: string[];
 }
 
 // API Functions
+export interface RecordUpdate {
+  field: string;
+  value: string | number;
+}
+
+export interface TaxBracket {
+  id: number;
+  country: string;
+  tax_type: string;
+  income_limit: number;
+  rate: number;
+}
+
+export interface TaxBracketCreate {
+  country: string;
+  tax_type: string;
+  income_limit: number;
+  rate: number;
+}
+
 export const projectsApi = {
   create: (data: ProjectCreate) => apiClient.post('/projects', data),
   getRecords: (limit = 10) => apiClient.get<Record[]>(`/records?limit=${limit}`),
   getRecord: (id: number) => apiClient.get<RecordWithPeople>(`/records/${id}`),
+  updateRecord: (id: number, update: RecordUpdate) => apiClient.put(`/records/${id}`, update),
   deleteRecord: (id: number) => apiClient.delete(`/records/${id}`),
+};
+
+export const taxBracketsApi = {
+  getTaxBrackets: (country: string, taxType: string) => apiClient.get<TaxBracket[]>(`/tax-brackets?country=${country}&tax_type=${taxType}`),
+  createTaxBracket: (data: TaxBracketCreate) => apiClient.post('/tax-brackets', data),
+  deleteTaxBracket: (id: number) => apiClient.delete(`/tax-brackets/${id}`),
 };
 
 export const reportsApi = {

@@ -1,6 +1,7 @@
 # Database files
 *.db
 *.db-journal
+*.db.backup
 
 # Python
 __pycache__/
@@ -39,3 +40,27 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Temporary files
+.claude/
+Claude/
+*.md.backup
+
+# Documentation (keep only README.md)
+ARCHITECTURE.md
+TESTING.md
+API_README.md
+QUICKSTART.md

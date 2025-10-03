@@ -35,30 +35,71 @@ def get_historical_data():
 
 
 def forecast_revenue(months_ahead=3):
-    """Forecast revenue for the next N months using linear regression."""
+    """
+    Forecast revenue using an enhanced algorithm.
+
+    Uses polynomial regression when enough data is available (better for non-linear trends).
+    Falls back to linear regression for smaller datasets.
+    Includes moving average smoothing to reduce noise.
+    """
     historical = get_historical_data()
 
     if len(historical) < 2:
         return {
             'success': False,
             'message': 'Not enough historical data (need at least 2 months)',
-            'predictions': []
+            'predictions': [],
+            'explanation': 'Create more projects across different months to enable AI forecasting.'
         }
 
     # Prepare data
-    months = [i for i in range(len(historical))]
-    revenues = [row[1] for row in historical]
+    revenues = np.array([row[1] for row in historical])
+    num_projects = np.array([row[4] for row in historical])
 
-    X = np.array(months).reshape(-1, 1)
-    y = np.array(revenues)
+    # Apply moving average smoothing for datasets with enough data
+    # IMPORTANT: Use 'valid' mode to avoid data leakage (no look-ahead bias)
+    if len(revenues) >= 4:
+        # 3-point moving average - 'valid' mode loses 2 data points but prevents leakage
+        smoothed_revenues = np.convolve(revenues, np.ones(3)/3, mode='valid')
+        y = smoothed_revenues
+        # Adjust indices to match smoothed data length (starts from index 1)
+        months_indices = np.array([i+1 for i in range(len(smoothed_revenues))]).reshape(-1, 1)
+    else:
+        y = revenues
+        months_indices = np.array([i for i in range(len(revenues))]).reshape(-1, 1)
 
-    # Train model
-    model = LinearRegression()
-    model.fit(X, y)
+    # Choose model based on data size
+    if len(historical) >= 6:
+        # Polynomial regression for better curve fitting
+        poly_features = PolynomialFeatures(degree=2)
+        X_poly = poly_features.fit_transform(months_indices)
+        model = LinearRegression()
+        model.fit(X_poly, y)
+        r2_score = model.score(X_poly, y)
+        model_type = "Polynomial (curved trend)"
+    else:
+        # Linear regression for smaller datasets
+        model = LinearRegression()
+        model.fit(months_indices, y)
+        r2_score = model.score(months_indices, y)
+        model_type = "Linear (straight trend)"
 
-    # Calculate R² score for confidence
-    r2_score = model.score(X, y)
-    confidence = "High" if r2_score > 0.7 else "Medium" if r2_score > 0.4 else "Low"
+    # Enhanced confidence scoring
+    if r2_score > 0.8:
+        confidence = "High"
+        confidence_desc = "Very reliable - strong pattern detected"
+    elif r2_score > 0.6:
+        confidence = "Medium-High"
+        confidence_desc = "Reliable - clear pattern with minor variation"
+    elif r2_score > 0.4:
+        confidence = "Medium"
+        confidence_desc = "Moderate - pattern exists but with some variability"
+    elif r2_score > 0.2:
+        confidence = "Low-Medium"
+        confidence_desc = "Less reliable - high variability in data"
+    else:
+        confidence = "Low"
+        confidence_desc = "Unreliable - very inconsistent data"
 
     # Predict future months
     predictions = []
@@ -66,22 +107,75 @@ def forecast_revenue(months_ahead=3):
     last_date = datetime.strptime(last_month, '%Y-%m')
 
     for i in range(1, months_ahead + 1):
-        future_x = len(historical) + i - 1
-        predicted_revenue = model.predict([[future_x]])[0]
+        future_index = len(historical) + i - 1
+
+        if len(historical) >= 6:
+            future_x_poly = poly_features.transform([[future_index]])
+            predicted_revenue = model.predict(future_x_poly)[0]
+        else:
+            predicted_revenue = model.predict([[future_index]])[0]
+
+        # Prevent negative predictions
+        predicted_revenue = max(0, predicted_revenue)
 
         # Calculate next month
         next_month = last_date + timedelta(days=30*i)
-        month_str = next_month.strftime('%Y-%m')
+        month_str = next_month.strftime('%B %Y')  # e.g., "November 2025"
+
+        # Calculate confidence interval (95%)
+        std_error = np.std(y - model.predict(X_poly if len(historical) >= 6 else months_indices))
+        lower_bound = max(0, predicted_revenue - 1.96 * std_error)
+        upper_bound = predicted_revenue + 1.96 * std_error
 
         predictions.append({
             'month': month_str,
-            'revenue': max(0, predicted_revenue),  # Prevent negative predictions
-            'confidence': confidence
+            'revenue': predicted_revenue,
+            'confidence': confidence,
+            'lower_bound': lower_bound,
+            'upper_bound': upper_bound,
+            'range': f"${lower_bound:,.0f} - ${upper_bound:,.0f}"
         })
 
-    # Calculate trend
-    trend = "increasing" if model.coef_[0] > 0 else "decreasing"
-    trend_strength = abs(model.coef_[0])
+    # Calculate trend with clearer description
+    if len(historical) >= 6:
+        slope = revenues[-1] - revenues[0]
+    else:
+        slope = model.coef_[0] if len(model.coef_) == 1 else model.coef_[1]
+
+    if slope > 100:
+        trend = "Strongly Increasing"
+    elif slope > 0:
+        trend = "Growing"
+    elif slope < -100:
+        trend = "Declining"
+    else:
+        trend = "Stable"
+
+    trend_strength = abs(slope / len(historical)) if len(historical) > 0 else 0
+
+    # Generate plain English explanation
+    avg_revenue = np.mean(revenues)
+    last_revenue = revenues[-1]
+    growth_rate = ((last_revenue - revenues[0]) / revenues[0] * 100) if revenues[0] > 0 else 0
+
+    explanation = f"""📊 What this means:
+
+Your business has {len(historical)} months of data. The AI analyzed this and found a {trend.lower()} pattern.
+
+• Average monthly revenue: ${avg_revenue:,.0f}
+• Last month: ${last_revenue:,.0f}
+• Overall growth: {growth_rate:+.1f}%
+• Confidence level: {confidence} ({confidence_desc})
+• Prediction model: {model_type}
+
+📈 Next month prediction: ${predictions[0]['revenue']:,.0f}
+(Range: {predictions[0]['range']})
+
+💡 The AI is {r2_score*100:.0f}% confident in this pattern. {
+        "This is very reliable!" if r2_score > 0.7 else
+        "Add more data over time for better accuracy." if r2_score < 0.5 else
+        "Predictions are reasonably accurate."
+    }"""
 
     return {
         'success': True,
@@ -90,8 +184,13 @@ def forecast_revenue(months_ahead=3):
         'trend_strength': trend_strength,
         'r2_score': r2_score,
         'confidence': confidence,
-        'historical_avg': np.mean(revenues),
-        'model_slope': model.coef_[0]
+        'confidence_description': confidence_desc,
+        'historical_avg': avg_revenue,
+        'model_slope': slope,
+        'growth_rate': growth_rate,
+        'model_type': model_type,
+        'explanation': explanation.strip(),
+        'data_quality': "Excellent" if len(historical) >= 10 else "Good" if len(historical) >= 6 else "Fair"
     }
 
 
@@ -121,6 +220,13 @@ def tax_optimization_analysis():
         ORDER BY tax_origin, avg_rate
     """)
     country_analysis = cursor.fetchall()
+
+    # Get overall rate before closing connection
+    cursor.execute("""
+        SELECT AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as overall_rate
+        FROM tax_records
+    """)
+    overall_rate = cursor.fetchone()[0] or 0
 
     conn.close()
 
@@ -161,13 +267,6 @@ def tax_optimization_analysis():
             )
 
     # General recommendations
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as overall_rate
-        FROM tax_records
-    """)
-    overall_rate = cursor.fetchone()[0] or 0
-
     if overall_rate > 25:
         recommendations.append(
             f"Your average tax rate is {overall_rate:.1f}%. Consider reviewing tax brackets and deductions."

@@ -1,46 +1,107 @@
-# Getting Started with Create React App
+# MoneySplit Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Modern React TypeScript frontend for the MoneySplit commission splitting application.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- 📊 **Dashboard**: Real-time statistics and recent projects overview
+- 📁 **New Project**: Create projects with tax calculations and team splits
+- 📈 **Reports**: Interactive visualizations, forecasts, and PDF exports
+- 🎨 **Modern UI**: Clean, responsive design with smooth animations
+- 🔄 **Real-time Data**: Live updates from FastAPI backend
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **React 18** with TypeScript
+- **Axios** for API requests
+- **Recharts** for data visualization
+- **CSS3** for styling
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Getting Started
 
-### `npm test`
+### Prerequisites
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js 16+ and npm
+- Backend API running on `http://localhost:8000`
 
-### `npm run build`
+### Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+# Install dependencies
+npm install
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Start development server
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The app will open at [http://localhost:3000](http://localhost:3000)
 
-### `npm run eject`
+### Build for Production
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+npm run build
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+src/
+├── api/
+│   └── client.ts          # API client and TypeScript types
+├── pages/
+│   ├── Dashboard.tsx      # Dashboard page
+│   ├── Projects.tsx       # Project creation form
+│   └── Reports.tsx        # Analytics and reports
+├── App.tsx                # Main app component
+├── App.css                # Global styles
+└── index.tsx              # Entry point
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## API Configuration
 
-## Learn More
+The frontend connects to the backend API. To change the API URL, set the environment variable:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+REACT_APP_API_URL=http://your-api-url:8000/api npm start
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Default: `http://localhost:8000/api`
+
+## Pages
+
+### Dashboard
+- **Statistics Cards**: Total revenue, projects, tax paid, net income
+- **Recent Projects Table**: Latest 5 projects
+- **Metrics**: Average tax rate, unique people, profit margin
+
+### New Project
+- **Form Fields**: Number of people, revenue, costs, country, tax type
+- **Team Input**: Dynamic person forms with work share distribution
+- **Validation**: Client-side validation with error messages
+- **Success**: Shows created record ID on success
+
+### Reports
+- **Visualizations**: One-click access to interactive charts
+  - Revenue Summary
+  - Monthly Trends
+  - Work Distribution
+  - Tax Comparison
+  - Project Profitability
+- **Forecasting**: ML-powered revenue predictions
+  - 3-month forecast
+  - Confidence levels
+  - Trend analysis
+- **PDF Exports**: Download professional reports
+  - Summary Report
+  - Forecast Report
+
+## Troubleshooting
+
+### API Connection Issues
+- Ensure backend is running: `cd .. && python3 -m uvicorn api.main:app --reload`
+- Check CORS is enabled in backend
+- Verify API_URL matches backend address
+
+### Build Issues
+- Clear node_modules: `rm -rf node_modules package-lock.json && npm install`
+- Check Node version: `node --version` (should be 16+)
