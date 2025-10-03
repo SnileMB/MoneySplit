@@ -47,8 +47,7 @@ A full-stack application for managing commission-based income splitting among te
 ### Frontend
 - **React 18** with TypeScript
 - **Axios** - API client
-- **Recharts** - Data visualization
-- **CSS3** - Styling
+- **CSS3** - Styling with gradient themes
 
 ---
 
@@ -151,18 +150,20 @@ MoneySplit/
 │   ├── tax_menu.py            # Tax bracket management
 │   └── report_menu.py         # Reports & visualizations
 ├── api/                        # REST API
-│   ├── main.py                # FastAPI application
+│   ├── main.py                # FastAPI application (1600+ lines)
 │   └── models.py              # Pydantic models
 ├── frontend/                   # React frontend
 │   ├── src/
 │   │   ├── api/
 │   │   │   └── client.ts      # API client
 │   │   ├── pages/
-│   │   │   ├── Dashboard.tsx  # Dashboard page
-│   │   │   ├── Projects.tsx   # Project creation
-│   │   │   └── Reports.tsx    # Analytics
-│   │   ├── App.tsx            # Main component
-│   │   └── App.css            # Styles
+│   │   │   ├── Dashboard.tsx  # Dashboard with statistics
+│   │   │   ├── Projects.tsx   # Project creation form
+│   │   │   ├── Reports.tsx    # Analytics & charts
+│   │   │   ├── RecordsManagement.tsx
+│   │   │   └── TaxBracketsManagement.tsx
+│   │   ├── App.tsx            # Main app with navigation
+│   │   └── App.css            # Gradient theme styles
 │   └── package.json
 ├── reports/                    # Generated reports (auto-created)
 ├── example.db                  # SQLite database
@@ -207,46 +208,53 @@ curl -X POST "http://localhost:8000/api/projects" \
 
 ### Frontend: Create a Project
 
-1. Navigate to "New Project"
-2. Fill in the form fields
-3. Add team members with work shares
+1. Navigate to "New Project" (📁 icon in sidebar)
+2. Fill in project details (revenue, costs, country, tax type)
+3. Add team members with work shares (must sum to 1.0)
 4. Click "Create Project"
+5. View results in Dashboard
 
 ---
 
 ## 📊 API Endpoints
 
-### Projects
+### Projects & Records
 - `POST /api/projects` - Create new project
-- `GET /api/records` - Get recent records
-- `GET /api/records/{id}` - Get specific record
-- `PUT /api/records/{id}` - Update record
+- `GET /api/records` - Get recent records (default: 10)
+- `GET /api/records/{id}` - Get specific record with people
+- `PUT /api/records/{id}` - Update record field
 - `DELETE /api/records/{id}` - Delete record
 
-### Reports
-- `GET /api/reports/statistics` - Overall statistics
-- `GET /api/reports/revenue-summary` - Revenue by year
-- `GET /api/reports/top-people` - Top contributors
+### Reports & Statistics
+- `GET /api/reports/statistics` - Overall statistics (total revenue, tax, net income)
+- `GET /api/reports/revenue-summary` - Revenue grouped by year
+- `GET /api/reports/top-people` - Top contributors by net income
 
-### Forecasting
+### Forecasting & Analysis
 - `GET /api/forecast/revenue?months=3` - Revenue predictions
 - `GET /api/forecast/comprehensive` - Full forecast with insights
 - `GET /api/forecast/tax-optimization` - Tax recommendations
-- `GET /api/forecast/trends` - Trend analysis
+- `GET /api/forecast/trends` - Trend analysis with seasonality
 
 ### Visualizations
-- `GET /api/visualizations/revenue-summary` - Revenue chart
-- `GET /api/visualizations/monthly-trends` - Monthly trends
-- `GET /api/visualizations/work-distribution` - Work distribution
-- `GET /api/visualizations/tax-comparison` - Tax comparison
-- `GET /api/visualizations/project-profitability` - Profitability
+- `GET /api/visualizations/revenue-summary` - Revenue chart (HTML)
+- `GET /api/visualizations/monthly-trends` - Monthly trends chart
+- `GET /api/visualizations/work-distribution` - Work distribution pie chart
+- `GET /api/visualizations/tax-comparison` - Tax comparison bar chart
+- `GET /api/visualizations/project-profitability` - Profitability scatter plot
+- `GET /api/visualizations/combined-dashboard` - All charts combined
 
 ### PDF Exports
-- `GET /api/export/record/{id}/pdf` - Project PDF
-- `GET /api/export/summary/pdf` - Summary PDF
-- `GET /api/export/forecast/pdf` - Forecast PDF
+- `GET /api/export/record/{id}/pdf` - Project PDF report
+- `GET /api/export/summary/pdf` - Summary PDF report
+- `GET /api/export/forecast/pdf` - Forecast PDF report
 
-Full documentation: `http://localhost:8000/docs`
+### Tax Brackets
+- `GET /api/tax-brackets/{country}` - Get tax brackets for country
+- `POST /api/tax-brackets` - Add new tax bracket
+- `DELETE /api/tax-brackets/{id}` - Delete tax bracket
+
+Full interactive documentation: `http://localhost:8000/docs`
 
 ---
 
@@ -290,12 +298,65 @@ See [TESTING.md](TESTING.md) for:
 
 ## 📐 Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for:
-- System architecture diagram
-- Component descriptions
-- Data flow diagrams
-- Technology stack details
-- Design patterns used
+### Database Schema
+
+**tax_records** table:
+- `id` (PRIMARY KEY)
+- `num_people`, `revenue`, `total_costs`
+- `group_income`, `individual_income`
+- `tax_origin` (country), `tax_option` (Individual/Business)
+- `tax_amount`, `net_income_per_person`, `net_income_group`
+- `created_at` (timestamp)
+
+**people** table:
+- `id` (PRIMARY KEY)
+- `record_id` (FOREIGN KEY → tax_records)
+- `name`, `work_share`
+- `gross_income`, `tax_paid`, `net_income`
+
+**tax_brackets** table:
+- `id` (PRIMARY KEY)
+- `country`, `tax_type`
+- `income_limit`, `rate`
+
+### Key Design Patterns
+
+- **Repository Pattern**: `DB/setup.py` handles all database operations
+- **MVC Architecture**: Separation of business logic, API, and UI
+- **REST API**: Stateless HTTP endpoints with JSON
+- **Component-Based UI**: React functional components with hooks
+- **Validation Layer**: Pydantic models for type safety and validation
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture diagrams and component descriptions.
+
+---
+
+## 🎨 Frontend Features
+
+### Pages
+- **Dashboard** (📊): Statistics cards, recent projects table
+- **New Project** (📁): Multi-step form with validation
+- **Reports** (📈): Analytics with chart visualizations
+- **Records Management**: View, edit, delete records
+- **Tax Brackets Management**: CRUD operations for tax rates
+
+### UI/UX
+- Gradient purple theme (`#667eea` → `#764ba2`)
+- Responsive sidebar navigation
+- Collapsible menu on mobile
+- Success/error alert messages
+- Loading states and error handling
+- Real-time form validation
+
+### Build & Deploy
+
+```bash
+cd frontend
+npm run build
+# Creates optimized production build in frontend/build/
+```
+
+Bundle size: ~90 KB (gzipped)
 
 ---
 
