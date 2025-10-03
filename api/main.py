@@ -2,18 +2,21 @@
 MoneySplit FastAPI Application
 RESTful API for commission-based income splitting with tax calculations.
 """
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import sys
 import os
+import csv
+import io
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from DB import setup
-from Logic import pdf_generator, forecasting
+from Logic import pdf_generator, forecasting, tax_comparison, tax_engine
 from api.models import (
     ProjectCreate, ProjectCreateResponse, RecordResponse,
     RecordWithPeople, PersonResponse, TaxBracketCreate,
@@ -40,7 +43,7 @@ app.add_middleware(
 
 @app.post("/api/projects", response_model=ProjectCreateResponse, status_code=201)
 async def create_project(project: ProjectCreate):
-    """Create a new project with people and calculate taxes."""
+    """Create a new project with people and calculate taxes using the enhanced tax engine."""
     try:
         # Calculate totals
         total_costs = sum(project.costs)
@@ -48,19 +51,21 @@ async def create_project(project: ProjectCreate):
         group_income = income
         individual_income = income / project.num_people if project.num_people > 0 else 0
 
-        # Calculate tax
-        if project.tax_type == "Individual":
-            tax = setup.calculate_tax_from_db(individual_income, project.country, project.tax_type)
-        else:
-            tax = setup.calculate_tax_from_db(group_income, project.country, project.tax_type)
+        # Use the new tax engine to calculate taxes
+        tax_result = tax_engine.calculate_project_taxes(
+            revenue=project.revenue,
+            costs=total_costs,
+            num_people=project.num_people,
+            country=project.country,
+            tax_structure=project.tax_type,
+            distribution_method=project.distribution_method,
+            salary_amount=project.salary_amount or 0
+        )
 
-        # Calculate net incomes
-        if project.tax_type == "Individual":
-            net_income_per_person = individual_income - tax
-            net_income_group = net_income_per_person * project.num_people
-        else:
-            net_income_group = group_income - tax
-            net_income_per_person = net_income_group / project.num_people if project.num_people > 0 else 0
+        # Extract values from tax_result
+        tax = tax_result['total_tax']
+        net_income_group = tax_result['net_income_group']
+        net_income_per_person = tax_result['net_income_per_person']
 
         # Save to database
         conn = setup.get_conn()
@@ -69,8 +74,9 @@ async def create_project(project: ProjectCreate):
             INSERT INTO tax_records (
                 num_people, revenue, total_costs, group_income, individual_income,
                 tax_origin, tax_option, tax_amount,
-                net_income_per_person, net_income_group
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                net_income_per_person, net_income_group,
+                distribution_method, salary_amount
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             project.num_people,
             project.revenue,
@@ -81,7 +87,9 @@ async def create_project(project: ProjectCreate):
             project.tax_type,
             tax,
             net_income_per_person,
-            net_income_group
+            net_income_group,
+            project.distribution_method,
+            project.salary_amount or 0
         ))
         record_id = cursor.lastrowid
 
@@ -94,7 +102,7 @@ async def create_project(project: ProjectCreate):
             else:
                 gross_income = group_income * person.work_share
                 tax_paid = tax * person.work_share
-                net_income = gross_income - tax_paid
+                net_income = net_income_group * person.work_share
 
             cursor.execute("""
                 INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
@@ -112,7 +120,9 @@ async def create_project(project: ProjectCreate):
                 "total_costs": total_costs,
                 "tax_amount": tax,
                 "net_income_group": net_income_group,
-                "net_income_per_person": net_income_per_person
+                "net_income_per_person": net_income_per_person,
+                "distribution_method": project.distribution_method,
+                "effective_rate": tax_result['effective_rate']
             }
         )
     except Exception as e:
@@ -129,7 +139,9 @@ async def get_records(limit: int = Query(10, ge=1, le=100)):
             revenue=r[3], total_costs=r[4], tax_amount=r[5],
             net_income_group=r[6], net_income_per_person=r[7],
             created_at=r[8],
-            num_people=r[9], group_income=r[10], individual_income=r[11]
+            num_people=r[9], group_income=r[10], individual_income=r[11],
+            distribution_method=r[12] if len(r) > 12 else "N/A",
+            salary_amount=r[13] if len(r) > 13 else 0
         ) for r in records
     ]
 
@@ -149,6 +161,8 @@ async def get_record(record_id: int):
         net_income_group=record[6], net_income_per_person=record[7],
         created_at=record[8],
         num_people=record[9], group_income=record[10], individual_income=record[11],
+        distribution_method=record[12] if len(record) > 12 else "N/A",
+        salary_amount=record[13] if len(record) > 13 else 0,
         people=[
             PersonResponse(
                 id=p[0], name=p[1], work_share=p[2],
@@ -1523,6 +1537,58 @@ async def trend_analysis_endpoint():
     return trends
 
 
+# ===== Tax Comparison Endpoints =====
+
+@app.get("/api/tax-comparison")
+async def compare_tax_strategies(
+    revenue: float = Query(..., description="Project revenue"),
+    costs: float = Query(..., description="Total project costs"),
+    num_people: int = Query(..., description="Number of people"),
+    country: str = Query(..., description="Country (US or Spain)")
+):
+    """
+    Compare all tax strategies (Individual vs Business with different distributions).
+    Returns detailed breakdown showing which option saves the most money.
+    """
+    comparison = tax_comparison.calculate_all_tax_scenarios(revenue, costs, num_people, country)
+    return comparison
+
+
+@app.get("/api/optimal-strategy")
+async def get_optimal_strategy(
+    revenue: float = Query(..., description="Project revenue"),
+    costs: float = Query(..., description="Total project costs"),
+    num_people: int = Query(..., description="Number of people"),
+    country: str = Query(..., description="Country"),
+    state: str = Query(None, description="US State (CA, NY, TX, FL) - optional")
+):
+    """
+    Get the optimal tax strategy using the enhanced tax engine.
+    Returns all strategies with the optimal one highlighted.
+    Supports US state taxes, UK, and Canada calculations.
+    """
+    try:
+        result = tax_engine.get_optimal_strategy(revenue, costs, num_people, country, state)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/tax-optimization")
+async def get_tax_optimization(
+    revenue: float,
+    costs: float,
+    num_people: int,
+    country: str,
+    selected_type: str = Query(..., description="Individual or Business")
+):
+    """
+    Get optimization summary showing if user's choice is optimal.
+    """
+    summary = tax_comparison.get_tax_optimization_summary(revenue, costs, num_people, country, selected_type)
+    return summary
+
+
 # ===== Root Endpoint =====
 
 @app.get("/", response_class=HTMLResponse)
@@ -1590,6 +1656,467 @@ async def root():
         </body>
     </html>
     """)
+
+
+@app.get("/api/forecast/tax-impact")
+async def forecast_with_tax_impact(
+    current_revenue: float = Query(..., description="Current quarterly revenue"),
+    growth_rate: float = Query(0.1, description="Expected growth rate (0.1 = 10%)"),
+    quarters: int = Query(4, description="Number of quarters to forecast"),
+    country: str = Query("US", description="Country"),
+    state: str = Query(None, description="US State (optional)")
+):
+    """
+    Forecast revenue with tax impact analysis and strategy recommendations.
+    Shows when to switch tax structures based on revenue thresholds.
+    """
+    forecasts = []
+
+    for q in range(1, quarters + 1):
+        projected_revenue = current_revenue * ((1 + growth_rate) ** q)
+        costs = projected_revenue * 0.2  # Assume 20% costs
+
+        # Calculate all strategies for this revenue level
+        result = tax_engine.get_optimal_strategy(projected_revenue, costs, 2, country, state)
+
+        # Find breakeven points
+        individual = next((s for s in result['all_strategies'] if s['strategy_name'] == 'Individual Tax'), None)
+        business_mixed = next((s for s in result['all_strategies'] if 'Mixed' in s['strategy_name']), None)
+
+        recommendation = ""
+        if business_mixed and individual:
+            if business_mixed['net_income_group'] > individual['net_income_group']:
+                savings = business_mixed['net_income_group'] - individual['net_income_group']
+                recommendation = f"Switch to Business+Mixed - save ${savings:,.0f}/quarter"
+            else:
+                recommendation = "Stay with Individual tax"
+
+        forecasts.append({
+            "quarter": q,
+            "projected_revenue": projected_revenue,
+            "optimal_strategy": result['optimal']['strategy_name'],
+            "take_home": result['optimal']['net_income_group'],
+            "total_tax": result['optimal']['total_tax'],
+            "effective_rate": result['optimal']['effective_rate'],
+            "recommendation": recommendation,
+            "all_strategies": result['all_strategies']
+        })
+
+    return {
+        "current_revenue": current_revenue,
+        "growth_rate": growth_rate * 100,
+        "forecasts": forecasts
+    }
+
+
+@app.get("/api/breakeven-analysis")
+async def breakeven_analysis(
+    min_revenue: float = Query(50000, description="Minimum revenue to test"),
+    max_revenue: float = Query(300000, description="Maximum revenue to test"),
+    step: float = Query(10000, description="Revenue increment"),
+    country: str = Query("US"),
+    state: str = Query(None)
+):
+    """
+    Find revenue breakeven points where tax strategies become optimal.
+    Returns revenue thresholds for switching between Individual and Business tax.
+    """
+    results = []
+    previous_optimal = None
+    breakeven_points = []
+
+    revenue = min_revenue
+    while revenue <= max_revenue:
+        costs = revenue * 0.2
+        result = tax_engine.get_optimal_strategy(revenue, costs, 2, country, state)
+
+        optimal_name = result['optimal']['strategy_name']
+
+        # Detect strategy change
+        if previous_optimal and previous_optimal != optimal_name:
+            breakeven_points.append({
+                "revenue_threshold": revenue,
+                "switch_from": previous_optimal,
+                "switch_to": optimal_name,
+                "savings": result['savings']
+            })
+
+        results.append({
+            "revenue": revenue,
+            "optimal_strategy": optimal_name,
+            "take_home": result['optimal']['net_income_group'],
+            "effective_rate": result['optimal']['effective_rate']
+        })
+
+        previous_optimal = optimal_name
+        revenue += step
+
+    return {
+        "breakeven_points": breakeven_points,
+        "analysis": results
+    }
+
+
+@app.get("/api/analytics/year-over-year")
+async def year_over_year_analysis():
+    """
+    Analyze project performance year-over-year.
+    Groups projects by year and compares revenue, taxes, and strategy choices.
+    """
+    records = setup.fetch_last_records(100)
+
+    years = {}
+    for r in records:
+        created_at = r[8] if len(r) > 8 else "2024-01-01"
+        year = created_at[:4]
+
+        if year not in years:
+            years[year] = {
+                "year": year,
+                "total_revenue": 0,
+                "total_tax": 0,
+                "total_net_income": 0,
+                "project_count": 0,
+                "strategies": {},
+                "avg_effective_rate": 0
+            }
+
+        revenue = r[3]
+        tax = r[5]
+        net = r[6]
+        strategy = f"{r[1]} {r[2]}"
+
+        years[year]["total_revenue"] += revenue
+        years[year]["total_tax"] += tax
+        years[year]["total_net_income"] += net
+        years[year]["project_count"] += 1
+        years[year]["strategies"][strategy] = years[year]["strategies"].get(strategy, 0) + 1
+
+    # Calculate averages
+    for year_data in years.values():
+        if year_data["total_revenue"] > 0:
+            year_data["avg_effective_rate"] = (year_data["total_tax"] / year_data["total_revenue"]) * 100
+
+    return {
+        "years": sorted(years.values(), key=lambda x: x["year"]),
+        "comparison": [
+            {
+                "year": y["year"],
+                "revenue": y["total_revenue"],
+                "tax_paid": y["total_tax"],
+                "take_home": y["total_net_income"],
+                "projects": y["project_count"],
+                "effective_rate": y["avg_effective_rate"]
+            }
+            for y in sorted(years.values(), key=lambda x: x["year"])
+        ]
+    }
+
+
+@app.get("/api/analytics/strategy-effectiveness")
+async def strategy_effectiveness():
+    """
+    Compare effectiveness of different tax strategies across all projects.
+    Shows which strategies saved the most money.
+    """
+    records = setup.fetch_last_records(100)
+
+    strategies = {}
+
+    for r in records:
+        strategy = f"{r[1]} {r[2]}"
+        distribution = r[12] if len(r) > 12 else "N/A"
+        if distribution != "N/A":
+            strategy = f"{strategy} ({distribution})"
+
+        if strategy not in strategies:
+            strategies[strategy] = {
+                "strategy": strategy,
+                "count": 0,
+                "total_revenue": 0,
+                "total_tax": 0,
+                "total_take_home": 0,
+                "avg_effective_rate": 0
+            }
+
+        strategies[strategy]["count"] += 1
+        strategies[strategy]["total_revenue"] += r[3]
+        strategies[strategy]["total_tax"] += r[5]
+        strategies[strategy]["total_take_home"] += r[6]
+
+    # Calculate averages and rank
+    for strat in strategies.values():
+        if strat["total_revenue"] > 0:
+            strat["avg_effective_rate"] = (strat["total_tax"] / strat["total_revenue"]) * 100
+            strat["avg_take_home"] = strat["total_take_home"] / strat["count"]
+
+    ranked = sorted(strategies.values(), key=lambda x: x["avg_effective_rate"])
+
+    return {
+        "strategies": ranked,
+        "best_strategy": ranked[0] if ranked else None,
+        "worst_strategy": ranked[-1] if ranked else None
+    }
+
+
+@app.get("/api/analytics/summary")
+async def analytics_summary():
+    """
+    Overall analytics dashboard summary.
+    Total projects, revenue, taxes, savings, and trends.
+    """
+    records = setup.fetch_last_records(100)
+
+    if not records:
+        return {
+            "total_projects": 0,
+            "total_revenue": 0,
+            "total_tax_paid": 0,
+            "total_take_home": 0,
+            "avg_effective_rate": 0,
+            "top_strategy": None
+        }
+
+    total_revenue = sum(r[3] for r in records)
+    total_tax = sum(r[5] for r in records)
+    total_take_home = sum(r[6] for r in records)
+
+    # Find most used strategy
+    strategy_counts = {}
+    for r in records:
+        strategy = f"{r[1]} {r[2]}"
+        strategy_counts[strategy] = strategy_counts.get(strategy, 0) + 1
+
+    top_strategy = max(strategy_counts.items(), key=lambda x: x[1])[0] if strategy_counts else None
+
+    return {
+        "total_projects": len(records),
+        "total_revenue": total_revenue,
+        "total_tax_paid": total_tax,
+        "total_take_home": total_take_home,
+        "avg_effective_rate": (total_tax / total_revenue * 100) if total_revenue > 0 else 0,
+        "top_strategy": top_strategy,
+        "avg_project_revenue": total_revenue / len(records),
+        "avg_tax_per_project": total_tax / len(records)
+    }
+
+
+@app.get("/api/export-csv")
+async def export_projects_csv(limit: int = Query(100, description="Number of records to export")):
+    """
+    Export projects to CSV format.
+    Returns CSV file with all project data.
+    """
+    records = setup.fetch_last_records(limit)
+
+    csv_lines = []
+    csv_lines.append("id,country,tax_type,revenue,costs,tax_amount,net_income,created_at,num_people,distribution_method")
+
+    for r in records:
+        record_id = r[0]
+        country = r[1]
+        tax_type = r[2]
+        revenue = r[3]
+        costs = r[4]
+        tax_amount = r[5]
+        net_income = r[6]
+        created_at = r[8] if len(r) > 8 else ""
+        num_people = r[9] if len(r) > 9 else 0
+        distribution = r[12] if len(r) > 12 else "N/A"
+
+        csv_lines.append(f"{record_id},{country},{tax_type},{revenue},{costs},{tax_amount},{net_income},{created_at},{num_people},{distribution}")
+
+    csv_content = "\n".join(csv_lines)
+
+    from fastapi.responses import Response
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=moneysplit_export.csv"
+        }
+    )
+
+
+@app.get("/api/export-json")
+async def export_projects_json(limit: int = Query(100)):
+    """
+    Export projects to JSON format with full details.
+    """
+    records = setup.fetch_last_records(limit)
+
+    projects = []
+    for r in records:
+        projects.append({
+            "id": r[0],
+            "country": r[1],
+            "tax_type": r[2],
+            "revenue": r[3],
+            "costs": r[4],
+            "tax_amount": r[5],
+            "net_income": r[6],
+            "net_income_per_person": r[7] if len(r) > 7 else 0,
+            "created_at": r[8] if len(r) > 8 else "",
+            "num_people": r[9] if len(r) > 9 else 0,
+            "gross_income": r[10] if len(r) > 10 else 0,
+            "distribution_method": r[12] if len(r) > 12 else "N/A"
+        })
+
+    return {
+        "total_projects": len(projects),
+        "export_date": datetime.now().isoformat(),
+        "projects": projects
+    }
+
+
+@app.get("/api/compare-projects")
+async def compare_projects(
+    project_ids: str = Query(..., description="Comma-separated project IDs (e.g., 1,2,3)")
+):
+    """
+    Compare multiple projects side-by-side.
+    Shows tax differences, savings, and strategy effectiveness.
+    """
+    ids = [int(id.strip()) for id in project_ids.split(',')]
+
+    comparisons = []
+    for project_id in ids:
+        record = setup.get_record_by_id(project_id)
+        if not record:
+            continue
+
+        comparisons.append({
+            "id": record[0],
+            "country": record[1],
+            "tax_type": record[2],
+            "revenue": record[3],
+            "costs": record[4],
+            "gross_income": record[3] - record[4],
+            "tax_amount": record[5],
+            "net_income": record[6],
+            "effective_rate": (record[5] / (record[3] - record[4]) * 100) if (record[3] - record[4]) > 0 else 0,
+            "num_people": record[9] if len(record) > 9 else 0,
+            "distribution": record[12] if len(record) > 12 else "N/A",
+            "created_at": record[8] if len(record) > 8 else ""
+        })
+
+    if not comparisons:
+        raise HTTPException(status_code=404, detail="No projects found")
+
+    # Find best and worst
+    best = max(comparisons, key=lambda x: x["net_income"])
+    worst = min(comparisons, key=lambda x: x["net_income"])
+
+    return {
+        "projects": comparisons,
+        "best_project": best,
+        "worst_project": worst,
+        "max_savings": best["net_income"] - worst["net_income"],
+        "comparison_count": len(comparisons)
+    }
+
+
+@app.post("/api/import-csv-text")
+async def import_projects_csv_text(csv_content: str):
+    """
+    Import multiple projects from CSV text content.
+
+    Send CSV as plain text in request body.
+
+    CSV Format:
+    project_name,revenue,costs,country,tax_type,distribution_method,person1_name,person1_share,person2_name,person2_share
+    """
+    try:
+        csv_data = io.StringIO(csv_content)
+        reader = csv.DictReader(csv_data)
+
+        imported_count = 0
+        errors = []
+
+        for row_num, row in enumerate(reader, start=2):  # Start at 2 (header is 1)
+            try:
+                # Parse people
+                people = []
+                for i in range(1, 10):  # Support up to 9 people
+                    name_key = f"person{i}_name"
+                    share_key = f"person{i}_share"
+
+                    if name_key in row and row[name_key]:
+                        people.append({
+                            "name": row[name_key],
+                            "work_share": float(row[share_key])
+                        })
+
+                if not people:
+                    errors.append(f"Row {row_num}: No people defined")
+                    continue
+
+                # Create project
+                project_data = ProjectCreate(
+                    tax_origin=row['country'],
+                    tax_option=row['tax_type'],
+                    revenue=float(row['revenue']),
+                    total_costs=float(row['costs']),
+                    people=people,
+                    distribution_method=row.get('distribution_method', 'N/A'),
+                    project_name=row.get('project_name', f"Imported {datetime.now().strftime('%Y-%m-%d')}")
+                )
+
+                # Calculate taxes
+                result = tax_engine.calculate_project_taxes(
+                    revenue=project_data.revenue,
+                    costs=project_data.total_costs,
+                    num_people=len(people),
+                    country=project_data.tax_origin,
+                    tax_structure=project_data.tax_option,
+                    distribution_method=project_data.distribution_method
+                )
+
+                # Store in database
+                record_id = setup.insert_record(
+                    tax_origin=project_data.tax_origin,
+                    tax_option=project_data.tax_option,
+                    revenue=project_data.revenue,
+                    total_costs=project_data.total_costs,
+                    tax_amount=result['total_tax'],
+                    net_income_group=result['net_income_group'],
+                    net_income_per_person=result['net_income_per_person'],
+                    num_people=len(people),
+                    group_income=result['gross_income'],
+                    individual_income=result['gross_income'] / len(people),
+                    distribution_method=project_data.distribution_method,
+                    salary_amount=0
+                )
+
+                # Insert people
+                for person in people:
+                    person_income = result['gross_income'] * (person['work_share'] / 100)
+                    person_tax = result['total_tax'] * (person['work_share'] / 100)
+                    person_net = person_income - person_tax
+
+                    setup.insert_person(
+                        record_id=record_id,
+                        name=person['name'],
+                        work_share=person['work_share'],
+                        gross_income=person_income,
+                        tax_paid=person_tax,
+                        net_income=person_net
+                    )
+
+                imported_count += 1
+
+            except Exception as e:
+                errors.append(f"Row {row_num}: {str(e)}")
+
+        return {
+            "success": True,
+            "imported_count": imported_count,
+            "errors": errors if errors else None,
+            "message": f"Successfully imported {imported_count} project(s)"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
 
 
 if __name__ == "__main__":

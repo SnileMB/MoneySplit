@@ -8,7 +8,7 @@ from datetime import datetime
 # Editable fields at project level
 ALLOWED_FIELDS = {
     "num_people", "revenue", "total_costs",
-    "tax_origin", "tax_option"
+    "tax_origin", "tax_option", "distribution_method", "salary_amount"
     # other fields are derived → recalculated automatically
 }
 
@@ -51,6 +51,8 @@ def init_db():
           tax_amount REAL,
           net_income_per_person REAL,
           net_income_group REAL,
+          distribution_method TEXT DEFAULT 'N/A',
+          salary_amount REAL DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -180,7 +182,8 @@ def fetch_last_records(n=5):
         SELECT id, tax_origin, tax_option,
                revenue, total_costs,
                tax_amount, net_income_group, net_income_per_person, created_at,
-               num_people, group_income, individual_income
+               num_people, group_income, individual_income,
+               distribution_method, salary_amount
         FROM tax_records
         ORDER BY created_at DESC
         LIMIT ?
@@ -197,7 +200,8 @@ def get_record_by_id(record_id: int):
         SELECT id, tax_origin, tax_option,
                revenue, total_costs,
                tax_amount, net_income_group, net_income_per_person, created_at,
-               num_people, group_income, individual_income
+               num_people, group_income, individual_income,
+               distribution_method, salary_amount
         FROM tax_records
         WHERE id = ?
     """, (record_id,))

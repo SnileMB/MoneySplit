@@ -19,6 +19,8 @@ class ProjectCreate(BaseModel):
     costs: List[float] = Field(..., description="List of costs")
     country: str = Field(..., min_length=1, description="Country (e.g., US, Spain, UK, etc.)")
     tax_type: str = Field(..., pattern="^(Individual|Business)$", description="Tax type: Individual or Business")
+    distribution_method: str = Field(default="N/A", pattern="^(N/A|Salary|Dividend|Mixed|Reinvest)$", description="Distribution method for Business tax")
+    salary_amount: Optional[float] = Field(default=0, ge=0, description="Salary amount for Mixed distribution method")
     people: List[PersonInput] = Field(..., description="List of people with work shares")
 
     @field_validator('people')
@@ -45,7 +47,7 @@ class TaxBracketCreate(BaseModel):
 
 
 class RecordUpdate(BaseModel):
-    field: str = Field(..., pattern="^(num_people|revenue|total_costs|tax_origin|tax_option)$")
+    field: str = Field(..., pattern="^(num_people|revenue|total_costs|tax_origin|tax_option|distribution_method|salary_amount)$")
     value: str | int | float
 
 
@@ -75,6 +77,8 @@ class RecordResponse(BaseModel):
     tax_amount: float
     net_income_per_person: float
     net_income_group: float
+    distribution_method: str = "N/A"
+    salary_amount: float = 0
     created_at: str
 
     class Config:

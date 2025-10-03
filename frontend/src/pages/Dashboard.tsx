@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { reportsApi, projectsApi, Statistics, Record } from '../api/client';
+import axios from 'axios';
 
 // Format dollar amounts - round down to nearest dollar
 const formatCurrency = (amount: number): string => {
@@ -14,10 +15,21 @@ const getValueLength = (value: string | number): string => {
   return 'normal';
 };
 
+interface TaxOptimizationSummary {
+  is_optimal: boolean;
+  message: string;
+  savings: number;
+}
+
+interface RecordWithOptimization extends Record {
+  optimization?: TaxOptimizationSummary;
+}
+
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<Statistics | null>(null);
-  const [recentRecords, setRecentRecords] = useState<Record[]>([]);
+  const [recentRecords, setRecentRecords] = useState<RecordWithOptimization[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalMissedSavings, setTotalMissedSavings] = useState<number>(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +39,42 @@ const Dashboard: React.FC = () => {
           projectsApi.getRecords(5),
         ]);
         setStats(statsRes.data);
-        setRecentRecords(recordsRes.data);
+
+        // Fetch tax optimization for each record (only for US and Spain)
+        const recordsWithOptimization = await Promise.all(
+          recordsRes.data.map(async (record) => {
+            if (record.tax_origin === 'US' || record.tax_origin === 'Spain') {
+              try {
+                const optimizationRes = await axios.get<TaxOptimizationSummary>(
+                  'http://localhost:8000/api/tax-optimization',
+                  {
+                    params: {
+                      revenue: record.revenue,
+                      costs: record.total_costs,
+                      num_people: record.num_people,
+                      country: record.tax_origin,
+                      selected_type: record.tax_option,
+                    },
+                  }
+                );
+                return { ...record, optimization: optimizationRes.data };
+              } catch (error) {
+                console.error(`Error fetching optimization for record ${record.id}:`, error);
+                return record;
+              }
+            }
+            return record;
+          })
+        );
+
+        setRecentRecords(recordsWithOptimization);
+
+        // Calculate total missed savings
+        const missed = recordsWithOptimization.reduce((sum, record) => {
+          const opt = record as RecordWithOptimization;
+          return sum + (opt.optimization?.savings || 0);
+        }, 0);
+        setTotalMissedSavings(missed);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -96,6 +143,31 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Tax Optimization Insights */}
+      {totalMissedSavings > 0 && (
+        <div className="alert" style={{
+          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          color: 'white',
+          border: 'none',
+          marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ fontSize: '48px' }}>💡</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
+                Tax Optimization Opportunity
+              </div>
+              <div style={{ fontSize: '16px', opacity: 0.95 }}>
+                You could have saved <strong>${formatCurrency(totalMissedSavings)}</strong> on your recent projects with better tax strategies!
+              </div>
+              <div style={{ fontSize: '14px', marginTop: '8px', opacity: 0.9 }}>
+                Check individual project insights below to see specific recommendations.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <h3 style={{ marginBottom: '24px' }}>🕐 Recent Projects</h3>
         {recentRecords.length > 0 ? (
@@ -109,6 +181,7 @@ const Dashboard: React.FC = () => {
                   <th>Tax Type</th>
                   <th>Revenue</th>
                   <th>Net Income</th>
+                  <th>Optimization</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,6 +229,39 @@ const Dashboard: React.FC = () => {
                       WebkitTextFillColor: 'transparent'
                     }}>
                       ${formatCurrency(record.net_income_group)}
+                    </td>
+                    <td>
+                      {record.optimization ? (
+                        record.optimization.is_optimal ? (
+                          <span style={{
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            background: 'rgba(72, 187, 120, 0.1)',
+                            color: '#48bb78',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            ✅ Optimal
+                          </span>
+                        ) : (
+                          <span style={{
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            background: 'rgba(245, 101, 101, 0.1)',
+                            color: '#f56565',
+                            display: 'inline-block'
+                          }} title={record.optimization.message}>
+                            💡 Could save ${formatCurrency(record.optimization.savings)}
+                          </span>
+                        )
+                      ) : (
+                        <span style={{ color: '#a0aec0', fontSize: '13px' }}>—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
