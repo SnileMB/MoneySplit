@@ -7,7 +7,7 @@ Maintenance tool for MoneySplit DB.
 - Export tax bracket CSV template
 """
 
-from MoneySplit.DB import setup
+from DB import setup
 import csv
 import os
 from datetime import datetime
