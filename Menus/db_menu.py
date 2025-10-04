@@ -1,5 +1,5 @@
-from MoneySplit.DB import setup
-from MoneySplit.Logic import validators
+from DB import setup
+from Logic import validators
 
 def show_last_records(n=5):
     print(f"\n=== Last {n} Saved Records ===")
@@ -388,7 +388,6 @@ def maintenance_menu():
         elif choice == "4":
             view_tax_brackets_menu()
         elif choice == "5":
-            from MoneySplit.DB import setup
             setup.deduplicate_all_records()
         elif choice == "6":
             break

@@ -1,4 +1,4 @@
-from MoneySplit.DB import setup
+from DB import setup
 
 def data_menu():
     while True:

@@ -1,5 +1,5 @@
-from MoneySplit.DB import setup
-from MoneySplit.Logic import pdf_generator, forecasting
+from DB import setup
+from Logic import pdf_generator, forecasting
 import csv
 import plotly.graph_objects as go
 import plotly.express as px
