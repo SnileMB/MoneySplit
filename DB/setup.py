@@ -1,3 +1,16 @@
+"""
+Database setup and operations module.
+
+AI ASSISTANCE DISCLOSURE:
+The database schema design received AI consultation (ChatGPT/Claude).
+- Prompts used: "Design a normalized database schema for tax records with people"
+- Prompts used: "Should I use foreign keys? What's the best relationship structure?"
+- AI helped recommend the 3-table design (tax_records, people, tax_brackets)
+- AI suggested adding foreign key constraints and proper indexing
+
+The final schema decisions were mine, but AI provided guidance on normalization,
+relationships, and SQL best practices.
+"""
 import json
 import sqlite3
 import sys

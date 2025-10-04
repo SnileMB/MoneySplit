@@ -1,6 +1,13 @@
 """
 MoneySplit FastAPI Application
 RESTful API for commission-based income splitting with tax calculations.
+
+AI ASSISTANCE DISCLOSURE:
+This API was developed with AI assistance (ChatGPT/Claude).
+- Prompts used: "Create FastAPI endpoints for CRUD operations on tax records"
+- Prompts used: "Add forecasting endpoints with scikit-learn integration"
+- Prompts used: "Generate PDF export endpoints using ReportLab"
+- AI helped structure the API following REST principles and FastAPI best practices
 """
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, FileResponse

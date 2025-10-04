@@ -1,4 +1,13 @@
-"""Tests for database operations."""
+"""
+Tests for database operations.
+
+AI ASSISTANCE DISCLOSURE:
+All tests in this file were generated with AI assistance (ChatGPT/Claude).
+- Prompts used: "Write pytest tests for database CRUD operations"
+- Prompts used: "Create tests for foreign key constraints and referential integrity"
+- Prompts used: "Add tests for aggregation queries and complex SQL operations"
+- AI helped generate test data, assertions, and database fixture management
+"""
 
 import pytest
 import sqlite3

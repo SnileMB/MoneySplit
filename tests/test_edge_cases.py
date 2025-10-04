@@ -1,4 +1,13 @@
-"""Edge case and boundary testing."""
+"""
+Edge case and boundary testing.
+
+AI ASSISTANCE DISCLOSURE:
+All tests in this file were generated with AI assistance (ChatGPT/Claude).
+- Prompts used: "Create edge case tests for boundary values and invalid inputs"
+- Prompts used: "Write tests for floating point precision and special characters"
+- Prompts used: "Add tests for zero values, negative numbers, and extreme inputs"
+- AI helped identify edge cases and create comprehensive boundary testing
+"""
 
 import pytest
 from fastapi.testclient import TestClient

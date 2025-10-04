@@ -1,3 +1,14 @@
+/**
+ * MoneySplit React Frontend Application
+ *
+ * AI ASSISTANCE DISCLOSURE:
+ * This entire frontend was developed with AI assistance (ChatGPT/Claude).
+ * - Prompts used: "Create a React TypeScript app with sidebar navigation for MoneySplit"
+ * - Prompts used: "Build Dashboard page with statistics cards and recent projects table"
+ * - Prompts used: "Create Projects page with form for creating tax calculation projects"
+ * - Prompts used: "Add responsive sidebar with gradient purple theme"
+ * - AI helped with React hooks, state management, TypeScript types, and CSS styling
+ */
 import React, { useState } from 'react';
 import './App.css';
 import Dashboard from './pages/Dashboard';

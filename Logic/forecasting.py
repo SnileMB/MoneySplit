@@ -1,6 +1,20 @@
 """
 Forecasting and prediction module for MoneySplit.
 Provides revenue forecasting, tax optimization, and trend analysis.
+
+AI ASSISTANCE DISCLOSURE:
+This forecasting module was developed with AI assistance (ChatGPT/Claude).
+- Prompts used: "Create revenue forecasting using scikit-learn LinearRegression"
+- Prompts used: "Add tax optimization analysis comparing Individual vs Business"
+- Prompts used: "Implement trend analysis with seasonality detection"
+
+ACADEMIC BACKGROUND:
+The machine learning concepts (linear regression, time-series forecasting) were
+learned in Machine Learning course (2024). AI assistance was primarily used for:
+- Writing the Python implementation code
+- Structuring the data preprocessing pipeline
+- Integrating sklearn with the database layer
+The underlying ML theory and approach were based on coursework knowledge.
 """
 import numpy as np
 from datetime import datetime, timedelta

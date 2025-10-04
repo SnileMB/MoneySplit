@@ -1,4 +1,13 @@
-"""Integration tests for FastAPI endpoints."""
+"""
+Integration tests for FastAPI endpoints.
+
+AI ASSISTANCE DISCLOSURE:
+All tests in this file were generated with AI assistance (ChatGPT/Claude).
+- Prompts used: "Write pytest tests for FastAPI CRUD endpoints"
+- Prompts used: "Create integration tests for forecasting and export endpoints"
+- Prompts used: "Add edge case tests for invalid inputs and error handling"
+- AI helped structure test cases, assertions, and test data fixtures
+"""
 
 import pytest
 from fastapi.testclient import TestClient

@@ -1,4 +1,13 @@
-"""Unit tests for backend business logic."""
+"""
+Unit tests for backend business logic.
+
+AI ASSISTANCE DISCLOSURE:
+All tests in this file were generated with AI assistance (ChatGPT/Claude).
+- Prompts used: "Create unit tests for tax calculation functions"
+- Prompts used: "Write tests for work share distribution logic"
+- Prompts used: "Add parameterized tests for different income levels"
+- AI helped create comprehensive test coverage for all business logic functions
+"""
 
 import pytest
 from Logic.tax_calculator import calculate_tax, calculate_tax_from_db, split_work_shares, calculate_profit
