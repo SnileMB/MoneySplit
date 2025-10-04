@@ -1901,6 +1901,63 @@ async def analytics_summary():
     }
 
 
+@app.get("/api/analytics/timeline")
+async def analytics_timeline(limit: int = Query(100)):
+    """
+    Get time-based analytics showing revenue and tax trends over time.
+    Returns monthly and project-level data for visualizations.
+    """
+    records = setup.fetch_last_records(limit)
+
+    if not records:
+        return {
+            "monthly": [],
+            "projects": []
+        }
+
+    # Monthly aggregation
+    monthly_data = {}
+    project_timeline = []
+
+    for r in records:
+        created_at = r[8] if len(r) > 8 else "2024-01-01"
+        month = created_at[:7]  # YYYY-MM
+
+        # Monthly aggregation
+        if month not in monthly_data:
+            monthly_data[month] = {
+                "month": month,
+                "revenue": 0,
+                "tax": 0,
+                "net_income": 0,
+                "projects": 0
+            }
+
+        monthly_data[month]["revenue"] += r[3]
+        monthly_data[month]["tax"] += r[5]
+        monthly_data[month]["net_income"] += r[6]
+        monthly_data[month]["projects"] += 1
+
+        # Project timeline
+        project_timeline.append({
+            "id": r[0],
+            "date": created_at,
+            "revenue": r[3],
+            "tax": r[5],
+            "net_income": r[6],
+            "effective_rate": (r[5] / r[3] * 100) if r[3] > 0 else 0,
+            "strategy": f"{r[1]} {r[2]}"
+        })
+
+    # Sort monthly data by month
+    monthly_sorted = sorted(monthly_data.values(), key=lambda x: x["month"])
+
+    return {
+        "monthly": monthly_sorted,
+        "projects": sorted(project_timeline, key=lambda x: x["date"])
+    }
+
+
 @app.get("/api/export-csv")
 async def export_projects_csv(limit: int = Query(100, description="Number of records to export")):
     """

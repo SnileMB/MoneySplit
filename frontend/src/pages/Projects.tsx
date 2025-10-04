@@ -386,6 +386,11 @@ const TaxScenarioCard: React.FC<{
   isRecommended: boolean;
   isSelected: boolean;
 }> = ({ scenario, isRecommended, isSelected }) => {
+  // Safety check for undefined values
+  if (!scenario || scenario.take_home_per_person === undefined || scenario.total_tax === undefined) {
+    return null;
+  }
+
   return (
     <div className="card" style={{
       border: isRecommended ? '3px solid #48bb78' : isSelected ? '2px solid #4299e1' : undefined,
@@ -469,7 +474,7 @@ const TaxScenarioCard: React.FC<{
         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#2d3748' }}>
           Tax Breakdown:
         </div>
-        {scenario.tax_breakdown.map((item, idx) => (
+        {scenario.tax_breakdown && scenario.tax_breakdown.map((item, idx) => (
           <div key={idx} style={{
             display: 'flex',
             justifyContent: 'space-between',

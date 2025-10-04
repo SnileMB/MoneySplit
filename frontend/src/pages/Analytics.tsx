@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  BarChart, Bar, PieChart, Pie, AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
+} from 'recharts';
 
 interface AnalyticsSummary {
   total_projects: number;
@@ -21,9 +25,29 @@ interface Strategy {
   avg_take_home: number;
 }
 
+interface MonthlyData {
+  month: string;
+  revenue: number;
+  tax: number;
+  net_income: number;
+  projects: number;
+}
+
+interface ProjectData {
+  id: number;
+  date: string;
+  revenue: number;
+  tax: number;
+  net_income: number;
+  effective_rate: number;
+  strategy: string;
+}
+
 const Analytics: React.FC = () => {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [projectData, setProjectData] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -32,13 +56,16 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const [summaryRes, strategyRes] = await Promise.all([
+        const [summaryRes, strategyRes, timelineRes] = await Promise.all([
           axios.get('http://localhost:8000/api/analytics/summary'),
-          axios.get('http://localhost:8000/api/analytics/strategy-effectiveness')
+          axios.get('http://localhost:8000/api/analytics/strategy-effectiveness'),
+          axios.get('http://localhost:8000/api/analytics/timeline')
         ]);
 
         setSummary(summaryRes.data);
         setStrategies(strategyRes.data.strategies);
+        setMonthlyData(timelineRes.data.monthly);
+        setProjectData(timelineRes.data.projects);
       } catch (error) {
         console.error('Error loading analytics:', error);
       } finally {
@@ -72,12 +99,15 @@ const Analytics: React.FC = () => {
       setImportFile(null);
 
       // Reload analytics after import
-      const [summaryRes, strategyRes] = await Promise.all([
+      const [summaryRes, strategyRes, timelineRes] = await Promise.all([
         axios.get('http://localhost:8000/api/analytics/summary'),
-        axios.get('http://localhost:8000/api/analytics/strategy-effectiveness')
+        axios.get('http://localhost:8000/api/analytics/strategy-effectiveness'),
+        axios.get('http://localhost:8000/api/analytics/timeline')
       ]);
       setSummary(summaryRes.data);
       setStrategies(strategyRes.data.strategies);
+      setMonthlyData(timelineRes.data.monthly);
+      setProjectData(timelineRes.data.projects);
     } catch (error: any) {
       setImportMessage(`❌ Import failed: ${error.response?.data?.detail || error.message}`);
     } finally {
@@ -233,6 +263,106 @@ const Analytics: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Revenue Over Time - Line Chart */}
+      {monthlyData.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '24px' }}>📈 Revenue Trend Over Time</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Line type="monotone" dataKey="revenue" stroke="#48bb78" strokeWidth={3} name="Revenue" />
+              <Line type="monotone" dataKey="tax" stroke="#e53e3e" strokeWidth={3} name="Tax Paid" />
+              <Line type="monotone" dataKey="net_income" stroke="#667eea" strokeWidth={3} name="Net Income" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Monthly Revenue Bar Chart */}
+      {monthlyData.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '24px' }}>📊 Monthly Revenue Breakdown</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Bar dataKey="revenue" fill="#48bb78" name="Revenue" />
+              <Bar dataKey="tax" fill="#e53e3e" name="Tax" />
+              <Bar dataKey="net_income" fill="#667eea" name="Net Income" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Strategy Performance Chart */}
+      {strategies.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '24px' }}>🎯 Strategy Performance Comparison</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={strategies}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="strategy" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Bar dataKey="total_revenue" fill="#48bb78" name="Total Revenue" />
+              <Bar dataKey="total_tax" fill="#e53e3e" name="Total Tax" />
+              <Bar dataKey="avg_take_home" fill="#667eea" name="Avg Take Home" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Tax Rate Comparison Chart */}
+      {strategies.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '24px' }}>📊 Effective Tax Rate by Strategy</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={strategies}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="strategy" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+              <Legend />
+              <Area type="monotone" dataKey="avg_effective_rate" stroke="#764ba2" fill="#667eea" name="Avg Tax Rate %" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Strategy Distribution Pie Chart */}
+      {strategies.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <h3 style={{ marginBottom: '24px' }}>🥧 Project Distribution by Strategy</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={strategies as any}
+                dataKey="count"
+                nameKey="strategy"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={(entry: any) => `${entry.strategy} (${entry.count})`}
+              >
+                {strategies.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={['#667eea', '#48bb78', '#e53e3e', '#764ba2', '#38a169'][index % 5]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Strategy Effectiveness */}
       <div className="card">
