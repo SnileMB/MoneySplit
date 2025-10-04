@@ -364,6 +364,3 @@ Bundle size: ~90 KB (gzipped)
 
 MIT
 
----
-
-**Built with ❤️ for commission-based teams**
