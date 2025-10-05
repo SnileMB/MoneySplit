@@ -1,5 +1,5 @@
-from DB import setup
-from Logic import validators
+from MoneySplit.DB import setup
+from MoneySplit.Logic import validators
 
 def manage_brackets_menu():
     while True:

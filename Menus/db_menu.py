@@ -1,5 +1,5 @@
-from DB import setup
-from Logic import validators
+from MoneySplit.DB import setup
+from MoneySplit.Logic import validators
 
 def show_last_records(n=5):
     print(f"\n=== Last {n} Saved Records ===")
@@ -18,7 +18,7 @@ def show_last_records(n=5):
     print("-" * len(header))
 
     for r in records:
-        id, origin, option, revenue, costs, tax, net_group, net_person, created = r
+        id, origin, option, revenue, costs, tax, net_group, net_person, created, num_people, group_income, individual_income = r
         print(
             f"{id:<3} | {origin:<6} | {option:<10} | "
             f"{float(revenue):>12,.2f} | {float(costs):>10,.2f} | {float(tax):>10,.2f} | "
@@ -287,7 +287,7 @@ def search_records_menu():
     print("-" * len(header))
 
     for r in rows:
-        id, origin, option, revenue, costs, tax, net_group, net_person, created = r
+        id, origin, option, revenue, costs, tax, net_group, net_person, created, num_people, group_income, individual_income = r
         print(
             f"{id:<3} | {origin:<6} | {option:<10} | "
             f"{float(revenue):>12,.2f} | {float(costs):>10,.2f} | {float(tax):>10,.2f} | "

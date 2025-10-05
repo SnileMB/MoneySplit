@@ -1,6 +1,6 @@
-from Menus import project_menu, db_menu, tax_menu, report_menu
-from DB import reset as db_reset
-from DB import setup
+from MoneySplit.Menus import project_menu, db_menu, tax_menu, report_menu
+from MoneySplit.DB import reset as db_reset
+from MoneySplit.DB import setup
 
 # Init DB + defaults
 setup.init_db()

@@ -1,5 +1,5 @@
-from DB import setup
-from Logic import pdf_generator, forecasting
+from MoneySplit.DB import setup
+from MoneySplit.Logic import pdf_generator, forecasting
 import csv
 import plotly.graph_objects as go
 import plotly.express as px
@@ -261,7 +261,7 @@ def show_summary(record_id: int):
         print(f"❌ Record {record_id} not found.")
         return
 
-    rid, origin, option, revenue, costs, tax, net_group, net_person, created = rec
+    rid, origin, option, revenue, costs, tax, net_group, net_person, created, num_people, group_income, individual_income = rec
     print(f"\n=== Summary for Record {rid} ({origin} {option}) ===")
     print(f"Revenue:        {float(revenue):,.2f}")
     print(f"Total Costs:    {float(costs):,.2f}")

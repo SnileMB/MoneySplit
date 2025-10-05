@@ -1,6 +1,6 @@
 # ProgramBackend.py
-from DB import setup
-from Logic import validators
+from MoneySplit.DB import setup
+from MoneySplit.Logic import validators
 
 # - Inputs -
 num_people = validators.safe_int_input("Enter the number of people: ", "Number of people", min_value=1)

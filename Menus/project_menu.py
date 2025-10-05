@@ -1,16 +1,16 @@
 import sys, importlib
-from DB import setup
-from Menus import report_menu
+from MoneySplit.DB import setup
+from MoneySplit.Menus import report_menu
 
 
 def run_new_project():
     """Run a fresh MoneySplit calculation and save it to DB."""
     importlib.invalidate_caches()
-    if "Logic.ProgramBackend" in sys.modules:
-        del sys.modules["Logic.ProgramBackend"]
+    if "MoneySplit.Logic.ProgramBackend" in sys.modules:
+        del sys.modules["MoneySplit.Logic.ProgramBackend"]
 
     # This import executes ProgramBackend.py (asks for inputs, runs calculation, and saves to DB)
-    pb = importlib.import_module("Logic.ProgramBackend")
+    pb = importlib.import_module("MoneySplit.Logic.ProgramBackend")
 
     # Get the record_id that was already saved in ProgramBackend
     record_id = pb.LAST_RECORD_ID
