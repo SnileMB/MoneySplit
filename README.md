@@ -288,12 +288,6 @@ pytest tests/test_api.py
 
 ### View Detailed Test Documentation
 
-See [TESTING.md](TESTING.md) for:
-- Complete test documentation
-- How to run tests with coverage
-- Adding new tests
-- CI/CD integration examples
-
 ---
 
 ## 📐 Architecture
@@ -327,7 +321,6 @@ See [TESTING.md](TESTING.md) for:
 - **Component-Based UI**: React functional components with hooks
 - **Validation Layer**: Pydantic models for type safety and validation
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture diagrams and component descriptions.
 
 ---
 
