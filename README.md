@@ -71,7 +71,7 @@ python3 -m MoneySplit
 ### Frontend Setup
 
 ```bash
-# Navigate to frontend directory
+# Navigate to frontend directory while being inside of MoneySplit directory
 cd frontend
 
 # Install dependencies
