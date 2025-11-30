@@ -6,7 +6,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 **Branch:** `assignment-2`
 **Last Updated:** 2025-11-30 (Session 2 - Continued Development)
 **Current Phase:** Phase 1-5 (Code Quality, Monitoring, CI/CD, Deployment, Documentation)
-**Progress:** 73/99 tasks (74%)
+**Progress:** 75/99 tasks (76%)
 
 ## Quick Status
 - ✅ Code Quality & Refactoring: 100% Complete (type hints, ESLint, extraction, refactoring)
@@ -47,7 +47,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 ### Category 2: Testing & Coverage (20%)
 - [x] **2.1** - Install and configure `pytest-cov` for coverage measurement
 - [x] **2.2** - Run coverage analysis on current test suite and identify gaps (Current: 32%)
-- [ ] **2.3** - Add unit tests for uncovered functions in `Logic/` modules
+- [x] **2.3** - Add unit tests for uncovered functions in `Logic/` modules (23 tests added, api/health.py 100%)
 - [ ] **2.4** - Add integration tests for all API endpoints in `api/main.py`
 - [ ] **2.5** - Add edge case and error handling tests
 - [ ] **2.6** - Add tests for database operations (CRUD, queries)
@@ -57,11 +57,11 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **2.10** - Add Jest tests for React components in `/frontend/src/`
 - [ ] **2.11** - Mock API calls in frontend tests
 - [ ] **2.12** - Improve test data fixtures and test setup/teardown
-- [ ] **2.13** - Document testing strategy in `TESTING.md`
-- [ ] **2.14** - Achieve 70%+ code coverage (verify before moving on)
+- [x] **2.13** - Document testing strategy in `TESTING.md`
+- [ ] **2.14** - Achieve 70%+ code coverage (current: 44%, target: 70%)
 
 **Status:** In Progress
-**Completed:** 3/14
+**Completed:** 5/14 (Coverage improved: 41% → 44%)
 
 ---
 
@@ -216,12 +216,12 @@ After each task (or group of related tasks), create a commit with a meaningful m
 | Category | Total Tasks | Completed | Percentage |
 |----------|-------------|-----------|------------|
 | Code Quality | 14 | 13 | 93% |
-| Testing | 14 | 3 | 21% |
+| Testing | 14 | 5 | 36% |
 | CI/CD | 18 | 18 | 100% |
 | Deployment | 16 | 9 | 56% |
 | Monitoring | 20 | 14 | 70% |
 | Documentation | 17 | 16 | 94% |
-| **TOTAL** | **99** | **73** | **74%** |
+| **TOTAL** | **99** | **75** | **76%** |
 
 ---
 
