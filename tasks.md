@@ -4,9 +4,9 @@
 This document tracks all tasks for Assignment 2. Each task is marked with status and updated after every commit.
 
 **Branch:** `assignment-2`
-**Last Updated:** 2025-11-30 (Session 4 - Testing Enhancement Complete)
+**Last Updated:** 2025-11-30 (Session 5 - Tax Engine & Coverage Expansion)
 **Current Phase:** Phase 1-5 (Code Quality, Monitoring, CI/CD, Deployment, Documentation)
-**Progress:** 79/99 tasks (80%)
+**Progress:** 79/99 tasks (80%) - Testing: 59% Coverage
 
 ## Quick Status
 - ✅ Code Quality & Refactoring: 100% Complete (type hints, ESLint, extraction, refactoring)
@@ -15,7 +15,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - ✅ Monitoring & Observability: Health checks, Prometheus metrics, /metrics endpoint
 - ✅ Docker & Containerization: 56% Complete (Backend, Frontend, Compose tested locally ✅)
 - ✅ Documentation: 94% Complete (README, REPORT, TESTING, DEPLOYMENT, MONITORING)
-- ⏳ Testing: Coverage 65%, 3 tasks to enhance coverage to 70% (added 307 new tests, 495 total)
+- ⏳ Testing: Coverage 59%, 100% on tax_engine.py (added 52 more tests, 547 total, +311 since start)
 - ⏳ Deployment: Docker local tested ✅, 7 tasks for cloud integration
 - ⏳ Remaining High Priority: Enhance test coverage (biggest gap), Cloud deployment setup
 
@@ -61,7 +61,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **2.14** - Achieve 70%+ code coverage (current: 43%, target: 70%)
 
 **Status:** In Progress
-**Completed:** 9/14 (Coverage improved: 32% → 65%, added 307 new tests, 495 total)
+**Completed:** 9/14 (Coverage improved: 32% → 59%, added 359 new tests, 547 total, 100% tax_engine)
 
 ---
 
@@ -216,7 +216,7 @@ After each task (or group of related tasks), create a commit with a meaningful m
 | Category | Total Tasks | Completed | Percentage |
 |----------|-------------|-----------|------------|
 | Code Quality | 14 | 13 | 93% |
-| Testing | 14 | 9 | 64% (Coverage: 32%→65%, 255 new tests) |
+| Testing | 14 | 9 | 64% (Coverage: 32%→59%, 359 new tests, 100% tax_engine) |
 | CI/CD | 18 | 18 | 100% |
 | Deployment | 16 | 9 | 56% |
 | Monitoring | 20 | 14 | 70% |
