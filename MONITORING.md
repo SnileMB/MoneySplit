@@ -1,510 +1,246 @@
-# Monitoring Guide for MoneySplit
+# MoneySplit Monitoring & Observability Guide
 
-Complete monitoring and observability documentation.
+## Overview
 
----
+MoneySplit includes comprehensive monitoring and observability infrastructure to track application health, performance, and business metrics. The monitoring stack consists of:
 
-## Table of Contents
+- **Prometheus**: Metrics collection and time-series database
+- **Grafana**: Visualization and dashboarding
+- **Health Checks**: Built-in endpoint health verification
+- **Structured Logging**: JSON-formatted application logs
 
-1. [Health Checks](#health-checks)
-2. [Prometheus Metrics](#prometheus-metrics)
-3. [Grafana Dashboards](#grafana-dashboards)
-4. [Logging](#logging)
-5. [Alerting](#alerting)
-6. [Troubleshooting](#troubleshooting)
+## Health Check Endpoints
 
----
-
-## Health Checks
-
-### Three-Tier Health System
-
-**1. Liveness Probe (`/health`)**
-- Indicates if service is running
-- Lightweight check (no dependencies)
-- Returns immediately
-
-```bash
-curl http://localhost:8000/health
+### Basic Health Check
 ```
+GET /health
+```
+Returns the basic health status of the application.
 
-Response:
+**Response:**
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-11-30T10:30:00.000000",
-  "uptime_seconds": 3600.5,
+  "timestamp": "2024-11-30T12:00:00Z",
   "version": "1.0.0"
 }
 ```
 
-**2. Readiness Probe (`/health/ready`)**
-- Indicates if service can accept traffic
-- Checks database connectivity
-- May return "not_ready" during startup
-
-```bash
-curl http://localhost:8000/health/ready
+### Readiness Probe
 ```
+GET /health/ready
+```
+Checks if the application is ready to accept requests (database connectivity, dependencies).
 
-Response:
+**Response:**
 ```json
 {
-  "status": "ready",
-  "timestamp": "2025-11-30T10:30:00.000000",
-  "uptime_seconds": 3600.5,
-  "database": {
-    "status": "healthy",
-    "records_count": 150,
-    "people_count": 300
-  },
-  "system": {
-    "cpu_percent": 45.2,
-    "memory_mb": 256.8,
-    "memory_percent": 25.4,
-    "open_files": 12,
-    "threads": 8
-  }
+  "ready": true,
+  "database": "connected",
+  "timestamp": "2024-11-30T12:00:00Z"
 }
 ```
 
-**3. Detailed Status (`/health/detailed`)**
-- Comprehensive system information
-- Full diagnostics
-- For debugging and monitoring dashboards
-
-```bash
-curl http://localhost:8000/health/detailed
+### Liveness Probe
 ```
+GET /health/live
+```
+Checks if the application process is alive and running.
 
-Response:
+**Response:**
 ```json
 {
-  "timestamp": "2025-11-30T10:30:00.000000",
-  "status": "healthy",
-  "uptime_seconds": 3600.5,
-  "database": {...},
-  "system": {
-    "cpu_percent": 45.2,
-    "cpu_status": "ok",
-    "memory_mb": 256.8,
-    "memory_percent": 25.4,
-    "memory_status": "ok",
-    "open_files": 12,
-    "threads": 8
-  },
-  "version": "1.0.0",
-  "environment": "production"
+  "live": true,
+  "uptime_seconds": 3600,
+  "timestamp": "2024-11-30T12:00:00Z"
 }
 ```
 
-### Docker Health Checks
+## Metrics Endpoint
 
-All containers configured with health checks:
+### Prometheus Metrics
+```
+GET /metrics
+```
+
+Exposes all application metrics in Prometheus text format. This endpoint is scraped by Prometheus server.
+
+**Key Metrics Tracked:**
+- `http_requests_total`: Total HTTP requests by endpoint, method, and status
+- `http_request_duration_seconds`: Request latency distribution
+- `http_requests_error_total`: Error count by endpoint and error type
+- `database_operations_total`: Database operation count
+- `tax_calculations_total`: Tax calculation operations
+- `projects_created_total`: Business metrics
+
+## Setting Up Monitoring
+
+### Local Development (Docker Compose)
+
+Start the complete monitoring stack:
 
 ```bash
-# View health status
-docker ps --format 'table {{.Names}}\t{{.Status}}'
-
-# Check specific container
-docker inspect --format='{{json .State.Health}}' moneysplit-api | jq
-
-# Manual health check in container
-docker exec moneysplit-api curl http://localhost:8000/health
+docker-compose up -d
 ```
 
----
+This starts:
+- MoneySplit API on `http://localhost:8000`
+- Prometheus on `http://localhost:9090`
+- Grafana on `http://localhost:3001`
+- Frontend on `http://localhost:3000`
 
-## Prometheus Metrics
+### Accessing Prometheus
 
-### Metric Types
+1. Navigate to http://localhost:9090
+2. Use the query interface to explore metrics
+3. Example queries:
+   ```
+   rate(http_requests_total[5m])  # Request rate
+   histogram_quantile(0.95, http_request_duration_seconds)  # 95th percentile latency
+   http_requests_error_total  # Error count
+   ```
 
-**Counters** (always increasing):
-- `moneysplit_requests_total` - Total requests
-- `moneysplit_errors_total` - Total errors
-- `moneysplit_projects_created_total` - Projects created
-- `moneysplit_tax_calculations_total` - Tax calculations
+### Accessing Grafana
 
-**Histograms** (latency distribution):
-- `moneysplit_request_duration_seconds` - Request latency
-- `moneysplit_request_size_bytes` - Request size
-- `moneysplit_response_size_bytes` - Response size
-- `moneysplit_db_query_duration_seconds` - Database latency
+1. Navigate to http://localhost:3001
+2. Login with default credentials:
+   - Username: `admin`
+   - Password: `admin` (or `${GRAFANA_PASSWORD}` if set)
+3. Configure Prometheus data source:
+   - Go to Configuration → Data Sources
+   - Click "Add data source"
+   - Select Prometheus
+   - Set URL to `http://prometheus:9090`
+   - Click "Save & Test"
 
-**Gauges** (point-in-time value):
-- `moneysplit_active_requests` - Active requests now
-- `moneysplit_db_records_total` - Total records
-- `moneysplit_db_people_total` - Total people
+## Prometheus Configuration
 
-### Accessing Metrics
+The Prometheus configuration is stored in `monitoring/prometheus.yml` and includes:
+
+- **Scrape interval**: 15 seconds (global default)
+- **Job: moneysplit-api**: Scrapes `/metrics` endpoint every 10 seconds
+- **Job: prometheus**: Self-monitoring
+- **Job: grafana**: Grafana health metrics (30-second interval)
+
+### Environment Variables
+
+Configure monitoring via environment variables:
 
 ```bash
-# Raw metrics endpoint
-curl http://localhost:8000/metrics
-
-# Specific metric
-curl http://localhost:8000/metrics | grep moneysplit_requests_total
-
-# Text format
-curl --header "Accept: text/plain" http://localhost:8000/metrics
+# .env file
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3001
+GRAFANA_PASSWORD=your_secure_password
 ```
 
-### Useful Prometheus Queries
+## Alerting (Future Enhancement)
 
-```promql
-# Request rate (requests per second)
-rate(moneysplit_requests_total[5m])
+To set up alerting:
 
-# Error rate
-rate(moneysplit_errors_total[5m])
-
-# 95th percentile latency
-histogram_quantile(0.95, moneysplit_request_duration_seconds)
-
-# Average latency
-rate(moneysplit_request_duration_seconds_sum[5m]) / rate(moneysplit_request_duration_seconds_count[5m])
-
-# Database query latency
-histogram_quantile(0.95, moneysplit_db_query_duration_seconds)
-
-# Active requests
-moneysplit_active_requests
-
-# Projects created rate
-rate(moneysplit_projects_created_total[1h])
-
-# Error count by type
-moneysplit_errors_total{type=~".*"}
-```
-
-### Metric Labels
-
-Labels allow filtering and aggregation:
-
-```
-moneysplit_requests_total{method="POST", endpoint="/api/projects", status="201"}
-moneysplit_request_duration_seconds{method="GET", endpoint="/api/records"}
-moneysplit_errors_total{type="ValidationError", endpoint="/api/projects"}
-moneysplit_tax_calculations_total{country="US", tax_type="Individual"}
-moneysplit_db_query_duration_seconds{operation="select"}
-```
-
----
-
-## Grafana Dashboards
-
-### Access Grafana
-
-```bash
-# URL
-http://localhost:3001
-
-# Default credentials
-Username: admin
-Password: admin
-```
-
-### Adding Prometheus Datasource
-
-1. Settings → Data Sources
-2. Click "Add data source"
-3. Select "Prometheus"
-4. URL: http://prometheus:9090
-5. Click "Save & Test"
-
-### Creating Dashboards
-
-**Sample Dashboard Panels:**
-
-1. **Request Rate**
-   ```promql
-   rate(moneysplit_requests_total[5m])
+1. Create `monitoring/alert_rules.yml` with alert rules
+2. Configure Alertmanager in `prometheus.yml`
+3. Example alert rule:
+   ```yaml
+   groups:
+     - name: moneysplit
+       rules:
+         - alert: HighErrorRate
+           expr: rate(http_requests_error_total[5m]) > 0.05
+           for: 5m
+           annotations:
+             summary: "High error rate detected"
    ```
-   - Type: Graph
-   - Legend: {{method}} {{endpoint}}
-
-2. **Error Rate**
-   ```promql
-   rate(moneysplit_errors_total[5m])
-   ```
-   - Type: Graph
-   - Legend: {{type}}
-
-3. **Latency (p95)**
-   ```promql
-   histogram_quantile(0.95, moneysplit_request_duration_seconds)
-   ```
-   - Type: Gauge
-   - Units: seconds
-
-4. **Database Performance**
-   ```promql
-   histogram_quantile(0.95, moneysplit_db_query_duration_seconds)
-   ```
-   - Type: Graph
-   - Legend: {{operation}}
-
-5. **System Resources**
-   ```promql
-   moneysplit_active_requests
-   ```
-   - Type: Gauge
-
-### Dashboard Templates
-
-Example dashboard JSON available in monitoring/grafana-dashboard.json
-
----
 
 ## Logging
 
-### Log Format
+### Structured Logging
 
-Logs are JSON formatted for easy parsing:
+All application logs are structured in JSON format for easy parsing and analysis.
 
-```json
-{
-  "timestamp": "2025-11-30T10:30:00.123456",
-  "level": "INFO",
-  "logger": "api.main",
-  "message": "Request completed",
-  "module": "main",
-  "function": "create_project",
-  "line": 52,
-  "request_id": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
+**Log Levels:**
+- INFO: General application events
+- WARNING: Potential issues
+- ERROR: Error conditions
+- DEBUG: Detailed debugging information
 
-### Log Levels
+### Log Files
 
-- **DEBUG** - Detailed diagnostic information
-- **INFO** - General information about application state
-- **WARNING** - Warning messages for potential issues
-- **ERROR** - Error messages for failed operations
-- **CRITICAL** - Critical errors affecting application
+Logs are stored in `./logs/app.log` and rotated daily.
 
-### Configuring Logging
+### Accessing Logs
 
-**In config.py:**
-```python
-LOG_LEVEL = "INFO"
-LOG_FILE = "app.log"
-```
-
-**In .env:**
+Via Docker:
 ```bash
-LOG_LEVEL=INFO
-LOG_FILE=/app/logs/app.log
+docker logs moneysplit-api
 ```
 
-### Viewing Logs
-
+Via file system:
 ```bash
-# Real-time logs
-docker logs -f moneysplit-api
-
-# Last N lines
-docker logs --tail 100 moneysplit-api
-
-# Since timestamp
-docker logs --since 2025-11-30T10:00:00 moneysplit-api
-
-# Until timestamp
-docker logs --until 2025-11-30T11:00:00 moneysplit-api
-
-# With timestamps
-docker logs -t moneysplit-api
-
-# Combined
-docker logs -f -t --tail 50 moneysplit-api
+tail -f logs/app.log | jq .
 ```
 
-### Log Aggregation
+## Performance Metrics
 
-For production, aggregate logs to centralized system:
+### Request Performance
+- Mean latency: Track `http_request_duration_seconds_sum / http_request_duration_seconds_count`
+- P95 latency: `histogram_quantile(0.95, http_request_duration_seconds)`
+- P99 latency: `histogram_quantile(0.99, http_request_duration_seconds)`
 
-**ELK Stack (Elasticsearch, Logstash, Kibana):**
-```yaml
-# logstash.conf
-input {
-  http {
-    port => 8080
-  }
-}
+### Error Tracking
+- Error rate: `rate(http_requests_error_total[5m]) / rate(http_requests_total[5m])`
+- Error types: `http_requests_error_total` by error_type
 
-filter {
-  json { source => "message" }
-}
-
-output {
-  elasticsearch {
-    hosts => ["elasticsearch:9200"]
-  }
-}
-```
-
-**Splunk:**
-- Stream logs to Splunk HTTP Event Collector
-- Search and analyze in Splunk UI
-
----
-
-## Alerting
-
-### Prometheus Alert Rules
-
-Create `monitoring/alert-rules.yml`:
-
-```yaml
-groups:
-- name: moneysplit
-  interval: 1m
-  rules:
-  - alert: HighErrorRate
-    expr: rate(moneysplit_errors_total[5m]) > 0.05
-    for: 5m
-    annotations:
-      summary: "High error rate detected"
-      description: "Error rate is {{ $value }}"
-
-  - alert: HighLatency
-    expr: histogram_quantile(0.95, moneysplit_request_duration_seconds) > 1
-    for: 5m
-    annotations:
-      summary: "High latency detected"
-      description: "p95 latency is {{ $value }}s"
-
-  - alert: DatabaseDown
-    expr: moneysplit_db_records_total == 0
-    for: 1m
-    annotations:
-      summary: "Database is down"
-
-  - alert: HighMemoryUsage
-    expr: moneysplit_active_requests > 100
-    for: 5m
-    annotations:
-      summary: "High number of active requests"
-```
-
-### Alertmanager Configuration
-
-Create `monitoring/alertmanager.yml`:
-
-```yaml
-global:
-  resolve_timeout: 5m
-
-route:
-  receiver: 'team-email'
-  repeat_interval: 4h
-
-receivers:
-- name: 'team-email'
-  email_configs:
-  - to: 'team@example.com'
-    from: 'alerts@example.com'
-    smarthost: 'smtp.example.com:587'
-    auth_username: 'user'
-    auth_password: 'password'
-```
-
----
-
-## Monitoring Checklist
-
-### Daily
-- [ ] Check health endpoint responses
-- [ ] Monitor error rates
-- [ ] Review application logs
-
-### Weekly
-- [ ] Analyze Grafana dashboards
-- [ ] Check storage usage
-- [ ] Review database performance
-
-### Monthly
-- [ ] Analyze trends
-- [ ] Optimize slow queries
-- [ ] Update thresholds
-- [ ] Review backups
-
----
+### Business Metrics
+- Tax calculations: `rate(tax_calculations_total[1m])`
+- Projects created: `increase(projects_created_total[1d])`
+- Database operations: `rate(database_operations_total[5m])`
 
 ## Troubleshooting
 
-### Prometheus Issues
+### Prometheus Not Scraping Metrics
 
-```bash
-# Check Prometheus UI
-curl http://localhost:9090
+Check:
+1. API is running: `curl http://localhost:8000/health`
+2. Metrics endpoint is accessible: `curl http://localhost:8000/metrics`
+3. Prometheus configuration: Check `monitoring/prometheus.yml`
+4. Prometheus logs: `docker logs moneysplit-prometheus`
 
-# Verify target status
-curl http://localhost:9090/api/v1/targets
+### Grafana Can't Connect to Prometheus
 
-# Test query
-curl http://localhost:9090/api/v1/query?query=up
-```
-
-### Metrics Not Appearing
-
-1. Verify endpoint is accessible:
-   ```bash
-   curl http://localhost:8000/metrics
-   ```
-
-2. Check Prometheus configuration:
-   ```bash
-   cat monitoring/prometheus.yml
-   ```
-
-3. Check scrape logs:
-   ```bash
-   docker logs prometheus
-   ```
+Ensure:
+1. Prometheus is running: `docker ps | grep prometheus`
+2. Data source URL is correct: `http://prometheus:9090` (internal Docker network)
+3. Grafana logs: `docker logs moneysplit-grafana`
 
 ### High Memory Usage
 
-```bash
-# Monitor memory in real-time
-docker stats moneysplit-api
-
-# Check memory limit
-docker inspect moneysplit-api | grep Memory
-
-# Increase limit if needed
-docker update --memory 2g moneysplit-api
+Reduce Prometheus retention:
+```yaml
+# prometheus.yml
+prometheus:
+  environment:
+    - "--storage.tsdb.retention.time=7d"  # Default is 15 days
 ```
 
-### Database Connection Issues
+## Production Deployment
 
-```bash
-# Test database connection
-curl http://localhost:8000/health/ready
+For production:
 
-# Check database file
-ls -la data/example.db
+1. **Secure Grafana**: Change default password
+2. **Configure HTTPS**: Use reverse proxy (nginx, Traefik)
+3. **Set up backups**: Regular backup of Prometheus TSDB and Grafana dashboards
+4. **Configure retention**: Adjust `--storage.tsdb.retention.time` based on disk space
+5. **Enable authentication**: Use OAuth2/LDAP for Grafana
+6. **Set up alerting**: Configure Alertmanager with notification channels
+7. **Monitor monitoring**: Ensure Prometheus itself is healthy
 
-# Verify permissions
-chmod 644 data/example.db
-```
+## Resources
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
+- [Best Practices](https://prometheus.io/docs/practices/naming/)
 
 ---
 
-## Performance Baselines
-
-Typical metrics for healthy system:
-
-| Metric | Expected | Alert Threshold |
-|--------|----------|---|
-| Error Rate | < 1% | > 5% |
-| Latency p95 | < 500ms | > 2s |
-| Database Query | < 100ms | > 500ms |
-| Active Requests | < 50 | > 200 |
-| Memory Usage | 25-50% | > 80% |
-| CPU Usage | 20-40% | > 80% |
-
----
-
-**Last Updated:** 2025-11-30
-**Status:** Monitoring Stack Ready
+Last updated: 2024-11-30

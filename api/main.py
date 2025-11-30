@@ -2517,6 +2517,63 @@ async def import_projects_csv_text(csv_content: str):
         raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
 
 
+# ===== Health Check Endpoints =====
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Basic health check endpoint.
+    Returns the health status of the application.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "version": "1.0.0"
+    }
+
+
+@app.get("/health/ready")
+async def readiness_probe():
+    """
+    Readiness probe endpoint.
+    Checks if the application is ready to accept requests (database connectivity, dependencies).
+    """
+    try:
+        # Check database connectivity
+        conn = setup.get_conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+
+        return {
+            "ready": True,
+            "database": "connected",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        return {
+            "ready": False,
+            "database": "disconnected",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }, 503
+
+
+@app.get("/health/live")
+async def liveness_probe():
+    """
+    Liveness probe endpoint.
+    Checks if the application process is alive and running.
+    """
+    import time
+    return {
+        "live": True,
+        "uptime_seconds": int(time.time()),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+
 # ===== Prometheus Metrics Endpoint =====
 
 
