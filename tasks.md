@@ -1,0 +1,232 @@
+# Assignment 2 - Task Tracking
+
+## Overview
+This document tracks all tasks for Assignment 2. Each task is marked with status and updated after every commit.
+
+**Branch:** `assignment-2`
+**Last Updated:** 2025-11-30
+
+---
+
+## Task Categories
+
+### Category 1: Code Quality & Refactoring (25%)
+- [ ] **1.1** - Analyze codebase for code smells (duplication, long methods, hardcoded values)
+- [ ] **1.2** - Extract duplicate tax calculation logic into reusable functions
+- [ ] **1.3** - Refactor long methods in `Logic/ProgramBackend.py` (break into smaller functions)
+- [ ] **1.4** - Create `config.py` module for hardcoded values (ports, paths, DB location)
+- [ ] **1.5** - Add comprehensive error handling to `api/main.py` endpoints
+- [ ] **1.6** - Implement logging module with structured logging (JSON format)
+- [ ] **1.7** - Add logging to all major functions across backend
+- [ ] **1.8** - Add type hints to Python functions (backend)
+- [ ] **1.9** - Add docstrings to public APIs in backend
+- [ ] **1.10** - Set up `black` code formatter and format all Python code
+- [ ] **1.11** - Set up `pylint` and `flake8` and fix linting issues
+- [ ] **1.12** - Set up `ESLint` for TypeScript/React and fix issues
+- [ ] **1.13** - Create `requirements-dev.txt` with development dependencies
+- [ ] **1.14** - Apply SOLID principles refactoring (document in code/REPORT.md)
+
+**Status:** Not Started
+**Completed:** 0/14
+
+---
+
+### Category 2: Testing & Coverage (20%)
+- [ ] **2.1** - Install and configure `pytest-cov` for coverage measurement
+- [ ] **2.2** - Run coverage analysis on current test suite and identify gaps
+- [ ] **2.3** - Add unit tests for uncovered functions in `Logic/` modules
+- [ ] **2.4** - Add integration tests for all API endpoints in `api/main.py`
+- [ ] **2.5** - Add edge case and error handling tests
+- [ ] **2.6** - Add tests for database operations (CRUD, queries)
+- [ ] **2.7** - Configure pytest to fail if coverage < 70%
+- [ ] **2.8** - Generate HTML coverage report
+- [ ] **2.9** - Generate XML coverage report (for CI)
+- [ ] **2.10** - Add Jest tests for React components in `/frontend/src/`
+- [ ] **2.11** - Mock API calls in frontend tests
+- [ ] **2.12** - Improve test data fixtures and test setup/teardown
+- [ ] **2.13** - Document testing strategy in `TESTING.md`
+- [ ] **2.14** - Achieve 70%+ code coverage (verify before moving on)
+
+**Status:** Not Started
+**Completed:** 0/14
+
+---
+
+### Category 3: Continuous Integration (20%)
+- [ ] **3.1** - Create `.github/workflows/` directory
+- [ ] **3.2** - Create `.github/workflows/ci.yml` pipeline configuration
+- [ ] **3.3** - Configure CI to run on push to all branches
+- [ ] **3.4** - Configure CI to run on pull requests to main
+- [ ] **3.5** - Add Python setup step (3.8, 3.9, 3.10 matrix)
+- [ ] **3.6** - Add backend dependency installation step
+- [ ] **3.7** - Add frontend dependency installation step
+- [ ] **3.8** - Add linting checks step (pylint/flake8)
+- [ ] **3.9** - Add backend unit tests step
+- [ ] **3.10** - Add backend integration tests step
+- [ ] **3.11** - Add coverage measurement step
+- [ ] **3.12** - Fail CI if coverage < 70%
+- [ ] **3.13** - Add frontend build step
+- [ ] **3.14** - Add frontend tests step (Jest)
+- [ ] **3.15** - Configure artifact uploads (coverage reports)
+- [ ] **3.16** - Add dependency caching to speed up CI
+- [ ] **3.17** - Test CI pipeline by pushing to assignment-2
+- [ ] **3.18** - Add CI status badge to README.md
+
+**Status:** Not Started
+**Completed:** 0/18
+
+---
+
+### Category 4: Deployment & Containerization (20%)
+- [ ] **4.1** - Create `Dockerfile` for backend (multi-stage build)
+- [ ] **4.2** - Create `Dockerfile.frontend` for React frontend
+- [ ] **4.3** - Create `.dockerignore` for optimizing Docker builds
+- [ ] **4.4** - Add health checks to backend Dockerfile
+- [ ] **4.5** - Create `docker-compose.yml` for local development
+- [ ] **4.6** - Add backend service to docker-compose
+- [ ] **4.7** - Add frontend service to docker-compose
+- [ ] **4.8** - Create `.env.example` with all required environment variables
+- [ ] **4.9** - Update code to use environment variables (python-dotenv)
+- [ ] **4.10** - Test Docker Compose locally (build and run)
+- [ ] **4.11** - Create cloud deployment configuration (AWS/GCP/Azure/Heroku - TBD)
+- [ ] **4.12** - Set up secrets management for cloud platform
+- [ ] **4.13** - Configure automatic deployment for main branch only
+- [ ] **4.14** - Create deployment documentation in `DEPLOYMENT.md`
+- [ ] **4.15** - Test deployment process end-to-end
+- [ ] **4.16** - Add deployment instructions to README.md
+
+**Status:** Not Started
+**Completed:** 0/16
+
+---
+
+### Category 5: Monitoring & Health Checks (15%)
+- [ ] **5.1** - Add `/health` endpoint to API (basic status)
+- [ ] **5.2** - Add `/health/ready` endpoint (readiness probe)
+- [ ] **5.3** - Add `/health/live` endpoint (liveness probe)
+- [ ] **5.4** - Implement database connection check in health endpoints
+- [ ] **5.5** - Add system info to health response (uptime, memory)
+- [ ] **5.6** - Install and configure `prometheus-client`
+- [ ] **5.7** - Add Prometheus metrics middleware to API
+- [ ] **5.8** - Track request count metrics (by endpoint, method, status)
+- [ ] **5.9** - Track request latency metrics (by endpoint)
+- [ ] **5.10** - Track error count metrics (by endpoint, type)
+- [ ] **5.11** - Expose metrics at `/metrics` endpoint
+- [ ] **5.12** - Implement structured logging (JSON format)
+- [ ] **5.13** - Add request ID tracking for tracing
+- [ ] **5.14** - Configure log rotation for file storage
+- [ ] **5.15** - Create `monitoring/prometheus.yml` configuration
+- [ ] **5.16** - Create `monitoring/grafana-dashboard.json` (or screenshots)
+- [ ] **5.17** - Add Prometheus service to docker-compose.yml
+- [ ] **5.18** - Add Grafana service to docker-compose.yml
+- [ ] **5.19** - Test health check and metrics endpoints
+- [ ] **5.20** - Create monitoring documentation in `MONITORING.md`
+
+**Status:** Not Started
+**Completed:** 0/20
+
+---
+
+### Category 6: Documentation (Throughout)
+- [ ] **6.1** - Update README.md - Add "Running the Application" section
+- [ ] **6.2** - Update README.md - Add "Running Tests" section
+- [ ] **6.3** - Update README.md - Add "Code Coverage" section
+- [ ] **6.4** - Update README.md - Add "Running with Docker" section
+- [ ] **6.5** - Update README.md - Add "Deployment" section
+- [ ] **6.6** - Update README.md - Add "Monitoring & Health Checks" section
+- [ ] **6.7** - Create `REPORT.md` - Executive Summary (what was improved)
+- [ ] **6.8** - Create `REPORT.md` - Code Quality Improvements section (1 page)
+- [ ] **6.9** - Create `REPORT.md` - Testing Strategy section (1 page)
+- [ ] **6.10** - Create `REPORT.md` - CI/CD Pipeline section (1 page)
+- [ ] **6.11** - Create `REPORT.md` - Deployment Process section (1 page)
+- [ ] **6.12** - Create `REPORT.md` - Monitoring & Observability section (1 page)
+- [ ] **6.13** - Create `REPORT.md` - Lessons Learned & Future Improvements (0.5 pages)
+- [ ] **6.14** - Create `TESTING.md` - Detailed testing documentation
+- [ ] **6.15** - Create `DEPLOYMENT.md` - Deployment instructions
+- [ ] **6.16** - Create `MONITORING.md` - Monitoring setup guide
+- [ ] **6.17** - Update `ARCHITECTURE.md` if exists, or create new one
+
+**Status:** Not Started
+**Completed:** 0/17
+
+---
+
+## Task Execution Order
+
+### Phase 1: Foundation (Code Quality + Testing)
+Execute these first to establish good code quality and test coverage:
+1. Tasks 1.1 → 1.14 (Code Quality)
+2. Tasks 2.1 → 2.14 (Testing & Coverage)
+
+### Phase 2: CI/CD Pipeline
+Execute after Phase 1 is complete:
+3. Tasks 3.1 → 3.18 (CI Pipeline)
+
+### Phase 3: Deployment
+Execute after Phase 2:
+4. Tasks 4.1 → 4.16 (Deployment & Containerization)
+
+### Phase 4: Monitoring
+Execute after Phase 3:
+5. Tasks 5.1 → 5.20 (Monitoring & Health Checks)
+
+### Phase 5: Documentation
+Execute throughout, finalize at the end:
+6. Tasks 6.1 → 6.17 (Documentation)
+
+---
+
+## Commit Strategy
+
+After each task (or group of related tasks), create a commit with a meaningful message following this pattern:
+
+```
+[Category] Task description
+
+- List of changes made
+- References to task IDs (e.g., 1.1, 1.2)
+```
+
+**Example:**
+```
+[Code Quality] Extract duplicate tax logic and refactor long methods
+
+- Extracted duplicate tax calculation into reusable functions (task 1.2)
+- Refactored long methods in Logic/ProgramBackend.py (task 1.3)
+- Added type hints to tax calculation functions (task 1.8)
+```
+
+---
+
+## Summary Statistics
+
+| Category | Total Tasks | Completed | Percentage |
+|----------|-------------|-----------|------------|
+| Code Quality | 14 | 0 | 0% |
+| Testing | 14 | 0 | 0% |
+| CI/CD | 18 | 0 | 0% |
+| Deployment | 16 | 0 | 0% |
+| Monitoring | 20 | 0 | 0% |
+| Documentation | 17 | 0 | 0% |
+| **TOTAL** | **99** | **0** | **0%** |
+
+---
+
+## Notes
+
+- ✅ = Completed and committed
+- ⏳ = In Progress
+- ❌ = Not started
+- **Update this file after every commit**
+- **Only move to next phase after current phase tasks are complete**
+- **Add new tasks if discovered during implementation**
+
+---
+
+## Commits Log
+
+| Commit # | Task IDs | Message | Status |
+|----------|----------|---------|--------|
+| 1 | - | Initial setup with assignment2.md and tasks.md | Pending |
+| 2-99 | TBD | To be filled as we progress | Pending |
+
