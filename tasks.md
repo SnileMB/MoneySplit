@@ -4,17 +4,17 @@
 This document tracks all tasks for Assignment 2. Each task is marked with status and updated after every commit.
 
 **Branch:** `assignment-2`
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-11-30 (Phase 1: Foundation - 6% complete)
 
 ---
 
 ## Task Categories
 
 ### Category 1: Code Quality & Refactoring (25%)
-- [ ] **1.1** - Analyze codebase for code smells (duplication, long methods, hardcoded values)
+- [x] **1.1** - Analyze codebase for code smells (duplication, long methods, hardcoded values)
 - [ ] **1.2** - Extract duplicate tax calculation logic into reusable functions
 - [ ] **1.3** - Refactor long methods in `Logic/ProgramBackend.py` (break into smaller functions)
-- [ ] **1.4** - Create `config.py` module for hardcoded values (ports, paths, DB location)
+- [x] **1.4** - Create `config.py` module for hardcoded values (ports, paths, DB location)
 - [ ] **1.5** - Add comprehensive error handling to `api/main.py` endpoints
 - [ ] **1.6** - Implement logging module with structured logging (JSON format)
 - [ ] **1.7** - Add logging to all major functions across backend
@@ -23,23 +23,23 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **1.10** - Set up `black` code formatter and format all Python code
 - [ ] **1.11** - Set up `pylint` and `flake8` and fix linting issues
 - [ ] **1.12** - Set up `ESLint` for TypeScript/React and fix issues
-- [ ] **1.13** - Create `requirements-dev.txt` with development dependencies
+- [x] **1.13** - Create `requirements-dev.txt` with development dependencies
 - [ ] **1.14** - Apply SOLID principles refactoring (document in code/REPORT.md)
 
-**Status:** Not Started
-**Completed:** 0/14
+**Status:** In Progress
+**Completed:** 3/14
 
 ---
 
 ### Category 2: Testing & Coverage (20%)
-- [ ] **2.1** - Install and configure `pytest-cov` for coverage measurement
-- [ ] **2.2** - Run coverage analysis on current test suite and identify gaps
+- [x] **2.1** - Install and configure `pytest-cov` for coverage measurement
+- [x] **2.2** - Run coverage analysis on current test suite and identify gaps (Current: 32%)
 - [ ] **2.3** - Add unit tests for uncovered functions in `Logic/` modules
 - [ ] **2.4** - Add integration tests for all API endpoints in `api/main.py`
 - [ ] **2.5** - Add edge case and error handling tests
 - [ ] **2.6** - Add tests for database operations (CRUD, queries)
 - [ ] **2.7** - Configure pytest to fail if coverage < 70%
-- [ ] **2.8** - Generate HTML coverage report
+- [x] **2.8** - Generate HTML coverage report (generated in htmlcov/)
 - [ ] **2.9** - Generate XML coverage report (for CI)
 - [ ] **2.10** - Add Jest tests for React components in `/frontend/src/`
 - [ ] **2.11** - Mock API calls in frontend tests
@@ -47,8 +47,8 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **2.13** - Document testing strategy in `TESTING.md`
 - [ ] **2.14** - Achieve 70%+ code coverage (verify before moving on)
 
-**Status:** Not Started
-**Completed:** 0/14
+**Status:** In Progress
+**Completed:** 3/14
 
 ---
 
@@ -202,13 +202,13 @@ After each task (or group of related tasks), create a commit with a meaningful m
 
 | Category | Total Tasks | Completed | Percentage |
 |----------|-------------|-----------|------------|
-| Code Quality | 14 | 0 | 0% |
-| Testing | 14 | 0 | 0% |
+| Code Quality | 14 | 3 | 21% |
+| Testing | 14 | 3 | 21% |
 | CI/CD | 18 | 0 | 0% |
 | Deployment | 16 | 0 | 0% |
 | Monitoring | 20 | 0 | 0% |
 | Documentation | 17 | 0 | 0% |
-| **TOTAL** | **99** | **0** | **0%** |
+| **TOTAL** | **99** | **6** | **6%** |
 
 ---
 
