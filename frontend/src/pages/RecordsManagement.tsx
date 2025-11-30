@@ -57,7 +57,8 @@ const RecordsManagement: React.FC = () => {
   const handleEditClick = (record: Record, field: string) => {
     setEditingRecord(record.id);
     setEditField(field);
-    setEditValue(String((record as any)[field]));
+    const value = (record as unknown as { [key: string]: unknown })[field];
+    setEditValue(String(value));
   };
 
   const handleEditSave = async () => {
@@ -334,7 +335,8 @@ const RecordsManagement: React.FC = () => {
                   setEditField(e.target.value);
                   const record = records.find(r => r.id === editingRecord);
                   if (record) {
-                    setEditValue(String((record as any)[e.target.value]));
+                    const value = (record as unknown as { [key: string]: unknown })[e.target.value];
+                    setEditValue(String(value));
                   }
                 }}
                 className="form-control"

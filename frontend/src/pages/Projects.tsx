@@ -146,8 +146,12 @@ const Projects: React.FC<ProjectsProps> = ({ prefilledData }) => {
       setRevenue("");
       setCosts("");
       handleNumPeopleChange(2);
-    } catch (error: any) {
-      setErrorMessage(error.response?.data?.detail || "Error creating project");
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : "Error creating project";
+      const axiosError = error as Record<string, unknown>;
+      const detail = (axiosError?.response as Record<string, unknown>)?.data as Record<string, unknown>;
+      const errorDetail = typeof detail?.detail === "string" ? detail.detail : errorMsg;
+      setErrorMessage(errorDetail);
     } finally {
       setLoading(false);
     }

@@ -110,8 +110,12 @@ const Analytics: React.FC = () => {
       setStrategies(strategyRes.data.strategies);
       setMonthlyData(timelineRes.data.monthly);
       setProjectData(timelineRes.data.projects);
-    } catch (error: any) {
-      setImportMessage(`❌ Import failed: ${error.response?.data?.detail || error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      const axiosError = error as Record<string, unknown>;
+      const detail = (axiosError?.response as Record<string, unknown>)?.data as Record<string, unknown>;
+      const errorDetail = typeof detail?.detail === "string" ? detail.detail : errorMsg;
+      setImportMessage(`❌ Import failed: ${errorDetail}`);
     } finally {
       setImporting(false);
     }
@@ -347,13 +351,17 @@ const Analytics: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data={strategies as any}
                 dataKey="count"
                 nameKey="strategy"
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={(entry: any) => `${entry.strategy} (${entry.count})`}
+                label={(entry: unknown) => {
+                  const e = entry as Record<string, unknown>;
+                  return `${e.strategy} (${e.count})`;
+                }}
               >
                 {strategies.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={["#667eea", "#48bb78", "#e53e3e", "#764ba2", "#38a169"][index % 5]} />

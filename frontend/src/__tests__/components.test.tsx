@@ -297,9 +297,8 @@ describe("Form Input Handling", () => {
       </BrowserRouter>,
     );
 
-    const taxTypeSelect = screen.getByTestId(
-      "tax-type-select",
-    ) as HTMLSelectElement;
+    const taxTypeSelect = screen.getByTestId("tax-type-select");
+    expect(taxTypeSelect).toBeInTheDocument();
     const options = taxTypeSelect.querySelectorAll("option");
     expect(options.length).toBeGreaterThan(1);
   });

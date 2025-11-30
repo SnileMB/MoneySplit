@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { taxBracketsApi, TaxBracket, TaxBracketCreate } from "../api/client";
 
 const TaxBracketsManagement: React.FC = () => {
@@ -17,11 +17,7 @@ const TaxBracketsManagement: React.FC = () => {
     rate: 0,
   });
 
-  useEffect(() => {
-    loadBrackets();
-  }, [selectedCountry, selectedTaxType]);
-
-  const loadBrackets = async () => {
+  const loadBrackets = useCallback(async () => {
     setLoading(true);
     try {
       const response = await taxBracketsApi.getTaxBrackets(selectedCountry, selectedTaxType);
@@ -31,7 +27,11 @@ const TaxBracketsManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCountry, selectedTaxType]);
+
+  useEffect(() => {
+    loadBrackets();
+  }, [loadBrackets]);
 
   const handleAdd = async () => {
     try {

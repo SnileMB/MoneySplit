@@ -63,7 +63,7 @@ const TaxCalculator: React.FC<TaxCalculatorProps> = ({ onCreateProject }) => {
       setError("");
 
       try {
-        const params: any = {
+        const params: Record<string, unknown> = {
           revenue: revenueNum,
           costs: costsNum,
           num_people: numPeople,
@@ -79,8 +79,12 @@ const TaxCalculator: React.FC<TaxCalculatorProps> = ({ onCreateProject }) => {
           params,
         });
         setResult(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || "Error calculating strategies");
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : "Error calculating strategies";
+        const axiosError = err as Record<string, unknown>;
+        const detail = (axiosError?.response as Record<string, unknown>)?.data as Record<string, unknown>;
+        const errorDetail = typeof detail?.detail === "string" ? detail.detail : errorMsg;
+        setError(errorDetail);
         setResult(null);
       } finally {
         setLoading(false);
