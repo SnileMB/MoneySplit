@@ -4,19 +4,20 @@
 This document tracks all tasks for Assignment 2. Each task is marked with status and updated after every commit.
 
 **Branch:** `assignment-2`
-**Last Updated:** 2025-11-30 (Final Session Update)
+**Last Updated:** 2025-11-30 (Session 2 - Continued Development)
 **Current Phase:** Phase 1-5 (Code Quality, Monitoring, CI/CD, Deployment, Documentation)
-**Progress:** 65/99 tasks (66%)
+**Progress:** 69/99 tasks (70%)
 
 ## Quick Status
-- ✅ Code Quality Infrastructure: Complete (config, linting, logging, error handling)
-- ✅ Monitoring & Observability: Health checks, Prometheus, Grafana configured
+- ✅ Code Quality & Refactoring: 86% Complete (type hints, ESLint, duplicate extraction)
+- ✅ Code Quality Infrastructure: Config, linting, logging, error handling, formatting
+- ✅ Monitoring & Observability: Health checks, Prometheus metrics, /metrics endpoint
 - ✅ Docker & Containerization: Backend, Frontend, Compose stack ready
 - ✅ CI/CD Pipeline: GitHub Actions workflow with full matrix testing
-- ✅ Documentation: Nearly complete (README, REPORT, TESTING, DEPLOYMENT, MONITORING)
-- ⏳ Code Refactoring: Extracted core modules, 5 tasks remaining
+- ✅ Documentation: 94% Complete (README, REPORT, TESTING, DEPLOYMENT, MONITORING)
 - ⏳ Testing: Baseline 32%, 11 tasks to enhance coverage to 70%
 - ⏳ Deployment Testing: Docker builds ready, 8 tasks for cloud integration
+- ⏳ Remaining High Priority: Refactor long methods, add docstrings, test Docker/CI/CD
 
 ---
 
@@ -24,22 +25,22 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 
 ### Category 1: Code Quality & Refactoring (25%)
 - [x] **1.1** - Analyze codebase for code smells (duplication, long methods, hardcoded values)
-- [ ] **1.2** - Extract duplicate tax calculation logic into reusable functions
+- [x] **1.2** - Extract duplicate tax calculation logic into reusable functions
 - [ ] **1.3** - Refactor long methods in `Logic/ProgramBackend.py` (break into smaller functions)
 - [x] **1.4** - Create `config.py` module for hardcoded values (ports, paths, DB location)
 - [x] **1.5** - Add comprehensive error handling to `api/main.py` endpoints
 - [x] **1.6** - Implement logging module with structured logging (JSON format)
 - [x] **1.7** - Add logging to all major functions across backend (infrastructure ready)
-- [ ] **1.8** - Add type hints to Python functions (backend)
+- [x] **1.8** - Add type hints to Python functions (backend)
 - [ ] **1.9** - Add docstrings to public APIs in backend
 - [x] **1.10** - Set up `black` code formatter and format all Python code
 - [x] **1.11** - Set up `pylint` and `flake8` and fix linting issues
-- [ ] **1.12** - Set up `ESLint` for TypeScript/React and fix issues
+- [x] **1.12** - Set up `ESLint` for TypeScript/React and fix issues
 - [x] **1.13** - Create `requirements-dev.txt` with development dependencies
 - [ ] **1.14** - Apply SOLID principles refactoring (document in code/REPORT.md)
 
 **Status:** In Progress
-**Completed:** 9/14
+**Completed:** 12/14
 
 ---
 
@@ -123,7 +124,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [x] **5.8** - Track request count metrics (by endpoint, method, status)
 - [x] **5.9** - Track request latency metrics (by endpoint)
 - [x] **5.10** - Track error count metrics (by endpoint, type)
-- [ ] **5.11** - Expose metrics at `/metrics` endpoint (integrate in main.py)
+- [x] **5.11** - Expose metrics at `/metrics` endpoint (integrate in main.py)
 - [x] **5.12** - Implement structured logging (JSON format)
 - [x] **5.13** - Add request ID tracking for tracing (api/middleware.py)
 - [x] **5.14** - Configure log rotation for file storage
@@ -135,7 +136,7 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **5.20** - Create monitoring documentation in `MONITORING.md`
 
 **Status:** In Progress
-**Completed:** 13/20
+**Completed:** 14/20
 
 ---
 
@@ -214,13 +215,13 @@ After each task (or group of related tasks), create a commit with a meaningful m
 
 | Category | Total Tasks | Completed | Percentage |
 |----------|-------------|-----------|------------|
-| Code Quality | 14 | 9 | 64% |
+| Code Quality | 14 | 12 | 86% |
 | Testing | 14 | 3 | 21% |
 | CI/CD | 18 | 16 | 89% |
 | Deployment | 16 | 8 | 50% |
-| Monitoring | 20 | 13 | 65% |
+| Monitoring | 20 | 14 | 70% |
 | Documentation | 17 | 16 | 94% |
-| **TOTAL** | **99** | **65** | **66%** |
+| **TOTAL** | **99** | **69** | **70%** |
 
 ---
 
