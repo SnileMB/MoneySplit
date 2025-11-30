@@ -2,10 +2,10 @@
  * React Component Tests with API Mocking
  * Tests for Dashboard, Projects, TaxCalculator, and Reports components
  */
-import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 /**
  * Mock Components for Testing
@@ -57,65 +57,65 @@ const MockReports: React.FC = () => (
 /**
  * Test Suite: Dashboard Component
  */
-describe('Dashboard Component', () => {
+describe("Dashboard Component", () => {
   const renderComponent = () =>
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockDashboard />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-  test('renders dashboard title', () => {
+  test("renders dashboard title", () => {
     renderComponent();
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
   });
 
-  test('displays projects section', () => {
+  test("displays projects section", () => {
     renderComponent();
-    expect(screen.getByTestId('dashboard-projects')).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-projects")).toBeInTheDocument();
   });
 
-  test('displays statistics section', () => {
+  test("displays statistics section", () => {
     renderComponent();
-    expect(screen.getByTestId('dashboard-statistics')).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-statistics")).toBeInTheDocument();
   });
 });
 
 /**
  * Test Suite: Projects Component
  */
-describe('Projects Component', () => {
+describe("Projects Component", () => {
   const renderComponent = () =>
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockProjects />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-  test('renders projects management page', () => {
+  test("renders projects management page", () => {
     renderComponent();
-    expect(screen.getByText('Projects Management')).toBeInTheDocument();
+    expect(screen.getByText("Projects Management")).toBeInTheDocument();
   });
 
-  test('has create project button', () => {
+  test("has create project button", () => {
     renderComponent();
-    const createBtn = screen.getByTestId('create-project-btn');
+    const createBtn = screen.getByTestId("create-project-btn");
     expect(createBtn).toBeInTheDocument();
-    expect(createBtn).toHaveTextContent('Create Project');
+    expect(createBtn).toHaveTextContent("Create Project");
   });
 
-  test('displays projects list', () => {
+  test("displays projects list", () => {
     renderComponent();
-    expect(screen.getByTestId('projects-list')).toBeInTheDocument();
+    expect(screen.getByTestId("projects-list")).toBeInTheDocument();
   });
 
-  test('create project button is clickable', () => {
+  test("create project button is clickable", () => {
     renderComponent();
-    const createBtn = screen.getByTestId('create-project-btn');
+    const createBtn = screen.getByTestId("create-project-btn");
     fireEvent.click(createBtn);
     expect(createBtn).toBeInTheDocument();
   });
@@ -124,104 +124,106 @@ describe('Projects Component', () => {
 /**
  * Test Suite: TaxCalculator Component
  */
-describe('TaxCalculator Component', () => {
+describe("TaxCalculator Component", () => {
   const renderComponent = () =>
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-  test('renders tax calculator form', () => {
+  test("renders tax calculator form", () => {
     renderComponent();
-    expect(screen.getByText('Tax Calculator')).toBeInTheDocument();
+    expect(screen.getByText("Tax Calculator")).toBeInTheDocument();
   });
 
-  test('has revenue input field', () => {
+  test("has revenue input field", () => {
     renderComponent();
-    const revenueInput = screen.getByTestId('revenue-input') as HTMLInputElement;
+    const revenueInput = screen.getByTestId("revenue-input") as HTMLInputElement;
     expect(revenueInput).toBeInTheDocument();
-    fireEvent.change(revenueInput, { target: { value: '50000' } });
-    expect(revenueInput.value).toBe('50000');
+    fireEvent.change(revenueInput, { target: { value: "50000" } });
+    expect(revenueInput.value).toBe("50000");
   });
 
-  test('has costs input field', () => {
+  test("has costs input field", () => {
     renderComponent();
-    const costsInput = screen.getByTestId('costs-input') as HTMLInputElement;
+    const costsInput = screen.getByTestId("costs-input") as HTMLInputElement;
     expect(costsInput).toBeInTheDocument();
-    fireEvent.change(costsInput, { target: { value: '5000' } });
-    expect(costsInput.value).toBe('5000');
+    fireEvent.change(costsInput, { target: { value: "5000" } });
+    expect(costsInput.value).toBe("5000");
   });
 
-  test('has tax type selector', () => {
+  test("has tax type selector", () => {
     renderComponent();
-    const taxTypeSelect = screen.getByTestId('tax-type-select') as HTMLSelectElement;
+    const taxTypeSelect = screen.getByTestId(
+      "tax-type-select",
+    ) as HTMLSelectElement;
     expect(taxTypeSelect).toBeInTheDocument();
-    fireEvent.change(taxTypeSelect, { target: { value: 'Business' } });
-    expect(taxTypeSelect.value).toBe('Business');
+    fireEvent.change(taxTypeSelect, { target: { value: "Business" } });
+    expect(taxTypeSelect.value).toBe("Business");
   });
 
-  test('has calculate button', () => {
+  test("has calculate button", () => {
     renderComponent();
-    const calculateBtn = screen.getByTestId('calculate-btn');
+    const calculateBtn = screen.getByTestId("calculate-btn");
     expect(calculateBtn).toBeInTheDocument();
-    expect(calculateBtn).toHaveTextContent('Calculate');
+    expect(calculateBtn).toHaveTextContent("Calculate");
   });
 
-  test('displays tax result', () => {
+  test("displays tax result", () => {
     renderComponent();
-    expect(screen.getByTestId('tax-result')).toBeInTheDocument();
+    expect(screen.getByTestId("tax-result")).toBeInTheDocument();
   });
 });
 
 /**
  * Test Suite: Reports Component
  */
-describe('Reports Component', () => {
+describe("Reports Component", () => {
   const renderComponent = () =>
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockReports />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-  test('renders reports page', () => {
+  test("renders reports page", () => {
     renderComponent();
-    expect(screen.getByText('Reports')).toBeInTheDocument();
+    expect(screen.getByText("Reports")).toBeInTheDocument();
   });
 
-  test('displays revenue report', () => {
+  test("displays revenue report", () => {
     renderComponent();
-    expect(screen.getByTestId('revenue-report')).toBeInTheDocument();
+    expect(screen.getByTestId("revenue-report")).toBeInTheDocument();
   });
 
-  test('displays statistics report', () => {
+  test("displays statistics report", () => {
     renderComponent();
-    expect(screen.getByTestId('statistics-report')).toBeInTheDocument();
+    expect(screen.getByTestId("statistics-report")).toBeInTheDocument();
   });
 
-  test('revenue report shows initial value', () => {
+  test("revenue report shows initial value", () => {
     renderComponent();
-    const revenueReport = screen.getByTestId('revenue-report');
-    expect(revenueReport).toHaveTextContent('Total Revenue: $0');
+    const revenueReport = screen.getByTestId("revenue-report");
+    expect(revenueReport).toHaveTextContent("Total Revenue: $0");
   });
 });
 
 /**
  * Test Suite: API Mocking and Integration
  */
-describe('API Mocking and Integration', () => {
-  test('component can render with mocked API', async () => {
+describe("API Mocking and Integration", () => {
+  test("component can render with mocked API", async () => {
     // This demonstrates API mocking capability
     const mockFetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ data: 'mocked' }),
-      })
+        json: () => Promise.resolve({ data: "mocked" }),
+      }),
     );
     global.fetch = mockFetch;
 
@@ -230,15 +232,15 @@ describe('API Mocking and Integration', () => {
         <QueryClientProvider client={new QueryClient()}>
           <MockDashboard />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
   });
 
-  test('handles API errors gracefully', async () => {
+  test("handles API errors gracefully", async () => {
     const mockFetch = jest.fn(() =>
-      Promise.reject(new Error('API Error'))
+      Promise.reject(new Error("API Error")),
     );
     global.fetch = mockFetch;
 
@@ -247,7 +249,7 @@ describe('API Mocking and Integration', () => {
         <QueryClientProvider client={new QueryClient()}>
           <MockDashboard />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(container).toBeInTheDocument();
@@ -257,46 +259,48 @@ describe('API Mocking and Integration', () => {
 /**
  * Test Suite: Form Input Validation
  */
-describe('Form Input Handling', () => {
-  test('accepts numeric input for revenue', () => {
+describe("Form Input Handling", () => {
+  test("accepts numeric input for revenue", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const revenueInput = screen.getByTestId('revenue-input') as HTMLInputElement;
-    fireEvent.change(revenueInput, { target: { value: '100000' } });
-    expect(revenueInput.value).toBe('100000');
+    const revenueInput = screen.getByTestId("revenue-input") as HTMLInputElement;
+    fireEvent.change(revenueInput, { target: { value: "100000" } });
+    expect(revenueInput.value).toBe("100000");
   });
 
-  test('accepts numeric input for costs', () => {
+  test("accepts numeric input for costs", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const costsInput = screen.getByTestId('costs-input') as HTMLInputElement;
-    fireEvent.change(costsInput, { target: { value: '10000' } });
-    expect(costsInput.value).toBe('10000');
+    const costsInput = screen.getByTestId("costs-input") as HTMLInputElement;
+    fireEvent.change(costsInput, { target: { value: "10000" } });
+    expect(costsInput.value).toBe("10000");
   });
 
-  test('can select different tax types', () => {
+  test("can select different tax types", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const taxTypeSelect = screen.getByTestId('tax-type-select') as HTMLSelectElement;
-    const options = taxTypeSelect.querySelectorAll('option');
+    const taxTypeSelect = screen.getByTestId(
+      "tax-type-select",
+    ) as HTMLSelectElement;
+    const options = taxTypeSelect.querySelectorAll("option");
     expect(options.length).toBeGreaterThan(1);
   });
 });
@@ -304,45 +308,47 @@ describe('Form Input Handling', () => {
 /**
  * Test Suite: Component Interaction
  */
-describe('User Interactions', () => {
-  test('button click events are handled', () => {
+describe("User Interactions", () => {
+  test("button click events are handled", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockProjects />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const createBtn = screen.getByTestId('create-project-btn');
+    const createBtn = screen.getByTestId("create-project-btn");
     expect(() => fireEvent.click(createBtn)).not.toThrow();
   });
 
-  test('input changes are tracked', () => {
+  test("input changes are tracked", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const revenueInput = screen.getByTestId('revenue-input') as HTMLInputElement;
-    fireEvent.change(revenueInput, { target: { value: '75000' } });
-    expect(revenueInput.value).toBe('75000');
+    const revenueInput = screen.getByTestId("revenue-input") as HTMLInputElement;
+    fireEvent.change(revenueInput, { target: { value: "75000" } });
+    expect(revenueInput.value).toBe("75000");
   });
 
-  test('dropdown selections are tracked', () => {
+  test("dropdown selections are tracked", () => {
     render(
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <MockTaxCalculator />
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    const taxTypeSelect = screen.getByTestId('tax-type-select') as HTMLSelectElement;
-    fireEvent.change(taxTypeSelect, { target: { value: 'Business' } });
-    expect(taxTypeSelect.value).toBe('Business');
+    const taxTypeSelect = screen.getByTestId(
+      "tax-type-select",
+    ) as HTMLSelectElement;
+    fireEvent.change(taxTypeSelect, { target: { value: "Business" } });
+    expect(taxTypeSelect.value).toBe("Business");
   });
 });
