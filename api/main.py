@@ -5,12 +5,14 @@ RESTful API for commission-based income splitting with tax calculations.
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 import sys
 import os
 import csv
 import io
 from datetime import datetime
+from pathlib import Path
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from dotenv import load_dotenv
 
@@ -59,6 +61,23 @@ async def startup_event():
         print("✓ Database initialized and seeded successfully")
     except Exception as e:
         print(f"⚠ Database initialization warning: {e}")
+
+
+# ===== Serve React Frontend Static Files =====
+
+# Get the frontend build directory
+frontend_build_dir = Path(__file__).parent.parent / "frontend" / "build"
+
+# Mount static files (CSS, JS, images, etc.) if the build directory exists
+if frontend_build_dir.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(frontend_build_dir / "static")),
+        name="static",
+    )
+    print(f"✓ Serving React static files from {frontend_build_dir}")
+else:
+    print(f"⚠ Frontend build directory not found at {frontend_build_dir}")
 
 
 # ===== Project/Record Endpoints =====
@@ -1897,73 +1916,26 @@ async def get_tax_optimization(
 # ===== Root Endpoint =====
 
 
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """API documentation homepage."""
-    return HTMLResponse(
-        """
-    <html>
-        <head>
-            <title>MoneySplit API</title>
-            <style>
-                body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-                h1 { color: #2c3e50; }
-                a { color: #3498db; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                .endpoint { background: #ecf0f1; padding: 10px; margin: 10px 0; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1>🤑 MoneySplit API</h1>
-            <p>RESTful API for commission-based income splitting with tax calculations.</p>
-
-            <h2>📚 Documentation</h2>
-            <div class="endpoint">
-                <a href="/docs" target="_blank">Interactive API Documentation (Swagger UI)</a>
-            </div>
-            <div class="endpoint">
-                <a href="/redoc" target="_blank">Alternative API Documentation (ReDoc)</a>
-            </div>
-
-            <h2>🚀 Quick Start</h2>
-            <p>Base URL: <code>http://localhost:8000/api</code></p>
-
-            <h3>Main Endpoints:</h3>
-            <ul>
-                <li><code>POST /api/projects</code> - Create new project</li>
-                <li><code>GET /api/records</code> - Get records</li>
-                <li><code>GET /api/tax-brackets</code> - Get tax brackets</li>
-                <li><code>GET /api/reports/statistics</code> - Get statistics</li>
-            </ul>
-
-            <h3>Visualization Endpoints:</h3>
-            <ul>
-                <li><code>GET /api/visualizations/revenue-summary</code> - Revenue summary chart</li>
-                <li><code>GET /api/visualizations/monthly-trends</code> - Monthly trends dashboard</li>
-                <li><code>GET /api/visualizations/work-distribution</code> - Work distribution analysis</li>
-                <li><code>GET /api/visualizations/tax-comparison</code> - Tax strategy comparison</li>
-                <li><code>GET /api/visualizations/person-performance/{name}</code> - Person timeline</li>
-                <li><code>GET /api/visualizations/project-profitability</code> - Profitability analysis</li>
-            </ul>
-
-            <h3>PDF Export Endpoints:</h3>
-            <ul>
-                <li><code>GET /api/export/record/{record_id}/pdf</code> - Export project to PDF</li>
-                <li><code>GET /api/export/summary/pdf</code> - Export summary to PDF</li>
-                <li><code>GET /api/export/forecast/pdf</code> - Export forecast to PDF</li>
-            </ul>
-
-            <h3>Forecasting Endpoints:</h3>
-            <ul>
-                <li><code>GET /api/forecast/revenue?months=3</code> - Revenue predictions</li>
-                <li><code>GET /api/forecast/comprehensive</code> - Full forecast with insights</li>
-                <li><code>GET /api/forecast/tax-optimization</code> - Tax optimization analysis</li>
-                <li><code>GET /api/forecast/trends</code> - Trend analysis</li>
-            </ul>
-        </body>
-    </html>
-    """
-    )
+@app.get("/")
+async def serve_react_app():
+    """Serve the React frontend application."""
+    index_file = frontend_build_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        # Fallback if frontend not built
+        return HTMLResponse(
+            """
+            <html>
+                <head><title>MoneySplit</title></head>
+                <body>
+                    <h1>MoneySplit API</h1>
+                    <p>Frontend not built. Please run: <code>cd frontend && npm run build</code></p>
+                    <p><a href="/docs">View API Documentation</a></p>
+                </body>
+            </html>
+            """
+        )
 
 
 @app.get("/api/forecast/tax-impact")
@@ -2606,6 +2578,27 @@ async def get_metrics():
         content=generate_latest(),
         media_type=CONTENT_TYPE_LATEST,
     )
+
+
+# ===== Catch-all route for React Router =====
+# This MUST be the last route defined
+
+
+@app.get("/{full_path:path}")
+async def serve_react_router(full_path: str):
+    """
+    Catch-all route to serve React app for client-side routing.
+    This handles all routes that don't match API endpoints, allowing React Router to work.
+    """
+    # Don't catch API routes, docs, or other special endpoints
+    if full_path.startswith(("api/", "docs", "redoc", "openapi.json", "health", "metrics")):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    index_file = frontend_build_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        raise HTTPException(status_code=404, detail="Frontend not built")
 
 
 if __name__ == "__main__":
