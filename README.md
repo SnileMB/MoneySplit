@@ -214,6 +214,156 @@ curl -X POST "http://localhost:8000/api/projects" \
 
 ---
 
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_api.py
+
+# Run tests with coverage
+pytest --cov=. --cov-report=html --cov-report=term
+```
+
+### Test Coverage
+
+The project includes 85+ tests covering:
+- **Unit Tests**: Tax calculation, work share distribution, input validation
+- **API Integration Tests**: All CRUD operations, reports, forecasting, visualizations
+- **Database Tests**: CRUD operations, foreign keys, aggregations
+- **Edge Case Tests**: Boundary values, invalid inputs, special characters
+
+**Current Coverage**: 32% (expanding in progress)
+**Target Coverage**: 70%+
+
+View coverage reports:
+```bash
+# Generate HTML report
+pytest --cov=. --cov-report=html
+
+# Open in browser
+open htmlcov/index.html
+```
+
+### Code Quality Tools
+
+```bash
+# Format code with Black
+black . --exclude="node_modules|.git|htmlcov"
+
+# Check formatting
+black --check .
+
+# Lint with flake8
+flake8 api/ Logic/ DB/ --max-line-length=120
+
+# Type check with mypy
+mypy api/ --ignore-missing-imports
+
+# Security scan with bandit
+bandit -r api/ Logic/ DB/
+```
+
+---
+
+## 🐳 Docker
+
+### Build Docker Images
+
+```bash
+# Backend API image
+docker build -t moneysplit:latest .
+
+# Frontend image
+docker build -f Dockerfile.frontend -t moneysplit-frontend:latest .
+```
+
+### Run with Docker Compose
+
+```bash
+# Start all services (API, Frontend, Prometheus, Grafana)
+docker-compose up
+
+# Build before starting
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+```
+
+**Services:**
+- **Backend API**: http://localhost:8000
+- **Frontend**: http://localhost:3000
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001 (admin/admin)
+
+### Docker Configuration
+
+- **Multi-stage builds** for minimal image size
+- **Non-root user** execution for security
+- **Health checks** for all containers
+- **Volume persistence** for data and logs
+- **Custom networking** for service communication
+
+---
+
+## 🔍 Health Checks & Monitoring
+
+### Health Check Endpoints
+
+```bash
+# Basic health status
+curl http://localhost:8000/health
+
+# Readiness check (includes database)
+curl http://localhost:8000/health/ready
+
+# Detailed status (system info, metrics)
+curl http://localhost:8000/health/detailed
+```
+
+### Prometheus Metrics
+
+Access metrics at: `http://localhost:8000/metrics`
+
+**Available Metrics:**
+- `moneysplit_requests_total` - Total requests by endpoint/method/status
+- `moneysplit_request_duration_seconds` - Request latency
+- `moneysplit_errors_total` - Error count by type
+- `moneysplit_projects_created_total` - Projects created
+- `moneysplit_tax_calculations_total` - Tax calculations by country/type
+- `moneysplit_db_query_duration_seconds` - Database query latency
+- `moneysplit_db_records_total` - Total database records
+- `moneysplit_active_requests` - Currently active requests
+
+### Grafana Dashboards
+
+1. Open Grafana: http://localhost:3001
+2. Login with `admin` / `admin`
+3. Import dashboards from `/monitoring` directory
+4. View real-time metrics and trends
+
+### Prometheus Configuration
+
+Prometheus is configured to scrape metrics from the API every 10 seconds.
+
+Config file: `monitoring/prometheus.yml`
+
+---
+
 ## 📊 API Endpoints
 
 ### Projects
@@ -285,6 +435,193 @@ See [TESTING.md](TESTING.md) for:
 - How to run tests with coverage
 - Adding new tests
 - CI/CD integration examples
+
+---
+
+## 🚀 CI/CD Pipeline
+
+### Automated Workflow
+
+The project uses GitHub Actions for continuous integration and testing.
+
+**Workflow triggers:**
+- Push to `main`, `feature/*`, or `assignment-*` branches
+- Pull requests to `main`
+
+**Workflow jobs:**
+1. **Backend Quality** - Python 3.8, 3.9, 3.10, 3.11 matrix
+   - Install dependencies with caching
+   - Black formatting checks
+   - Flake8 linting
+   - Mypy type checking
+   - Pytest execution
+   - Coverage measurement (fails if < 70%)
+
+2. **Frontend Quality** - Node 16.x, 18.x, 20.x matrix
+   - Install dependencies with caching
+   - ESLint linting (strict)
+   - React build
+   - Jest tests
+
+3. **Docker Build**
+   - Build backend image
+   - Build frontend image
+
+4. **Security Scan**
+   - Bandit vulnerability scanning
+   - Report generation
+
+5. **Status Check**
+   - Consolidate all job results
+
+**Artifacts uploaded:**
+- Coverage HTML reports
+- Security scan reports
+- Frontend build artifacts
+
+View workflow status: `.github/workflows/ci.yml`
+
+---
+
+## 🔧 Development Setup
+
+### Prerequisites
+
+- Python 3.8+
+- Node.js 16+
+- npm or yarn
+- Git
+
+### Local Development
+
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/your-username/MoneySplit.git
+   cd MoneySplit
+   ```
+
+2. **Set up Python environment**
+   ```bash
+   # Create virtual environment (optional)
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+   # Install dependencies
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+
+3. **Set up Node environment**
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+
+4. **Create environment file**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+5. **Run application**
+   ```bash
+   # Terminal 1: Backend API
+   python3 -m uvicorn api.main:app --reload
+
+   # Terminal 2: Frontend
+   cd frontend && npm start
+   ```
+
+### Code Style & Quality
+
+```bash
+# Format code
+black .
+
+# Check formatting
+black --check .
+
+# Lint code
+flake8 api/ Logic/ DB/
+
+# Type check
+mypy api/
+
+# Security scan
+bandit -r api/ Logic/ DB/
+
+# Run tests
+pytest -v
+
+# Coverage report
+pytest --cov=. --cov-report=html
+```
+
+### Environment Variables
+
+See `.env.example` for all available variables:
+- `API_HOST`, `API_PORT` - API configuration
+- `FRONTEND_HOST`, `FRONTEND_PORT` - Frontend configuration
+- `DB_PATH` - Database location
+- `LOG_LEVEL`, `LOG_FILE` - Logging configuration
+- `METRICS_ENABLED` - Enable Prometheus metrics
+- `ENVIRONMENT` - development/production
+
+---
+
+## 📦 Deployment
+
+### Docker Deployment
+
+1. **Build images**
+   ```bash
+   docker build -t moneysplit:latest .
+   docker build -f Dockerfile.frontend -t moneysplit-frontend:latest .
+   ```
+
+2. **Push to registry**
+   ```bash
+   docker tag moneysplit:latest your-registry/moneysplit:latest
+   docker push your-registry/moneysplit:latest
+   ```
+
+3. **Deploy with Docker Compose**
+   ```bash
+   # Use docker-compose.yml for full stack
+   docker-compose up -d
+   ```
+
+### Cloud Deployment (Azure)
+
+Azure deployment configuration is managed through:
+- GitHub Secrets: `AZURE_CREDENTIALS_FOR_GITHUB_ACTIONS`, `SERVICE_PRINCIPALS_CREDENTIALS`
+- GitHub Actions workflow integration
+- Container registry deployment
+
+For detailed deployment instructions, see `DEPLOYMENT.md`
+
+### Health Checks
+
+All containers include health checks:
+
+```bash
+# Check API health
+curl http://localhost:8000/health
+
+# Check readiness
+curl http://localhost:8000/health/ready
+
+# Check detailed status
+curl http://localhost:8000/health/detailed
+```
+
+### Monitoring in Production
+
+- **Prometheus** collects metrics from all services
+- **Grafana** provides dashboard visualization
+- **Health endpoints** available at `/health/*`
+- **Structured logging** in JSON format
 
 ---
 
