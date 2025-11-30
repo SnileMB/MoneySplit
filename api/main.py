@@ -50,6 +50,17 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and seed default tax brackets on application startup."""
+    try:
+        setup.init_db()
+        setup.seed_default_brackets()
+        print("✓ Database initialized and seeded successfully")
+    except Exception as e:
+        print(f"⚠ Database initialization warning: {e}")
+
+
 # ===== Project/Record Endpoints =====
 
 
