@@ -5,6 +5,10 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
 } from "recharts";
 
+// Use relative path in production, localhost in development
+const API_BASE_URL = process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000/api");
+
 interface AnalyticsSummary {
   total_projects: number;
   total_revenue: number;
@@ -57,9 +61,9 @@ const Analytics: React.FC = () => {
     const loadAnalytics = async () => {
       try {
         const [summaryRes, strategyRes, timelineRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/analytics/summary"),
-          axios.get("http://localhost:8000/api/analytics/strategy-effectiveness"),
-          axios.get("http://localhost:8000/api/analytics/timeline"),
+          axios.get(`${API_BASE_URL}/analytics/summary`),
+          axios.get(`${API_BASE_URL}/analytics/strategy-effectiveness`),
+          axios.get(`${API_BASE_URL}/analytics/timeline`),
         ]);
 
         setSummary(summaryRes.data);
@@ -92,7 +96,7 @@ const Analytics: React.FC = () => {
       const formData = new FormData();
       formData.append("file", importFile);
 
-      const response = await axios.post("http://localhost:8000/api/import-csv", formData, {
+      const response = await axios.post(`${API_BASE_URL}/import-csv`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 60000,
       });
@@ -102,9 +106,9 @@ const Analytics: React.FC = () => {
 
       // Reload analytics after import
       const [summaryRes, strategyRes, timelineRes] = await Promise.all([
-        axios.get("http://localhost:8000/api/analytics/summary"),
-        axios.get("http://localhost:8000/api/analytics/strategy-effectiveness"),
-        axios.get("http://localhost:8000/api/analytics/timeline"),
+        axios.get(`${API_BASE_URL}/analytics/summary`),
+        axios.get(`${API_BASE_URL}/analytics/strategy-effectiveness`),
+        axios.get(`${API_BASE_URL}/analytics/timeline`),
       ]);
       setSummary(summaryRes.data);
       setStrategies(strategyRes.data.strategies);
@@ -147,7 +151,7 @@ const Analytics: React.FC = () => {
         </div>
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
           <a
-            href="http://localhost:8000/api/export-csv"
+            href={`${API_BASE_URL}/export-csv`}
             download
             className="btn btn-primary"
             style={{ textDecoration: "none", display: "inline-block" }}
@@ -155,7 +159,7 @@ const Analytics: React.FC = () => {
             📥 Export CSV
           </a>
           <a
-            href="http://localhost:8000/api/export-json"
+            href={`${API_BASE_URL}/export-json`}
             download
             className="btn btn-primary"
             style={{ textDecoration: "none", display: "inline-block", background: "#764ba2" }}
@@ -163,7 +167,7 @@ const Analytics: React.FC = () => {
             📥 Export JSON
           </a>
           <a
-            href="http://localhost:8000/api/export/forecast/pdf?current_revenue=100000&growth_rate=0.1&quarters=4&country=US"
+            href={`${API_BASE_URL}/export/forecast/pdf?current_revenue=100000&growth_rate=0.1&quarters=4&country=US`}
             download
             className="btn btn-primary"
             style={{ textDecoration: "none", display: "inline-block", background: "#e53e3e" }}

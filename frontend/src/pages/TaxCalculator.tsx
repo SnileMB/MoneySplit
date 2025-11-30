@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+// Use relative path in production, localhost in development
+const API_BASE_URL = process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000/api");
+
 interface Strategy {
   strategy_name: string;
   gross_income: number;
@@ -75,7 +79,7 @@ const TaxCalculator: React.FC<TaxCalculatorProps> = ({ onCreateProject }) => {
           params.state = state;
         }
 
-        const response = await axios.get<OptimalResult>("http://localhost:8000/api/optimal-strategy", {
+        const response = await axios.get<OptimalResult>(`${API_BASE_URL}/optimal-strategy`, {
           params,
         });
         setResult(response.data);
