@@ -275,6 +275,104 @@ bandit -r api/ Logic/ DB/
 
 ---
 
+## 📝 Using Makefile
+
+All common development, testing, and deployment tasks can be run using the convenient Makefile commands:
+
+### Quick Start
+
+```bash
+# View all available commands
+make help
+
+# Install dependencies
+make setup
+
+# Run backend
+make backend
+
+# Run frontend
+make frontend
+```
+
+### Testing
+
+```bash
+# Run all tests with coverage report
+make test
+
+# Run tests without coverage (faster)
+make test-fast
+
+# Run only backend tests
+make test-backend
+
+# Run only frontend tests
+make test-frontend
+
+# Generate HTML coverage report
+make coverage
+```
+
+### Code Quality
+
+```bash
+# Lint code (pylint, flake8, ESLint)
+make lint
+
+# Format code (black, prettier)
+make format
+
+# Check database connection
+make db-status
+```
+
+### Docker Convenience Commands
+
+```bash
+# Build Docker images
+make docker-build
+
+# Start all containers
+make docker-up
+
+# Stop containers
+make docker-down
+
+# View container logs
+make docker-logs
+
+# Show running containers
+make docker-ps
+
+# Rebuild and restart everything
+make docker-rebuild
+
+# Clean Docker images and volumes
+make docker-clean
+```
+
+### Health & Monitoring
+
+```bash
+# Check API health endpoints
+make health-check
+
+# View Prometheus metrics
+make metrics
+```
+
+### Deployment
+
+```bash
+# Deploy to Heroku
+make deploy-heroku
+```
+
+All Makefile commands are fully documented with `make help`.
+
+---
+
 ## 🐳 Docker
 
 ### Build Docker Images
