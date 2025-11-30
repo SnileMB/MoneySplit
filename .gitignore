@@ -59,8 +59,7 @@ frontend/.env.production.local
 Claude/
 *.md.backup
 
-# Documentation (keep only README.md)
-ARCHITECTURE.md
-TESTING.md
-API_README.md
-QUICKSTART.md
+# Documentation
+# Keep all documentation files created for Assignment 2
+# REMOVED: TESTING.md, DEPLOYMENT.md, MONITORING.md (now part of project)
+# API_README.md and QUICKSTART.md (old files to ignore)
