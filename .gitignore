@@ -66,3 +66,6 @@ Claude/
 # Keep all documentation files created for Assignment 2
 # REMOVED: TESTING.md, DEPLOYMENT.md, MONITORING.md (now part of project)
 # API_README.md and QUICKSTART.md (old files to ignore)
+codebase.md
+codebase.html
+codebase.pdf
