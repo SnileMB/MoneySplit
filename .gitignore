@@ -44,6 +44,10 @@ build/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+.tox/
+*.cover
+.hypothesis/
 
 # Frontend
 frontend/node_modules/
