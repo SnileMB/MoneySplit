@@ -1,0 +1,25 @@
+[run]
+omit =
+    Menus/*
+    __main__.py
+    config.py
+    logging_config.py
+    add_historical_data.py
+    generate_comprehensive_data.py
+    run_all_tests.py
+    test_*.py
+    test_phase*.py
+    Logic/ProgramBackend.py
+    DB/reset.py
+    DB/migrate_add_distribution_fields.py
+    Logic/tax_calculator.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstract
