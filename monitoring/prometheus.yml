@@ -28,7 +28,7 @@ scrape_configs:
   # MoneySplit API metrics
   - job_name: 'moneysplit-api'
     static_configs:
-      - targets: ['localhost:8000']
+      - targets: ['api:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
@@ -36,7 +36,7 @@ scrape_configs:
   # Grafana metrics (if running)
   - job_name: 'grafana'
     static_configs:
-      - targets: ['localhost:3000']
+      - targets: ['grafana:3000']
     scrape_interval: 30s
 
   # Optional: Node Exporter for system metrics
