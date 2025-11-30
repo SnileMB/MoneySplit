@@ -316,6 +316,77 @@ seed_default_brackets()
 # -----------------------------
 
 
+def insert_record(
+    tax_origin: str,
+    tax_option: str,
+    revenue: float,
+    total_costs: float,
+    tax_amount: float,
+    net_income_group: float,
+    net_income_per_person: float,
+    num_people: int,
+    group_income: float,
+    individual_income: float,
+    distribution_method: str = "N/A",
+    salary_amount: float = 0,
+):
+    """Insert a new tax record into the database."""
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO tax_records (
+            num_people, revenue, total_costs, group_income, individual_income,
+            tax_origin, tax_option, tax_amount,
+            net_income_per_person, net_income_group,
+            distribution_method, salary_amount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """,
+        (
+            num_people,
+            revenue,
+            total_costs,
+            group_income,
+            individual_income,
+            tax_origin,
+            tax_option,
+            tax_amount,
+            net_income_per_person,
+            net_income_group,
+            distribution_method,
+            salary_amount,
+        ),
+    )
+    record_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return record_id
+
+
+def insert_person(
+    record_id: int,
+    name: str,
+    work_share: float,
+    gross_income: float,
+    tax_paid: float,
+    net_income: float,
+):
+    """Insert a new person into the database."""
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (record_id, name, work_share, gross_income, tax_paid, net_income),
+    )
+    person_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return person_id
+
+
 def save_to_db():
     """Save the current ProgramBackend calculation to tax_records."""
     pb = _pb()
@@ -671,6 +742,24 @@ def get_tax_brackets(country: str, tax_type: str, include_id: bool = False):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+
+def add_tax_bracket(country: str, tax_type: str, income_limit: float, rate: float):
+    """Add a single tax bracket to the database."""
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO tax_brackets (country, tax_type, income_limit, rate)
+        VALUES (?, ?, ?, ?)
+    """,
+        (country, tax_type, income_limit, rate),
+    )
+    bracket_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    print(f"✅ Added tax bracket {bracket_id} for {country} {tax_type}")
+    return bracket_id
 
 
 def add_tax_brackets_from_csv(country: str, tax_type: str, filepath: str):
