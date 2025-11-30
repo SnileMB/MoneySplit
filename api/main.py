@@ -12,6 +12,10 @@ import csv
 import io
 from datetime import datetime
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -2538,4 +2542,9 @@ async def get_metrics():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Load configuration from environment variables with defaults
+    host = os.getenv("API_HOST", "0.0.0.0")
+    port = int(os.getenv("API_PORT", "8000"))
+    debug = os.getenv("API_DEBUG", "False").lower() == "true"
+
+    uvicorn.run(app, host=host, port=port, debug=debug)
