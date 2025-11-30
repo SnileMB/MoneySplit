@@ -594,14 +594,40 @@ See `.env.example` for all available variables:
    docker-compose up -d
    ```
 
-### Cloud Deployment (Azure)
+### Cloud Deployment
+
+#### Heroku (Recommended for Quick Deployment)
+
+```bash
+# 1. Login to Heroku
+heroku login
+
+# 2. Create Heroku app
+heroku create moneysplit-app
+
+# 3. Deploy
+git push heroku main
+
+# 4. Initialize database
+heroku run python DB/setup.py
+
+# 5. View logs
+heroku logs --tail
+
+# 6. Open app
+heroku open
+```
+
+For detailed Heroku instructions, see `HEROKU_DEPLOYMENT.md`
+
+#### Azure Deployment
 
 Azure deployment configuration is managed through:
 - GitHub Secrets: `AZURE_CREDENTIALS_FOR_GITHUB_ACTIONS`, `SERVICE_PRINCIPALS_CREDENTIALS`
 - GitHub Actions workflow integration
 - Container registry deployment
 
-For detailed deployment instructions, see `DEPLOYMENT.md`
+For detailed Azure deployment instructions, see `DEPLOYMENT.md`
 
 ### Health Checks
 
