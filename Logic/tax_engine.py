@@ -104,7 +104,9 @@ CANADA_ONTARIO_BRACKETS = [
 ]
 
 
-def calculate_tax_from_brackets(income: float, brackets: list[tuple[float, float]]) -> float:
+def calculate_tax_from_brackets(
+    income: float, brackets: list[tuple[float, float]]
+) -> float:
     """
     Calculate tax from progressive tax brackets using standard algorithm.
 
@@ -179,7 +181,9 @@ def calculate_self_employment_tax(income: float, country: str) -> dict:
     }
 
 
-def apply_standard_deduction(income: float, country: str, state: Optional[str] = None) -> float:
+def apply_standard_deduction(
+    income: float, country: str, state: Optional[str] = None
+) -> float:
     """
     Apply standard deduction to reduce taxable income.
     Includes state deduction if applicable.
@@ -656,7 +660,11 @@ def calculate_project_taxes(
 
 
 def get_optimal_strategy(
-    revenue: float, costs: float, num_people: int, country: str, state: Optional[str] = None
+    revenue: float,
+    costs: float,
+    num_people: int,
+    country: str,
+    state: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Calculate all possible tax strategies and return the optimal one.

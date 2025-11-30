@@ -64,7 +64,10 @@ def collect_tax_configuration() -> Tuple[str, str, int, int]:
         >>> print(f"Tax: {tax_type} in {country}")
     """
     tax_origin = validators.safe_int_input(
-        "Enter the country (1 for US, 2 for Spain): ", "Country", min_value=1, max_value=2
+        "Enter the country (1 for US, 2 for Spain): ",
+        "Country",
+        min_value=1,
+        max_value=2,
     )
     tax_option = validators.safe_int_input(
         "Enter tax option (1 for individual, 2 for business): ",
@@ -146,7 +149,11 @@ def calculate_project_tax(
 
 
 def display_tax_results(
-    tax: float, tax_option: int, individual_income: float, group_income: float, num_people: int
+    tax: float,
+    tax_option: int,
+    individual_income: float,
+    group_income: float,
+    num_people: int,
 ) -> None:
     """
     Display formatted tax calculation results to console.
@@ -243,7 +250,11 @@ def calculate_person_financials(
         tax_paid = tax * work_share
 
     net_income = gross_income - tax_paid
-    return {"gross_income": gross_income, "tax_paid": tax_paid, "net_income": net_income}
+    return {
+        "gross_income": gross_income,
+        "tax_paid": tax_paid,
+        "net_income": net_income,
+    }
 
 
 def display_project_summary(people_data: List[Dict[str, Any]], record_id: int) -> None:

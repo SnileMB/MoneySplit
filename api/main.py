@@ -2529,7 +2529,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 
@@ -2549,14 +2549,14 @@ async def readiness_probe():
         return {
             "ready": True,
             "database": "connected",
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
     except Exception as e:
         return {
             "ready": False,
             "database": "disconnected",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }, 503
 
 
@@ -2567,10 +2567,11 @@ async def liveness_probe():
     Checks if the application process is alive and running.
     """
     import time
+
     return {
         "live": True,
         "uptime_seconds": int(time.time()),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
 

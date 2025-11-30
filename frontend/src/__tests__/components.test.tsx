@@ -299,7 +299,7 @@ describe("Form Input Handling", () => {
 
     const taxTypeSelect = screen.getByTestId("tax-type-select");
     expect(taxTypeSelect).toBeInTheDocument();
-    const options = taxTypeSelect.querySelectorAll("option");
+    const options = screen.getAllByRole("option");
     expect(options.length).toBeGreaterThan(1);
   });
 });
