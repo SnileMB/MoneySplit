@@ -4,6 +4,7 @@ import sys
 import csv
 import os
 from datetime import datetime
+from urllib.parse import urlparse
 
 # Editable fields at project level
 ALLOWED_FIELDS = {
@@ -16,6 +17,19 @@ ALLOWED_FIELDS = {
     "salary_amount"
     # other fields are derived → recalculated automatically
 }
+
+# -----------------------------
+# Database Configuration
+# -----------------------------
+
+# Determine which database to use
+DATABASE_URL = os.environ.get("DATABASE_URL")
+USE_POSTGRES = DATABASE_URL is not None
+
+# Fix Heroku DATABASE_URL (they use postgres:// but psycopg2 needs postgresql://)
+if USE_POSTGRES and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 
 # -----------------------------
 # Init
@@ -32,17 +46,92 @@ def _pb():
     return m
 
 
+class DatabaseCursor:
+    """Wrapper cursor that handles SQLite vs PostgreSQL placeholder differences."""
+
+    def __init__(self, cursor, is_postgres):
+        self._cursor = cursor
+        self._is_postgres = is_postgres
+
+    def execute(self, query, params=None):
+        """Execute query, converting ? to %s for PostgreSQL."""
+        if self._is_postgres and params:
+            # Convert ? placeholders to %s for PostgreSQL
+            query = query.replace("?", "%s")
+        return self._cursor.execute(query, params) if params else self._cursor.execute(query)
+
+    def executemany(self, query, params_list):
+        """Execute many, converting ? to %s for PostgreSQL."""
+        if self._is_postgres:
+            query = query.replace("?", "%s")
+        return self._cursor.executemany(query, params_list)
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+    def fetchmany(self, size=None):
+        return self._cursor.fetchmany(size) if size else self._cursor.fetchmany()
+
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
+    def close(self):
+        return self._cursor.close()
+
+
+class DatabaseConnection:
+    """Wrapper connection that returns DatabaseCursor."""
+
+    def __init__(self, conn, is_postgres):
+        self._conn = conn
+        self._is_postgres = is_postgres
+
+    def cursor(self):
+        return DatabaseCursor(self._conn.cursor(), self._is_postgres)
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        return self._conn.close()
+
+    def execute(self, query, params=None):
+        """Convenience method for one-off queries."""
+        cursor = self.cursor()
+        return cursor.execute(query, params)
+
+
 def get_conn():
-    """Get a SQLite connection with foreign keys enabled."""
-    # Use test database when running tests
-    db_name = (
-        os.environ.get("TEST_DB", "example.db")
-        if os.environ.get("TESTING")
-        else "example.db"
-    )
-    conn = sqlite3.connect(db_name)
-    conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
+    """Get a database connection (PostgreSQL in production, SQLite in development)."""
+    if USE_POSTGRES:
+        # Use PostgreSQL in production (Heroku)
+        import psycopg2
+        import psycopg2.extras
+
+        conn = psycopg2.connect(DATABASE_URL)
+        return DatabaseConnection(conn, is_postgres=True)
+    else:
+        # Use SQLite in development
+        db_name = (
+            os.environ.get("TEST_DB", "example.db")
+            if os.environ.get("TESTING")
+            else "example.db"
+        )
+        conn = sqlite3.connect(db_name)
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.row_factory = sqlite3.Row  # Allow dict-like access
+        return DatabaseConnection(conn, is_postgres=False)
 
 
 def init_db():
@@ -50,53 +139,104 @@ def init_db():
     conn = get_conn()
     cursor = conn.cursor()
 
-    cursor.execute(
+    if USE_POSTGRES:
+        # PostgreSQL syntax
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tax_records (
+              id SERIAL PRIMARY KEY,
+              num_people INTEGER,
+              revenue REAL,
+              total_costs REAL,
+              group_income REAL,
+              individual_income REAL,
+              tax_origin TEXT,
+              tax_option TEXT,
+              tax_amount REAL,
+              net_income_per_person REAL,
+              net_income_group REAL,
+              distribution_method TEXT DEFAULT 'N/A',
+              salary_amount REAL DEFAULT 0,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         """
-        CREATE TABLE IF NOT EXISTS tax_records (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          num_people INTEGER,
-          revenue REAL,
-          total_costs REAL,
-          group_income REAL,
-          individual_income REAL,
-          tax_origin TEXT,
-          tax_option TEXT,
-          tax_amount REAL,
-          net_income_per_person REAL,
-          net_income_group REAL,
-          distribution_method TEXT DEFAULT 'N/A',
-          salary_amount REAL DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """
-    )
 
-    cursor.execute(
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS people (
+              id SERIAL PRIMARY KEY,
+              record_id INTEGER,
+              name TEXT NOT NULL,
+              work_share REAL,
+              gross_income REAL,
+              tax_paid REAL,
+              net_income REAL,
+              FOREIGN KEY (record_id) REFERENCES tax_records(id) ON DELETE CASCADE
+            )
         """
-        CREATE TABLE IF NOT EXISTS people (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          record_id INTEGER,
-          name TEXT NOT NULL,
-          work_share REAL,
-          gross_income REAL,
-          tax_paid REAL,
-          net_income REAL,
-          FOREIGN KEY (record_id) REFERENCES tax_records(id) ON DELETE CASCADE
         )
-    """
-    )
 
-    cursor.execute(
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tax_brackets (
+              id SERIAL PRIMARY KEY,
+              country TEXT NOT NULL,
+              tax_type TEXT NOT NULL,
+              income_limit REAL NOT NULL,
+              rate REAL NOT NULL
+            )
         """
-        CREATE TABLE IF NOT EXISTS tax_brackets (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          country TEXT NOT NULL,
-          tax_type TEXT NOT NULL,
-          income_limit REAL NOT NULL,
-          rate REAL NOT NULL
         )
-    """
-    )
+    else:
+        # SQLite syntax
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tax_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              num_people INTEGER,
+              revenue REAL,
+              total_costs REAL,
+              group_income REAL,
+              individual_income REAL,
+              tax_origin TEXT,
+              tax_option TEXT,
+              tax_amount REAL,
+              net_income_per_person REAL,
+              net_income_group REAL,
+              distribution_method TEXT DEFAULT 'N/A',
+              salary_amount REAL DEFAULT 0,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS people (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              record_id INTEGER,
+              name TEXT NOT NULL,
+              work_share REAL,
+              gross_income REAL,
+              tax_paid REAL,
+              net_income REAL,
+              FOREIGN KEY (record_id) REFERENCES tax_records(id) ON DELETE CASCADE
+            )
+        """
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tax_brackets (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              country TEXT NOT NULL,
+              tax_type TEXT NOT NULL,
+              income_limit REAL NOT NULL,
+              rate REAL NOT NULL
+            )
+        """
+        )
 
     conn.commit()
     conn.close()
