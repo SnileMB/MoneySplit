@@ -17,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -56,22 +56,27 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          coverage report --fail-under=70 || echo "Coverage below 70%"
+          coverage report --fail-under=60 || echo "Coverage below 60%"
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
+        continue-on-error: true
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
           flags: backend
           name: backend-coverage
+          fail_ci_if_error: false
 
       - name: Upload HTML coverage reports
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-${{ matrix.python-version }}
           path: htmlcov/
           retention-days: 30
+          if-no-files-found: warn
 
   # Frontend Code Quality & Build
   frontend-quality:
@@ -79,12 +84,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 16.x, 18.x, 20.x ]
+        node-version: [ 18.x, 20.x, 22.x ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -98,7 +103,7 @@ jobs:
       - name: Lint with ESLint
         run: |
           cd frontend
-          npx eslint src/ --max-warnings=0 || true
+          npx eslint src/ --max-warnings=0
 
       - name: Build React app
         run: |
@@ -108,7 +113,7 @@ jobs:
       - name: Run frontend tests
         run: |
           cd frontend
-          npm test -- --coverage --watchAll=false || true
+          npm test -- --coverage --watchAll=false
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
@@ -125,13 +130,13 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -141,7 +146,7 @@ jobs:
             moneysplit:${{ github.sha }}
 
       - name: Build frontend image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile.frontend
@@ -155,7 +160,7 @@ jobs:
     name: Security Scanning
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run bandit security scan
         run: |

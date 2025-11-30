@@ -17,4 +17,4 @@ numpy>=1.20.0
 pandas>=2.0.0
 
 # Python version requirement
-# Python >= 3.8
+# Python >= 3.9 (required by pandas 2.0+)

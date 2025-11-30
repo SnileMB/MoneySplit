@@ -11,9 +11,10 @@ COPY frontend/package*.json ./
 # Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Copy source code
+# Copy all necessary files for build
 COPY frontend/src ./src
 COPY frontend/public ./public
+COPY frontend/tsconfig.json ./tsconfig.json
 
 # Build application
 RUN npm run build
