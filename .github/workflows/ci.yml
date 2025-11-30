@@ -124,9 +124,10 @@ jobs:
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ matrix.node-version }}
           path: frontend/build/
           retention-days: 7
+          if-no-files-found: warn
 
   # Docker build and push
   docker-build:
