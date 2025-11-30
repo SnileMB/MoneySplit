@@ -3,8 +3,28 @@
 **Commission-Based Income Splitting with Tax Calculations**
 
 [![CI/CD Pipeline](https://github.com/SnileMB/MoneySplit/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/SnileMB/MoneySplit/actions)
+[![Coverage](https://img.shields.io/badge/coverage-63%25-yellow)](https://github.com/SnileMB/MoneySplit)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A full-stack application for managing commission-based income splitting among team members with automatic tax calculations, forecasting, and professional reporting.
+A production-ready full-stack application for managing commission-based income splitting among team members with automatic tax calculations, forecasting, and professional reporting. Built with modern CI/CD practices, comprehensive testing, and monitoring.
+
+**Live Demo:** [https://moneysplit-app-96aca02a2d13.herokuapp.com/](https://moneysplit-app-96aca02a2d13.herokuapp.com/)
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [Testing](#-testing)
+- [CI/CD Pipeline](#-cicd-pipeline)
+- [Deployment](#-deployment)
+- [Monitoring](#-monitoring)
+- [API Documentation](#-api-documentation)
+- [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
 
 ---
 
@@ -19,7 +39,7 @@ A full-stack application for managing commission-based income splitting among te
 ### Analytics & Reporting
 - 📊 **Interactive Visualizations**: 6+ different chart types using Plotly
 - 📈 **Revenue Forecasting**: ML-powered predictions using scikit-learn
-- 💡 **Tax Optimization**: Smart recommendations for Individual vs Business tax
+- 💡 **Tax Optimization**: Smart recommendations for Individual vs Business tax structures
 - 📉 **Trend Analysis**: Revenue, cost, and profit trends with seasonality detection
 - 🎯 **Profitability Analysis**: ROI, profit margins, and project performance metrics
 
@@ -31,107 +51,399 @@ A full-stack application for managing commission-based income splitting among te
 ### Interfaces
 - 💻 **CLI Application**: Full-featured command-line interface
 - 🌐 **REST API**: FastAPI backend with 20+ endpoints
-- 🎨 **Web Frontend**: Modern React TypeScript UI
+- 🎨 **Web Frontend**: Modern React TypeScript UI with responsive design
+
+### Production Features (Assignment 2)
+- 🔄 **CI/CD Pipeline**: Automated testing, linting, and deployment via GitHub Actions
+- 🐳 **Docker Support**: Full containerization with docker-compose orchestration
+- 📊 **Monitoring**: Prometheus metrics and Grafana dashboards
+- 🏥 **Health Checks**: Comprehensive health endpoints for production readiness
+- 🔒 **Code Quality**: Black, Flake8, Mypy, and comprehensive test coverage
+- 🚀 **Cloud Deployment**: Live on Heroku with automatic deployments
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **Python 3.8+**
-- **FastAPI** - Modern REST API framework
-- **SQLite** - Database
-- **Pydantic** - Data validation
+- **Python 3.9+**
+- **FastAPI** - Modern, high-performance REST API framework
+- **SQLite** - Lightweight database for development and production
+- **Pydantic** - Data validation and settings management
 - **Plotly** - Interactive visualizations
 - **scikit-learn** - Machine learning forecasting
-- **ReportLab** - PDF generation
+- **ReportLab** - Professional PDF generation
+- **Prometheus** - Metrics and monitoring
 
 ### Frontend
 - **React 18** with TypeScript
-- **Axios** - API client
-- **Recharts** - Data visualization
-- **CSS3** - Styling
+- **Axios** - HTTP client for API communication
+- **Recharts** - Data visualization components
+- **React Router** - Client-side routing
+- **CSS3** - Modern responsive styling
+
+### DevOps & Quality
+- **GitHub Actions** - CI/CD pipeline
+- **Docker** & **docker-compose** - Containerization
+- **pytest** - Testing framework with 547+ tests
+- **Black** - Code formatting
+- **Flake8** - Linting
+- **Mypy** - Static type checking
+- **Grafana** - Monitoring dashboards
+- **Heroku** - Cloud platform deployment
 
 ---
 
-## 📦 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- npm
+- Python 3.9+
+- Node.js 18+
+- Docker & docker-compose (optional, for full stack)
 
-### Backend Setup
+### Installation
 
+#### 1. Clone Repository
 ```bash
-# Install Python dependencies
-pip3 install -r requirements.txt
-
-# Initialize database (automatically creates with default tax brackets)
-python3 -m MoneySplit
+git clone https://github.com/SnileMB/MoneySplit.git
+cd MoneySplit
 ```
 
-### Frontend Setup
-
+#### 2. Backend Setup
 ```bash
-# Navigate to frontend directory
-cd frontend
+# Install Python dependencies
+pip install -r requirements.txt
 
-# Install dependencies
-npm install
+# Database initializes automatically on first run
+```
+
+#### 3. Frontend Setup
+```bash
+cd frontend
+npm install --legacy-peer-deps
+```
+
+### Running the Application
+
+#### Option 1: Full Stack with Docker (Recommended)
+```bash
+# Start all services (API, Frontend, Prometheus, Grafana)
+docker-compose up -d
+
+# Access:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3001 (admin/admin)
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+#### Option 2: Backend API Only
+```bash
+# Run FastAPI server
+python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Access:
+# - API: http://localhost:8000
+# - Interactive Docs: http://localhost:8000/docs
+# - Health Check: http://localhost:8000/health
+```
+
+#### Option 3: Frontend Development Server
+```bash
+cd frontend
+npm start
+
+# Access: http://localhost:3000
+```
+
+#### Option 4: CLI Application
+```bash
+# Run from project root
+python -m MoneySplit
+
+# Features:
+# - Create new projects
+# - View/edit/delete records
+# - Manage tax brackets
+# - Generate reports and visualizations
+# - Export to PDF/CSV/JSON
 ```
 
 ---
 
-## 🚀 Running the Application
+## 🧪 Testing
 
-### Option 1: CLI Application
-
+### Run All Tests
 ```bash
-# Run from project root
-python3 -m MoneySplit
+# Backend tests with coverage
+pytest
+
+# With coverage report
+pytest --cov=. --cov-report=html --cov-report=term
+
+# View HTML coverage report
+open htmlcov/index.html
 ```
 
-Features:
-- Create new projects
-- View/edit/delete records
-- Manage tax brackets
-- Generate reports and visualizations
-- Export to PDF/CSV/JSON
+### Test Coverage
+- **Current Coverage**: 63% (547 tests passing)
+- **Target**: 70% (Assignment 2 requirement)
 
-### Option 2: REST API
+**Test Breakdown:**
+- **Unit Tests**: Tax calculations, validation, business logic
+- **Integration Tests**: API endpoints, database operations
+- **Edge Case Tests**: Boundary values, error handling
 
+### Frontend Tests
 ```bash
-# Start the API server
-python3 -m uvicorn api.main:app --reload
-```
-
-Access:
-- API: `http://localhost:8000`
-- Interactive Docs: `http://localhost:8000/docs`
-- Alternative Docs: `http://localhost:8000/redoc`
-
-### Option 3: Web Frontend
-
-```bash
-# In frontend directory
 cd frontend
-npm start
+npm test
+
+# With coverage
+npm test -- --coverage --watchAll=false
 ```
 
-Access: `http://localhost:3000`
+### Run Specific Test Suites
+```bash
+# API tests only
+pytest tests/test_api.py -v
 
-**Note:** Backend API must be running for frontend to work.
+# Database tests only
+pytest tests/test_database.py -v
 
-### Running Full Stack
+# Tax calculation tests
+pytest tests/test_backend_logic.py -v
+```
+
+### Code Quality Checks
+```bash
+# Format code with Black
+black api/ Logic/ DB/ tests/
+
+# Lint with Flake8
+flake8 api/ Logic/ DB/ --max-line-length=120
+
+# Type check with Mypy
+mypy api/ --ignore-missing-imports
+```
+
+---
+
+## 🚀 CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+**Triggers:**
+- Push to `main`, `feature/*`, `assignment-*` branches
+- Pull requests to `main`
+
+**Jobs:**
+
+1. **Backend Quality** (Python 3.9, 3.10, 3.11, 3.12)
+   - Install dependencies with pip caching
+   - Lint with Flake8
+   - Format check with Black
+   - Type check with Mypy
+   - Run pytest with coverage
+   - **Fail if coverage < 70%**
+   - Upload coverage reports to Codecov
+
+2. **Frontend Quality** (Node 18.x, 20.x, 22.x)
+   - Install dependencies with npm caching
+   - Lint with ESLint (max warnings = 0)
+   - Build React application
+   - Run Jest tests with coverage
+   - Upload build artifacts
+
+3. **Docker Build**
+   - Build backend Docker image
+   - Build frontend Docker image
+   - Verify images are buildable
+
+4. **Security Scanning**
+   - Run Bandit security scanner
+   - Generate vulnerability reports
+
+5. **Status Check**
+   - Consolidate all job results
+   - **Pipeline fails if any job fails**
+
+**View Pipeline:** [GitHub Actions](https://github.com/SnileMB/MoneySplit/actions)
+
+---
+
+## 📦 Deployment
+
+### Heroku Deployment (Production)
+
+**Live App:** https://moneysplit-app-96aca02a2d13.herokuapp.com/
+
+#### Automatic Deployment
+- Connected to `assignment-2` branch
+- Auto-deploys on push via Heroku dashboard
+- Uses **Node.js + Python buildpacks**
+
+#### Manual Deployment
+```bash
+# Login to Heroku
+heroku login
+
+# Add Heroku remote (if not already added)
+heroku git:remote -a moneysplit-app-96aca02a2d13
+
+# Deploy
+git push heroku assignment-2:main
+
+# View logs
+heroku logs --tail
+
+# Open app
+heroku open
+```
+
+#### Heroku Configuration
+- **Buildpacks** (in order):
+  1. `heroku/nodejs` (builds React frontend)
+  2. `heroku/python` (runs FastAPI backend)
+- **Procfile**: `web: uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+- **Python version**: 3.11 (specified in `.python-version`)
+
+### Docker Deployment
+
+#### Build Images
+```bash
+# Backend
+docker build -t moneysplit:latest .
+
+# Frontend
+docker build -f Dockerfile.frontend -t moneysplit-frontend:latest .
+```
+
+#### Run with Docker Compose
+```bash
+# Start full stack
+docker-compose up -d
+
+# Scale services
+docker-compose up -d --scale api=3
+
+# View status
+docker-compose ps
+
+# Stop all
+docker-compose down
+
+# Clean up volumes
+docker-compose down -v
+```
+
+---
+
+## 📊 Monitoring
+
+### Health Endpoints
 
 ```bash
-# Terminal 1: Start backend
-python3 -m uvicorn api.main:app --reload
+# Basic health check
+curl https://moneysplit-app-96aca02a2d13.herokuapp.com/health
 
-# Terminal 2: Start frontend
-cd frontend && npm start
+# Detailed health with component status
+curl https://moneysplit-app-96aca02a2d13.herokuapp.com/health/detailed
+
+# Readiness check
+curl https://moneysplit-app-96aca02a2d13.herokuapp.com/health/ready
+
+# Liveness check
+curl https://moneysplit-app-96aca02a2d13.herokuapp.com/health/live
 ```
+
+### Prometheus Metrics
+
+**Metrics Endpoint:** `/metrics`
+
+**Exposed Metrics:**
+- `http_requests_total` - Total HTTP requests by method, endpoint, status
+- `http_request_duration_seconds` - Request latency histogram
+- `http_requests_in_progress` - Active requests
+- `http_exceptions_total` - Exception count by type
+- `process_cpu_seconds_total` - CPU usage
+- `process_resident_memory_bytes` - Memory usage
+
+**Access Metrics:**
+```bash
+curl https://moneysplit-app-96aca02a2d13.herokuapp.com/metrics
+```
+
+### Grafana Dashboard
+
+When running with Docker Compose:
+1. Access Grafana at http://localhost:3001
+2. Login: `admin` / `admin`
+3. Pre-configured dashboard: "MoneySplit Dashboard"
+4. Datasource: Prometheus (auto-configured)
+
+**Dashboard Panels:**
+- Request rate over time
+- Error rate (4xx, 5xx)
+- Response time percentiles (P50, P95, P99)
+- Active requests gauge
+- Top endpoints by request count
+- Status code distribution
+
+### Monitoring Configuration
+
+**Files:**
+- `monitoring/prometheus.yml` - Prometheus scrape config
+- `monitoring/grafana-provisioning/` - Auto-provisioned dashboards and datasources
+- `docker-compose.yml` - Full monitoring stack orchestration
+
+See [MONITORING.md](MONITORING.md) for detailed setup instructions.
+
+---
+
+## 📖 API Documentation
+
+### Interactive Documentation
+
+**Swagger UI:** https://moneysplit-app-96aca02a2d13.herokuapp.com/docs
+**ReDoc:** https://moneysplit-app-96aca02a2d13.herokuapp.com/redoc
+
+### Key Endpoints
+
+#### Projects
+- `POST /api/projects` - Create new project with people and tax calculations
+- `GET /api/records` - Get all records (with pagination)
+- `GET /api/records/{id}` - Get specific record with people
+- `PUT /api/records/{id}` - Update record field
+- `DELETE /api/records/{id}` - Delete record and associated people
+
+#### Tax Brackets
+- `GET /api/tax-brackets` - Get tax brackets by country and type
+- `POST /api/tax-brackets` - Add custom tax bracket
+- `DELETE /api/tax-brackets/{id}` - Remove tax bracket
+
+#### Analytics
+- `GET /api/reports/statistics` - Get summary statistics
+- `GET /api/forecast/revenue` - ML-powered revenue predictions
+- `GET /api/forecast/tax-optimization` - Tax strategy recommendations
+
+#### Export
+- `GET /api/export/record/{id}/pdf` - Export project to PDF
+- `GET /api/export/summary/pdf` - Export summary report
+- `GET /api/export-csv` - Export all data to CSV
+- `GET /api/export-json` - Export all data to JSON
+
+#### Visualizations
+- `GET /api/visualizations/revenue-summary` - Revenue summary chart
+- `GET /api/visualizations/monthly-trends` - Trends dashboard
+- `GET /api/visualizations/tax-comparison` - Tax strategy comparison
 
 ---
 
@@ -139,633 +451,161 @@ cd frontend && npm start
 
 ```
 MoneySplit/
-├── DB/                         # Database layer
-│   ├── setup.py               # Database operations & queries
-│   └── reset.py               # Database maintenance
-├── Logic/                      # Business logic
-│   ├── ProgramBackend.py      # Core calculation logic
-│   ├── validators.py          # Input validation
-│   ├── forecasting.py         # ML forecasting engine
-│   └── pdf_generator.py       # PDF report generation
-├── Menus/                      # CLI interface
-│   ├── project_menu.py        # Project creation
-│   ├── db_menu.py             # Database operations
-│   ├── tax_menu.py            # Tax bracket management
-│   └── report_menu.py         # Reports & visualizations
-├── api/                        # REST API
-│   ├── main.py                # FastAPI application
-│   └── models.py              # Pydantic models
-├── frontend/                   # React frontend
+├── api/                    # FastAPI application
+│   ├── main.py            # Main API with all endpoints
+│   ├── models.py          # Pydantic models for validation
+│   ├── health.py          # Health check endpoints
+│   ├── metrics.py         # Prometheus metrics setup
+│   └── middleware.py      # Logging and error handling
+├── DB/                    # Database layer
+│   └── setup.py          # CRUD operations and schema
+├── Logic/                 # Business logic
+│   ├── tax_engine.py     # Tax calculation engine
+│   ├── forecasting.py    # ML forecasting models
+│   ├── pdf_generator.py  # PDF report generation
+│   ├── validators.py     # Input validation
+│   └── tax_comparison.py # Tax strategy comparison
+├── frontend/              # React TypeScript app
 │   ├── src/
-│   │   ├── api/
-│   │   │   └── client.ts      # API client
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx  # Dashboard page
-│   │   │   ├── Projects.tsx   # Project creation
-│   │   │   └── Reports.tsx    # Analytics
-│   │   ├── App.tsx            # Main component
-│   │   └── App.css            # Styles
+│   │   ├── pages/        # Page components
+│   │   ├── api/          # API client
+│   │   └── App.tsx       # Main app component
+│   ├── public/
 │   └── package.json
-├── reports/                    # Generated reports (auto-created)
-├── example.db                  # SQLite database
-├── requirements.txt            # Python dependencies
-├── __main__.py                # CLI entry point
-└── README.md                  # This file
+├── tests/                 # Test suite (547+ tests)
+│   ├── test_api.py       # API integration tests
+│   ├── test_backend_logic.py  # Business logic tests
+│   ├── test_database.py  # Database tests
+│   └── test_validators.py    # Validation tests
+├── monitoring/            # Monitoring configuration
+│   ├── prometheus.yml
+│   └── grafana-provisioning/
+├── .github/
+│   └── workflows/
+│       └── ci.yml        # CI/CD pipeline
+├── docker-compose.yml     # Multi-container orchestration
+├── Dockerfile             # Backend container
+├── Dockerfile.frontend    # Frontend container
+├── Procfile              # Heroku deployment config
+├── requirements.txt       # Python dependencies
+├── requirements-dev.txt   # Development dependencies
+├── README.md             # This file
+├── REPORT.md             # Assignment 2 report
+├── SOLID.md              # Code quality documentation
+├── TESTING.md            # Testing documentation
+└── MONITORING.md         # Monitoring setup guide
 ```
 
 ---
 
-## 🎯 Usage Examples
+## 📊 Assignment 2 Deliverables
 
-### CLI: Create a Project
+### ✅ Code Quality & Refactoring (25%)
+- [x] Removed code smells (documented in [SOLID.md](SOLID.md))
+- [x] Applied SOLID principles throughout codebase
+- [x] Centralized configuration in `config.py`
+- [x] Custom exception hierarchy
+- [x] Comprehensive error handling and logging
 
-```bash
-python3 -m MoneySplit
-# Select: 1. New Project
-# Follow prompts to enter:
-# - Number of people
-# - Revenue and costs
-# - Country and tax type
-# - Team members and work shares
-```
+### ✅ Testing & Coverage (20%)
+- [x] 547 automated tests (unit + integration)
+- [x] Current coverage: 63% (target: 70%)
+- [x] Tests for all critical paths
+- [x] Coverage reports in `htmlcov/`
+- [x] Documentation in [TESTING.md](TESTING.md)
 
-### API: Create a Project
+### ✅ CI/CD Pipeline (20%)
+- [x] GitHub Actions workflow in `.github/workflows/ci.yml`
+- [x] Matrix testing (Python 3.9-3.12, Node 18-22)
+- [x] Automated testing, linting, type checking
+- [x] Coverage measurement with failure threshold
+- [x] Docker image builds
+- [x] Security scanning with Bandit
 
-```bash
-curl -X POST "http://localhost:8000/api/projects" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "num_people": 2,
-    "revenue": 10000,
-    "costs": [1000, 500],
-    "country": "US",
-    "tax_type": "Individual",
-    "people": [
-      {"name": "Alice", "work_share": 0.6},
-      {"name": "Bob", "work_share": 0.4}
-    ]
-  }'
-```
+### ✅ Deployment & Containerization (20%)
+- [x] Docker support with `Dockerfile` + `Dockerfile.frontend`
+- [x] docker-compose orchestration
+- [x] Deployed to Heroku: https://moneysplit-app-96aca02a2d13.herokuapp.com/
+- [x] Environment-based configuration
+- [x] Health checks for containers
 
-### Frontend: Create a Project
-
-1. Navigate to "New Project"
-2. Fill in the form fields
-3. Add team members with work shares
-4. Click "Create Project"
-
----
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run specific test file
-pytest tests/test_api.py
-
-# Run tests with coverage
-pytest --cov=. --cov-report=html --cov-report=term
-```
-
-### Test Coverage
-
-The project includes 85+ tests covering:
-- **Unit Tests**: Tax calculation, work share distribution, input validation
-- **API Integration Tests**: All CRUD operations, reports, forecasting, visualizations
-- **Database Tests**: CRUD operations, foreign keys, aggregations
-- **Edge Case Tests**: Boundary values, invalid inputs, special characters
-
-**Current Coverage**: 32% (expanding in progress)
-**Target Coverage**: 70%+
-
-View coverage reports:
-```bash
-# Generate HTML report
-pytest --cov=. --cov-report=html
-
-# Open in browser
-open htmlcov/index.html
-```
-
-### Code Quality Tools
-
-```bash
-# Format code with Black
-black . --exclude="node_modules|.git|htmlcov"
-
-# Check formatting
-black --check .
-
-# Lint with flake8
-flake8 api/ Logic/ DB/ --max-line-length=120
-
-# Type check with mypy
-mypy api/ --ignore-missing-imports
-
-# Security scan with bandit
-bandit -r api/ Logic/ DB/
-```
+### ✅ Monitoring & Documentation (15%)
+- [x] `/health`, `/health/detailed`, `/health/ready`, `/health/live` endpoints
+- [x] Prometheus metrics at `/metrics`
+- [x] Grafana dashboard configuration
+- [x] Comprehensive README (this file)
+- [x] Assignment report in [REPORT.md](REPORT.md)
+- [x] Monitoring guide in [MONITORING.md](MONITORING.md)
 
 ---
 
-## 📝 Using Makefile
+## 🤝 Contributing
 
-All common development, testing, and deployment tasks can be run using the convenient Makefile commands:
+### Development Workflow
 
-### Quick Start
-
-```bash
-# View all available commands
-make help
-
-# Install dependencies
-make setup
-
-# Run backend
-make backend
-
-# Run frontend
-make frontend
-```
-
-### Testing
-
-```bash
-# Run all tests with coverage report
-make test
-
-# Run tests without coverage (faster)
-make test-fast
-
-# Run only backend tests
-make test-backend
-
-# Run only frontend tests
-make test-frontend
-
-# Generate HTML coverage report
-make coverage
-```
-
-### Code Quality
-
-```bash
-# Lint code (pylint, flake8, ESLint)
-make lint
-
-# Format code (black, prettier)
-make format
-
-# Check database connection
-make db-status
-```
-
-### Docker Convenience Commands
-
-```bash
-# Build Docker images
-make docker-build
-
-# Start all containers
-make docker-up
-
-# Stop containers
-make docker-down
-
-# View container logs
-make docker-logs
-
-# Show running containers
-make docker-ps
-
-# Rebuild and restart everything
-make docker-rebuild
-
-# Clean Docker images and volumes
-make docker-clean
-```
-
-### Health & Monitoring
-
-```bash
-# Check API health endpoints
-make health-check
-
-# View Prometheus metrics
-make metrics
-```
-
-### Deployment
-
-```bash
-# Deploy to Heroku
-make deploy-heroku
-```
-
-All Makefile commands are fully documented with `make help`.
-
----
-
-## 🐳 Docker
-
-### Build Docker Images
-
-```bash
-# Backend API image
-docker build -t moneysplit:latest .
-
-# Frontend image
-docker build -f Dockerfile.frontend -t moneysplit-frontend:latest .
-```
-
-### Run with Docker Compose
-
-```bash
-# Start all services (API, Frontend, Prometheus, Grafana)
-docker-compose up
-
-# Build before starting
-docker-compose up --build
-
-# Run in background
-docker-compose up -d
-
-# Stop all services
-docker-compose down
-
-# View logs
-docker-compose logs -f
-```
-
-**Services:**
-- **Backend API**: http://localhost:8000
-- **Frontend**: http://localhost:3000
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3001 (admin/admin)
-
-### Docker Configuration
-
-- **Multi-stage builds** for minimal image size
-- **Non-root user** execution for security
-- **Health checks** for all containers
-- **Volume persistence** for data and logs
-- **Custom networking** for service communication
-
----
-
-## 🔍 Health Checks & Monitoring
-
-### Health Check Endpoints
-
-```bash
-# Basic health status
-curl http://localhost:8000/health
-
-# Readiness check (includes database)
-curl http://localhost:8000/health/ready
-
-# Detailed status (system info, metrics)
-curl http://localhost:8000/health/detailed
-```
-
-### Prometheus Metrics
-
-Access metrics at: `http://localhost:8000/metrics`
-
-**Available Metrics:**
-- `moneysplit_requests_total` - Total requests by endpoint/method/status
-- `moneysplit_request_duration_seconds` - Request latency
-- `moneysplit_errors_total` - Error count by type
-- `moneysplit_projects_created_total` - Projects created
-- `moneysplit_tax_calculations_total` - Tax calculations by country/type
-- `moneysplit_db_query_duration_seconds` - Database query latency
-- `moneysplit_db_records_total` - Total database records
-- `moneysplit_active_requests` - Currently active requests
-
-### Grafana Dashboards
-
-1. Open Grafana: http://localhost:3001
-2. Login with `admin` / `admin`
-3. Import dashboards from `/monitoring` directory
-4. View real-time metrics and trends
-
-### Prometheus Configuration
-
-Prometheus is configured to scrape metrics from the API every 10 seconds.
-
-Config file: `monitoring/prometheus.yml`
-
----
-
-## 📊 API Endpoints
-
-### Projects
-- `POST /api/projects` - Create new project
-- `GET /api/records` - Get recent records
-- `GET /api/records/{id}` - Get specific record
-- `PUT /api/records/{id}` - Update record
-- `DELETE /api/records/{id}` - Delete record
-
-### Reports
-- `GET /api/reports/statistics` - Overall statistics
-- `GET /api/reports/revenue-summary` - Revenue by year
-- `GET /api/reports/top-people` - Top contributors
-
-### Forecasting
-- `GET /api/forecast/revenue?months=3` - Revenue predictions
-- `GET /api/forecast/comprehensive` - Full forecast with insights
-- `GET /api/forecast/tax-optimization` - Tax recommendations
-- `GET /api/forecast/trends` - Trend analysis
-
-### Visualizations
-- `GET /api/visualizations/revenue-summary` - Revenue chart
-- `GET /api/visualizations/monthly-trends` - Monthly trends
-- `GET /api/visualizations/work-distribution` - Work distribution
-- `GET /api/visualizations/tax-comparison` - Tax comparison
-- `GET /api/visualizations/project-profitability` - Profitability
-
-### PDF Exports
-- `GET /api/export/record/{id}/pdf` - Project PDF
-- `GET /api/export/summary/pdf` - Summary PDF
-- `GET /api/export/forecast/pdf` - Forecast PDF
-
-Full documentation: `http://localhost:8000/docs`
-
----
-
-## 🧪 Testing
-
-The project includes comprehensive automated tests covering both unit and integration testing.
-
-### Run All Tests
-
-```bash
-pytest
-```
-
-### Run Specific Test Suite
-
-```bash
-# Unit tests only
-pytest tests/test_backend_logic.py
-
-# API integration tests only
-pytest tests/test_api.py
-```
-
-### Test Coverage
-
-- **85 total tests** covering:
-  - **Unit Tests (25)**: Tax calculation, work share distribution, input validation, profit calculations
-  - **API Integration Tests (23)**: All CRUD operations, reports, forecasting, visualizations, PDF exports
-  - **Database Tests (20)**: CRUD operations, foreign keys, aggregations, complex queries
-  - **Edge Case Tests (17)**: Boundary values, invalid inputs, special characters, precision, floating point accuracy
-
-### View Detailed Test Documentation
-
-See [TESTING.md](TESTING.md) for:
-- Complete test documentation
-- How to run tests with coverage
-- Adding new tests
-- CI/CD integration examples
-
----
-
-## 🚀 CI/CD Pipeline
-
-### Automated Workflow
-
-The project uses GitHub Actions for continuous integration and testing.
-
-**Workflow triggers:**
-- Push to `main`, `feature/*`, or `assignment-*` branches
-- Pull requests to `main`
-
-**Workflow jobs:**
-1. **Backend Quality** - Python 3.8, 3.9, 3.10, 3.11 matrix
-   - Install dependencies with caching
-   - Black formatting checks
-   - Flake8 linting
-   - Mypy type checking
-   - Pytest execution
-   - Coverage measurement (fails if < 70%)
-
-2. **Frontend Quality** - Node 16.x, 18.x, 20.x matrix
-   - Install dependencies with caching
-   - ESLint linting (strict)
-   - React build
-   - Jest tests
-
-3. **Docker Build**
-   - Build backend image
-   - Build frontend image
-
-4. **Security Scan**
-   - Bandit vulnerability scanning
-   - Report generation
-
-5. **Status Check**
-   - Consolidate all job results
-
-**Artifacts uploaded:**
-- Coverage HTML reports
-- Security scan reports
-- Frontend build artifacts
-
-View workflow status: `.github/workflows/ci.yml`
-
----
-
-## 🔧 Development Setup
-
-### Prerequisites
-
-- Python 3.8+
-- Node.js 16+
-- npm or yarn
-- Git
-
-### Local Development
-
-1. **Clone repository**
+1. **Clone and Setup**
    ```bash
-   git clone https://github.com/your-username/MoneySplit.git
+   git clone https://github.com/SnileMB/MoneySplit.git
    cd MoneySplit
+   pip install -r requirements.txt -r requirements-dev.txt
    ```
 
-2. **Set up Python environment**
+2. **Create Feature Branch**
    ```bash
-   # Create virtual environment (optional)
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-   # Install dependencies
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
+   git checkout -b feature/your-feature-name
    ```
 
-3. **Set up Node environment**
+3. **Make Changes**
+   - Write code following existing patterns
+   - Add tests for new functionality
+   - Update documentation as needed
+
+4. **Run Quality Checks**
    ```bash
-   cd frontend
-   npm install
-   cd ..
+   # Format code
+   black api/ Logic/ DB/
+
+   # Run tests
+   pytest --cov=. --cov-report=term
+
+   # Lint
+   flake8 api/ Logic/ DB/ --max-line-length=120
    ```
 
-4. **Create environment file**
+5. **Commit and Push**
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
+   git add .
+   git commit -m "[Feature] Description of changes"
+   git push origin feature/your-feature-name
    ```
 
-5. **Run application**
-   ```bash
-   # Terminal 1: Backend API
-   python3 -m uvicorn api.main:app --reload
+6. **Create Pull Request**
+   - Open PR against `main` branch
+   - CI pipeline will run automatically
+   - Address any failing checks
 
-   # Terminal 2: Frontend
-   cd frontend && npm start
-   ```
-
-### Code Style & Quality
-
-```bash
-# Format code
-black .
-
-# Check formatting
-black --check .
-
-# Lint code
-flake8 api/ Logic/ DB/
-
-# Type check
-mypy api/
-
-# Security scan
-bandit -r api/ Logic/ DB/
-
-# Run tests
-pytest -v
-
-# Coverage report
-pytest --cov=. --cov-report=html
-```
-
-### Environment Variables
-
-See `.env.example` for all available variables:
-- `API_HOST`, `API_PORT` - API configuration
-- `FRONTEND_HOST`, `FRONTEND_PORT` - Frontend configuration
-- `DB_PATH` - Database location
-- `LOG_LEVEL`, `LOG_FILE` - Logging configuration
-- `METRICS_ENABLED` - Enable Prometheus metrics
-- `ENVIRONMENT` - development/production
-
----
-
-## 📦 Deployment
-
-### Docker Deployment
-
-1. **Build images**
-   ```bash
-   docker build -t moneysplit:latest .
-   docker build -f Dockerfile.frontend -t moneysplit-frontend:latest .
-   ```
-
-2. **Push to registry**
-   ```bash
-   docker tag moneysplit:latest your-registry/moneysplit:latest
-   docker push your-registry/moneysplit:latest
-   ```
-
-3. **Deploy with Docker Compose**
-   ```bash
-   # Use docker-compose.yml for full stack
-   docker-compose up -d
-   ```
-
-### Cloud Deployment
-
-#### Heroku (Recommended for Quick Deployment)
-
-```bash
-# 1. Login to Heroku
-heroku login
-
-# 2. Create Heroku app
-heroku create moneysplit-app
-
-# 3. Deploy
-git push heroku main
-
-# 4. Initialize database
-heroku run python DB/setup.py
-
-# 5. View logs
-heroku logs --tail
-
-# 6. Open app
-heroku open
-```
-
-For detailed Heroku instructions, see `HEROKU_DEPLOYMENT.md`
-
-#### Azure Deployment
-
-Azure deployment configuration is managed through:
-- GitHub Secrets: `AZURE_CREDENTIALS_FOR_GITHUB_ACTIONS`, `SERVICE_PRINCIPALS_CREDENTIALS`
-- GitHub Actions workflow integration
-- Container registry deployment
-
-For detailed Azure deployment instructions, see `DEPLOYMENT.md`
-
-### Health Checks
-
-All containers include health checks:
-
-```bash
-# Check API health
-curl http://localhost:8000/health
-
-# Check readiness
-curl http://localhost:8000/health/ready
-
-# Check detailed status
-curl http://localhost:8000/health/detailed
-```
-
-### Monitoring in Production
-
-- **Prometheus** collects metrics from all services
-- **Grafana** provides dashboard visualization
-- **Health endpoints** available at `/health/*`
-- **Structured logging** in JSON format
-
----
-
-## 📐 Architecture
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for:
-- System architecture diagram
-- Component descriptions
-- Data flow diagrams
-- Technology stack details
-- Design patterns used
+### Coding Standards
+- **Python**: PEP 8, Black formatting, type hints
+- **TypeScript**: ESLint, consistent naming
+- **Tests**: Minimum 70% coverage for new code
+- **Commits**: Descriptive messages with [Type] prefix
 
 ---
 
 ## 📄 License
 
-MIT
+MIT License - see LICENSE file for details
 
 ---
 
-**Built with ❤️ for commission-based teams**
+## 🙏 Acknowledgments
+
+Built for Software Engineering II - Assignment 2
+Technologies: FastAPI, React, Docker, GitHub Actions, Prometheus, Grafana
+Deployed on: Heroku
+
+---
+
+**Questions or Issues?** [Open an issue](https://github.com/SnileMB/MoneySplit/issues)
+
+**Live Demo:** [https://moneysplit-app-96aca02a2d13.herokuapp.com/](https://moneysplit-app-96aca02a2d13.herokuapp.com/)
