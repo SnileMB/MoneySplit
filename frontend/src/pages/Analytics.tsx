@@ -47,7 +47,7 @@ const Analytics: React.FC = () => {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [projectData, setProjectData] = useState<ProjectData[]>([]);
+  const [_projectData, setProjectData] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
