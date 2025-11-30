@@ -20,7 +20,7 @@ class TestBoundaryValues:
             "costs": [1000000],
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Millionaire", "work_share": 1.0}]
+            "people": [{"name": "Millionaire", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -34,7 +34,7 @@ class TestBoundaryValues:
             "costs": [0.001],
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Penny", "work_share": 1.0}]
+            "people": [{"name": "Penny", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -48,7 +48,7 @@ class TestBoundaryValues:
             "costs": [0],
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Zero", "work_share": 1.0}]
+            "people": [{"name": "Zero", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -65,9 +65,9 @@ class TestBoundaryValues:
             "country": "US",
             "tax_type": "Individual",
             "people": [
-                {"name": f"Person{i}", "work_share": 1.0/num_people}
+                {"name": f"Person{i}", "work_share": 1.0 / num_people}
                 for i in range(num_people)
-            ]
+            ],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -81,7 +81,7 @@ class TestBoundaryValues:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Solo", "work_share": 1.0}]
+            "people": [{"name": "Solo", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -99,7 +99,7 @@ class TestInvalidInputs:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": []
+            "people": [],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -113,7 +113,7 @@ class TestInvalidInputs:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": []
+            "people": [],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -129,8 +129,8 @@ class TestInvalidInputs:
             "tax_type": "Individual",
             "people": [
                 {"name": "Person1", "work_share": 0.5},
-                {"name": "Person2", "work_share": 0.5}
-            ]  # Only 2 people but num_people=5
+                {"name": "Person2", "work_share": 0.5},
+            ],  # Only 2 people but num_people=5
         }
 
         response = client.post("/api/projects", json=payload)
@@ -144,7 +144,7 @@ class TestInvalidInputs:
             "costs": [500],
             "country": "",  # Empty country
             "tax_type": "Individual",
-            "people": [{"name": "Test", "work_share": 1.0}]
+            "people": [{"name": "Test", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -158,7 +158,7 @@ class TestInvalidInputs:
             "costs": [500],
             "country": "US",
             "tax_type": "Corporate",  # Invalid type
-            "people": [{"name": "Test", "work_share": 1.0}]
+            "people": [{"name": "Test", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -189,8 +189,8 @@ class TestWorkShareEdgeCases:
             "tax_type": "Individual",
             "people": [
                 {"name": "Leader", "work_share": 0.99},
-                {"name": "Helper", "work_share": 0.01}
-            ]
+                {"name": "Helper", "work_share": 0.01},
+            ],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -219,7 +219,7 @@ class TestCostsEdgeCases:
             "costs": [6000],  # Costs > revenue
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Loss", "work_share": 1.0}]
+            "people": [{"name": "Loss", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -236,7 +236,7 @@ class TestCostsEdgeCases:
             "costs": costs,
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Penny", "work_share": 1.0}]
+            "people": [{"name": "Penny", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -250,7 +250,7 @@ class TestCostsEdgeCases:
             "costs": [],  # No costs
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "NoCost", "work_share": 1.0}]
+            "people": [{"name": "NoCost", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -301,7 +301,7 @@ class TestAPIEdgeCases:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": [{"name": "Concurrent", "work_share": 1.0}]
+            "people": [{"name": "Concurrent", "work_share": 1.0}],
         }
 
         # Create 10 projects rapidly
@@ -323,7 +323,7 @@ class TestAPIEdgeCases:
             "Müller",
             "O'Brien",
             "Jean-Pierre",
-            "Владимир"
+            "Владимир",
         ]
 
         for name in special_names:
@@ -333,7 +333,7 @@ class TestAPIEdgeCases:
                 "costs": [500],
                 "country": "US",
                 "tax_type": "Individual",
-                "people": [{"name": name, "work_share": 1.0}]
+                "people": [{"name": name, "work_share": 1.0}],
             }
 
             response = client.post("/api/projects", json=payload)

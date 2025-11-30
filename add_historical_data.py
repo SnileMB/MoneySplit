@@ -8,9 +8,10 @@ import sqlite3
 from datetime import datetime, timedelta
 import random
 
+
 def backdate_records():
     """Backdate some records to create historical data."""
-    conn = sqlite3.connect('example.db')
+    conn = sqlite3.connect("example.db")
     cursor = conn.cursor()
 
     # Get all records
@@ -49,7 +50,7 @@ def backdate_records():
             break
 
         # Calculate target month
-        target_date = now - timedelta(days=30*months_ago)
+        target_date = now - timedelta(days=30 * months_ago)
 
         for i in range(count):
             if record_idx >= len(records):
@@ -60,27 +61,28 @@ def backdate_records():
             day = random.randint(1, 28)
             backdated = target_date.replace(day=day)
 
-            updates.append((backdated.strftime('%Y-%m-%d %H:%M:%S'), record_id))
+            updates.append((backdated.strftime("%Y-%m-%d %H:%M:%S"), record_id))
             record_idx += 1
 
     # Apply updates
     for new_date, record_id in updates:
         cursor.execute(
-            "UPDATE tax_records SET created_at = ? WHERE id = ?",
-            (new_date, record_id)
+            "UPDATE tax_records SET created_at = ? WHERE id = ?", (new_date, record_id)
         )
 
     conn.commit()
 
     # Show results
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', created_at) as month,
                COUNT(*) as records,
                SUM(revenue) as total_revenue
         FROM tax_records
         GROUP BY month
         ORDER BY month
-    """)
+    """
+    )
 
     print("\n✅ Historical data created successfully!\n")
     print("Month Distribution:")
@@ -93,10 +95,13 @@ def backdate_records():
         print(f"{month:<15} {count:<10} ${revenue:,.2f}")
 
     print("-" * 50)
-    print(f"\n✅ You now have data across {cursor.execute('SELECT COUNT(DISTINCT strftime(\"%Y-%m\", created_at)) FROM tax_records').fetchone()[0]} months!")
+    print(
+        f"\n✅ You now have data across {cursor.execute('SELECT COUNT(DISTINCT strftime(\"%Y-%m\", created_at)) FROM tax_records').fetchone()[0]} months!"
+    )
     print("✅ Revenue forecasting should now work!")
 
     conn.close()
+
 
 if __name__ == "__main__":
     print("📊 Adding historical data for forecasting...")

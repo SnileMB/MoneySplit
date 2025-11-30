@@ -1,7 +1,12 @@
 """Unit tests for backend business logic."""
 
 import pytest
-from Logic.tax_calculator import calculate_tax, calculate_tax_from_db, split_work_shares, calculate_profit
+from Logic.tax_calculator import (
+    calculate_tax,
+    calculate_tax_from_db,
+    split_work_shares,
+    calculate_profit,
+)
 from Logic.validators import (
     validate_positive_number,
     validate_work_shares,
@@ -10,7 +15,7 @@ from Logic.validators import (
     validate_country,
     validate_tax_type,
     validate_tax_rate,
-    ValidationError
+    ValidationError,
 )
 
 
@@ -24,7 +29,9 @@ class TestTaxCalculations:
 
         mock_brackets = [(10000, 0.10), (50000, 0.20)]
 
-        with patch('Logic.tax_calculator.setup.get_tax_brackets', return_value=mock_brackets):
+        with patch(
+            "Logic.tax_calculator.setup.get_tax_brackets", return_value=mock_brackets
+        ):
             # Income of 15000: (10000 * 0.10) + (5000 * 0.20) = 1000 + 1000 = 2000
             tax = calculate_tax_from_db(15000, "US", "Individual")
             assert tax == 2000.0
@@ -35,7 +42,9 @@ class TestTaxCalculations:
 
         mock_brackets = [(10000, 0.10), (50000, 0.20)]
 
-        with patch('Logic.tax_calculator.setup.get_tax_brackets', return_value=mock_brackets):
+        with patch(
+            "Logic.tax_calculator.setup.get_tax_brackets", return_value=mock_brackets
+        ):
             # Income of 5000: entirely in first bracket
             tax = calculate_tax_from_db(5000, "US", "Individual")
             assert tax == 500.0  # 5000 * 0.10
@@ -46,7 +55,9 @@ class TestTaxCalculations:
 
         mock_brackets = [(10000, 0.10)]
 
-        with patch('Logic.tax_calculator.setup.get_tax_brackets', return_value=mock_brackets):
+        with patch(
+            "Logic.tax_calculator.setup.get_tax_brackets", return_value=mock_brackets
+        ):
             tax = calculate_tax_from_db(0, "US", "Individual")
             assert tax == 0.0
 

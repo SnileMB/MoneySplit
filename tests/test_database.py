@@ -15,12 +15,15 @@ class TestDatabaseOperations:
         cursor = conn.cursor()
 
         # Insert a test record
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (2, 10000, 1500, 8500, 4250, "US", "Individual", 500, 3750, 8000))
+        """,
+            (2, 10000, 1500, 8500, 4250, "US", "Individual", 500, 3750, 8000),
+        )
 
         record_id = cursor.lastrowid
         conn.commit()
@@ -31,7 +34,7 @@ class TestDatabaseOperations:
 
         assert record is not None
         assert record[2] == 10000  # revenue
-        assert record[3] == 1500   # total_costs
+        assert record[3] == 1500  # total_costs
 
         conn.close()
 
@@ -41,12 +44,14 @@ class TestDatabaseOperations:
         cursor = conn.cursor()
 
         # Insert
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (1, 5000, 500, 4500, 4500, "US", "Individual", 450, 4050, 4050)
-        """)
+        """
+        )
         record_id = cursor.lastrowid
         conn.commit()
 
@@ -66,17 +71,21 @@ class TestDatabaseOperations:
         cursor = conn.cursor()
 
         # Insert
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (1, 5000, 500, 4500, 4500, "US", "Individual", 450, 4050, 4050)
-        """)
+        """
+        )
         record_id = cursor.lastrowid
         conn.commit()
 
         # Update
-        cursor.execute("UPDATE tax_records SET revenue = ? WHERE id = ?", (6000, record_id))
+        cursor.execute(
+            "UPDATE tax_records SET revenue = ? WHERE id = ?", (6000, record_id)
+        )
         conn.commit()
 
         # Verify updated
@@ -96,19 +105,24 @@ class TestPeopleTable:
         cursor = conn.cursor()
 
         # Create a tax record first
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (1, 5000, 500, 4500, 4500, "US", "Individual", 450, 4050, 4050)
-        """)
+        """
+        )
         record_id = cursor.lastrowid
 
         # Insert person
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (record_id, "Alice", 1.0, 4500, 450, 4050))
+        """,
+            (record_id, "Alice", 1.0, 4500, 450, 4050),
+        )
 
         conn.commit()
 
@@ -128,24 +142,29 @@ class TestPeopleTable:
         cursor = conn.cursor()
 
         # Create record
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (2, 10000, 1000, 9000, 4500, "US", "Individual", 900, 4050, 8100)
-        """)
+        """
+        )
         record_id = cursor.lastrowid
 
         # Insert multiple people
         people = [
             (record_id, "Alice", 0.6, 5400, 540, 4860),
-            (record_id, "Bob", 0.4, 3600, 360, 3240)
+            (record_id, "Bob", 0.4, 3600, 360, 3240),
         ]
 
-        cursor.executemany("""
+        cursor.executemany(
+            """
             INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, people)
+        """,
+            people,
+        )
 
         conn.commit()
 
@@ -154,7 +173,9 @@ class TestPeopleTable:
         count = cursor.fetchone()[0]
         assert count == 2
 
-        cursor.execute("SELECT SUM(work_share) FROM people WHERE record_id = ?", (record_id,))
+        cursor.execute(
+            "SELECT SUM(work_share) FROM people WHERE record_id = ?", (record_id,)
+        )
         total_share = cursor.fetchone()[0]
         assert abs(total_share - 1.0) < 0.01  # Should sum to 1.0
 
@@ -170,11 +191,13 @@ class TestTaxBrackets:
         cursor = conn.cursor()
 
         # Fetch US Individual brackets
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT income_limit, rate FROM tax_brackets
             WHERE country = 'US' AND tax_type = 'Individual'
             ORDER BY income_limit
-        """)
+        """
+        )
 
         brackets = cursor.fetchall()
         assert len(brackets) > 0
@@ -189,11 +212,13 @@ class TestTaxBrackets:
         conn = setup.get_conn()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT income_limit FROM tax_brackets
             WHERE country = 'US' AND tax_type = 'Individual'
             ORDER BY income_limit
-        """)
+        """
+        )
 
         limits = [row[0] for row in cursor.fetchall()]
 
@@ -214,10 +239,13 @@ class TestDataIntegrity:
 
         # Try to insert person with non-existent record_id
         with pytest.raises(sqlite3.IntegrityError):
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (99999, "NonExistent", 1.0, 1000, 100, 900))
+            """,
+                (99999, "NonExistent", 1.0, 1000, 100, 900),
+            )
             conn.commit()
 
         conn.close()
@@ -228,18 +256,23 @@ class TestDataIntegrity:
         cursor = conn.cursor()
 
         # Create record with person
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (num_people, revenue, total_costs, group_income,
                                     individual_income, tax_origin, tax_option, tax_amount,
                                     net_income_per_person, net_income_group)
             VALUES (1, 5000, 500, 4500, 4500, "US", "Individual", 450, 4050, 4050)
-        """)
+        """
+        )
         record_id = cursor.lastrowid
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (record_id, "Test", 1.0, 4500, 450, 4050))
+        """,
+            (record_id, "Test", 1.0, 4500, 450, 4050),
+        )
 
         conn.commit()
 
@@ -266,14 +299,16 @@ class TestDatabaseQueries:
         conn = setup.get_conn()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT strftime('%Y-%m', created_at) as month,
                    SUM(revenue) as total_revenue,
                    COUNT(*) as num_records
             FROM tax_records
             GROUP BY month
             ORDER BY month
-        """)
+        """
+        )
 
         results = cursor.fetchall()
 
@@ -291,7 +326,8 @@ class TestDatabaseQueries:
         conn = setup.get_conn()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT name,
                    SUM(gross_income) as total_earned,
                    COUNT(*) as projects
@@ -299,7 +335,8 @@ class TestDatabaseQueries:
             GROUP BY name
             ORDER BY total_earned DESC
             LIMIT 5
-        """)
+        """
+        )
 
         results = cursor.fetchall()
 
@@ -315,7 +352,8 @@ class TestDatabaseQueries:
         conn = setup.get_conn()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT tax_origin,
                    tax_option,
                    AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_tax_rate,
@@ -323,7 +361,8 @@ class TestDatabaseQueries:
             FROM tax_records
             WHERE group_income > 0
             GROUP BY tax_origin, tax_option
-        """)
+        """
+        )
 
         results = cursor.fetchall()
 

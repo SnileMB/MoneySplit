@@ -6,6 +6,7 @@ from MoneySplit.DB import setup
 setup.init_db()
 setup.seed_default_brackets()
 
+
 def main():
     while True:
         print("\n=== MoneySplit Main Menu ===")
@@ -33,6 +34,7 @@ def main():
             break
         else:
             print("❌ Invalid choice. Please enter 1-6.")
+
 
 if __name__ == "__main__":
     main()

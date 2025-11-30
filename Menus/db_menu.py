@@ -1,6 +1,7 @@
 from MoneySplit.DB import setup
 from MoneySplit.Logic import validators
 
+
 def show_last_records(n=5):
     print(f"\n=== Last {n} Saved Records ===")
     records = setup.fetch_last_records(n)
@@ -60,7 +61,13 @@ def delete_record_menu():
             print(f"❌ No record found with ID {record_id}.")
             return
 
-        confirm = input(f"Are you sure you want to delete record {record_id} (and all linked people)? (y/n): ").strip().lower()
+        confirm = (
+            input(
+                f"Are you sure you want to delete record {record_id} (and all linked people)? (y/n): "
+            )
+            .strip()
+            .lower()
+        )
         if confirm == "y":
             setup.delete_record(record_id)
         else:
@@ -72,7 +79,9 @@ def delete_record_menu():
 
 def update_record_menu():
     try:
-        record_id = validators.safe_int_input("Enter the ID of the record to update: ", "Record ID", min_value=1)
+        record_id = validators.safe_int_input(
+            "Enter the ID of the record to update: ", "Record ID", min_value=1
+        )
         record = setup.get_record_by_id(record_id)
 
         if not record:
@@ -83,18 +92,28 @@ def update_record_menu():
         for f in sorted(setup.ALLOWED_FIELDS):
             print(f" - {f}")
 
-        field = validators.safe_string_input("\nEnter the field to update: ", "Field name")
+        field = validators.safe_string_input(
+            "\nEnter the field to update: ", "Field name"
+        )
 
         if field not in setup.ALLOWED_FIELDS:
-            print(f"❌ '{field}' is not editable. Allowed: {', '.join(sorted(setup.ALLOWED_FIELDS))}")
+            print(
+                f"❌ '{field}' is not editable. Allowed: {', '.join(sorted(setup.ALLOWED_FIELDS))}"
+            )
             return
 
         if field == "num_people":
-            new_value = validators.safe_int_input(f"Enter new value for {field}: ", field, min_value=1)
+            new_value = validators.safe_int_input(
+                f"Enter new value for {field}: ", field, min_value=1
+            )
         elif field in ["revenue", "total_costs"]:
-            new_value = validators.safe_float_input(f"Enter new value for {field}: ", field)
+            new_value = validators.safe_float_input(
+                f"Enter new value for {field}: ", field
+            )
         else:
-            new_value = validators.safe_string_input(f"Enter new value for {field}: ", field)
+            new_value = validators.safe_string_input(
+                f"Enter new value for {field}: ", field
+            )
 
         setup.update_record(record_id, field, new_value)
 
@@ -135,18 +154,26 @@ def show_person_history():
 
 def update_person_menu():
     try:
-        person_id = validators.safe_int_input("Enter the ID of the person to update: ", "Person ID", min_value=1)
+        person_id = validators.safe_int_input(
+            "Enter the ID of the person to update: ", "Person ID", min_value=1
+        )
         print("\nYou can update the following fields:")
         print(" - name")
         print(" - work_share")
 
-        field = validators.safe_string_input("Enter the field to update: ", "Field name")
+        field = validators.safe_string_input(
+            "Enter the field to update: ", "Field name"
+        )
 
         if field == "work_share":
-            new_value = validators.safe_float_input(f"Enter new value for {field} (0.0-1.0): ", field)
+            new_value = validators.safe_float_input(
+                f"Enter new value for {field} (0.0-1.0): ", field
+            )
             new_value = validators.validate_work_share(new_value)
         elif field == "name":
-            new_value = validators.safe_string_input(f"Enter new value for {field}: ", field)
+            new_value = validators.safe_string_input(
+                f"Enter new value for {field}: ", field
+            )
         else:
             print(f"❌ Invalid field. Only 'name' and 'work_share' can be updated.")
             return
@@ -160,7 +187,11 @@ def update_person_menu():
 def delete_person_menu():
     try:
         person_id = int(input("Enter the ID of the person to delete: "))
-        confirm = input(f"Are you sure you want to delete person {person_id}? (y/n): ").strip().lower()
+        confirm = (
+            input(f"Are you sure you want to delete person {person_id}? (y/n): ")
+            .strip()
+            .lower()
+        )
         if confirm == "y":
             setup.delete_person(person_id)
         else:
@@ -179,7 +210,9 @@ def deduplicate_people_menu():
 
 # --- Maintenance ---
 def reset_db_menu():
-    confirm = input("⚠️ This will DELETE ALL tax records and people. Type 'RESET' to confirm: ").strip()
+    confirm = input(
+        "⚠️ This will DELETE ALL tax records and people. Type 'RESET' to confirm: "
+    ).strip()
     if confirm == "RESET":
         setup.reset_db()
     else:
@@ -187,7 +220,9 @@ def reset_db_menu():
 
 
 def reset_tax_brackets_menu():
-    confirm = input("⚠️ This will DELETE ALL tax brackets and restore defaults. Type 'RESET' to confirm: ").strip()
+    confirm = input(
+        "⚠️ This will DELETE ALL tax brackets and restore defaults. Type 'RESET' to confirm: "
+    ).strip()
     if confirm == "RESET":
         setup.reset_tax_brackets()
     else:
@@ -195,7 +230,9 @@ def reset_tax_brackets_menu():
 
 
 def export_template_menu():
-    filepath = input("Enter filename for template (default: tax_template.csv): ").strip()
+    filepath = input(
+        "Enter filename for template (default: tax_template.csv): "
+    ).strip()
     if not filepath:
         filepath = "tax_template.csv"
     setup.export_tax_template(filepath)
@@ -238,8 +275,10 @@ def copy_people_menu():
 
         # 🔄 Run deduplication
         removed = setup.deduplicate_people(target_id)
-        print(f"🔄 Target record {target_id} updated. num_people = {new_count}. "
-              f"Deduplicated {removed} duplicate(s).")
+        print(
+            f"🔄 Target record {target_id} updated. num_people = {new_count}. "
+            f"Deduplicated {removed} duplicate(s)."
+        )
 
     except ValueError:
         print("❌ Invalid input. Please enter numbers.")
@@ -268,7 +307,10 @@ def advanced_options_menu():
 def search_records_menu():
     print("\n=== Search Filters ===")
     country = input("Country (leave blank to skip): ").strip() or None
-    tax_option = input("Tax option (Individual/Business, leave blank to skip): ").strip().title() or None
+    tax_option = (
+        input("Tax option (Individual/Business, leave blank to skip): ").strip().title()
+        or None
+    )
     start_date = input("Start date (YYYY-MM-DD, leave blank to skip): ").strip() or None
     end_date = input("End date (YYYY-MM-DD, leave blank to skip): ").strip() or None
 
@@ -307,6 +349,7 @@ def merge_records_menu():
 
     except ValueError:
         print("❌ Invalid input. Please enter numbers.")
+
 
 def records_menu():
     while True:
@@ -389,12 +432,12 @@ def maintenance_menu():
             view_tax_brackets_menu()
         elif choice == "5":
             from MoneySplit.DB import setup
+
             setup.deduplicate_all_records()
         elif choice == "6":
             break
         else:
             print("❌ Invalid choice. Please enter 1-6.")
-
 
 
 # --- Main ---

@@ -5,17 +5,20 @@ Tests: Tax Engine, API Integration, Database Operations
 import sys
 import requests
 import json
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 from Logic import tax_engine
 from DB import setup
 
 API_BASE = "http://localhost:8000"
 
+
 def print_section(title):
     print("\n" + "=" * 70)
     print(f"  {title}")
     print("=" * 70)
+
 
 def test_tax_engine():
     """Test the tax engine directly."""
@@ -27,17 +30,23 @@ def test_tax_engine():
     num_people = 3
     country = "US"
 
-    print(f"\nProject: ${revenue:,} revenue, ${costs:,} costs, {num_people} people, {country}")
+    print(
+        f"\nProject: ${revenue:,} revenue, ${costs:,} costs, {num_people} people, {country}"
+    )
 
     # Test Individual
     print("\n1️⃣  Individual Tax:")
-    result = tax_engine.calculate_project_taxes(revenue, costs, num_people, country, "Individual", "N/A")
+    result = tax_engine.calculate_project_taxes(
+        revenue, costs, num_people, country, "Individual", "N/A"
+    )
     print(f"   Take Home: ${result['net_income_group']:,.2f}")
     print(f"   Tax: ${result['total_tax']:,.2f} ({result['effective_rate']:.2f}%)")
 
     # Test Business + Dividend
     print("\n2️⃣  Business + Dividend:")
-    result = tax_engine.calculate_project_taxes(revenue, costs, num_people, country, "Business", "Dividend")
+    result = tax_engine.calculate_project_taxes(
+        revenue, costs, num_people, country, "Business", "Dividend"
+    )
     print(f"   Take Home: ${result['net_income_group']:,.2f}")
     print(f"   Tax: ${result['total_tax']:,.2f} ({result['effective_rate']:.2f}%)")
 
@@ -49,6 +58,7 @@ def test_tax_engine():
 
     print("\n✅ Tax Engine Module: PASSED")
     return True
+
 
 def test_database_operations():
     """Test database with new fields."""
@@ -62,13 +72,13 @@ def test_database_operations():
     conn.close()
 
     print("\n1️⃣  Database Schema:")
-    if 'distribution_method' in columns:
+    if "distribution_method" in columns:
         print("   ✅ distribution_method column exists")
     else:
         print("   ❌ distribution_method column missing!")
         return False
 
-    if 'salary_amount' in columns:
+    if "salary_amount" in columns:
         print("   ✅ salary_amount column exists")
     else:
         print("   ❌ salary_amount column missing!")
@@ -88,6 +98,7 @@ def test_database_operations():
 
     print("\n✅ Database Operations: PASSED")
     return True
+
 
 def test_api_integration():
     """Test API endpoints with new fields."""
@@ -113,12 +124,15 @@ def test_api_integration():
     # Test 2: Optimal strategy endpoint
     print("\n2️⃣  Testing /api/optimal-strategy endpoint:")
     try:
-        response = requests.get(f"{API_BASE}/api/optimal-strategy", params={
-            "revenue": 100000,
-            "costs": 20000,
-            "num_people": 2,
-            "country": "US"
-        })
+        response = requests.get(
+            f"{API_BASE}/api/optimal-strategy",
+            params={
+                "revenue": 100000,
+                "costs": 20000,
+                "num_people": 2,
+                "country": "US",
+            },
+        )
         if response.status_code == 200:
             data = response.json()
             print(f"   ✅ Endpoint works")
@@ -144,8 +158,8 @@ def test_api_integration():
         "salary_amount": 0,
         "people": [
             {"name": "Alice Test", "work_share": 0.6},
-            {"name": "Bob Test", "work_share": 0.4}
-        ]
+            {"name": "Bob Test", "work_share": 0.4},
+        ],
     }
 
     try:
@@ -154,15 +168,19 @@ def test_api_integration():
             data = response.json()
             print(f"   ✅ Project created: Record ID {data['record_id']}")
             print(f"   Tax: ${data['summary']['tax_amount']:,.2f}")
-            print(f"   Distribution: {data['summary'].get('distribution_method', 'N/A')}")
+            print(
+                f"   Distribution: {data['summary'].get('distribution_method', 'N/A')}"
+            )
 
             # Verify we can fetch it back
-            record_id = data['record_id']
+            record_id = data["record_id"]
             response = requests.get(f"{API_BASE}/api/records/{record_id}")
             if response.status_code == 200:
                 record = response.json()
                 print(f"   ✅ Record retrieved successfully")
-                print(f"   Distribution method: {record.get('distribution_method', 'N/A')}")
+                print(
+                    f"   Distribution method: {record.get('distribution_method', 'N/A')}"
+                )
             else:
                 print(f"   ⚠️  Could not retrieve record")
         else:
@@ -176,13 +194,16 @@ def test_api_integration():
     print("\n✅ API Integration: PASSED")
     return True
 
+
 def test_edge_cases():
     """Test edge cases and error handling."""
     print_section("TEST 4: EDGE CASES & ERROR HANDLING")
 
     print("\n1️⃣  Zero people (should error):")
     try:
-        result = tax_engine.calculate_project_taxes(100000, 20000, 0, "US", "Individual", "N/A")
+        result = tax_engine.calculate_project_taxes(
+            100000, 20000, 0, "US", "Individual", "N/A"
+        )
         print("   ❌ Should have raised an error!")
         return False
     except ValueError as e:
@@ -190,21 +211,26 @@ def test_edge_cases():
 
     print("\n2️⃣  Mixed strategy with salary > profit (should error):")
     try:
-        result = tax_engine.calculate_project_taxes(100000, 20000, 2, "US", "Business", "Mixed", 150000)
+        result = tax_engine.calculate_project_taxes(
+            100000, 20000, 2, "US", "Business", "Mixed", 150000
+        )
         print("   ❌ Should have raised an error!")
         return False
     except ValueError as e:
         print(f"   ✅ Correctly raised error: {e}")
 
     print("\n3️⃣  Negative revenue (taxes on loss):")
-    result = tax_engine.calculate_project_taxes(50000, 80000, 2, "US", "Individual", "N/A")
+    result = tax_engine.calculate_project_taxes(
+        50000, 80000, 2, "US", "Individual", "N/A"
+    )
     print(f"   Gross income: ${result['gross_income']:,.2f}")
     print(f"   Tax: ${result['total_tax']:,.2f}")
-    if result['gross_income'] < 0:
+    if result["gross_income"] < 0:
         print("   ✅ Handles negative income")
 
     print("\n✅ Edge Cases: PASSED")
     return True
+
 
 def test_spain_tax_rates():
     """Test Spain-specific tax calculations."""
@@ -215,20 +241,27 @@ def test_spain_tax_rates():
     num_people = 2
 
     print("\n1️⃣  Spain Individual Tax:")
-    result = tax_engine.calculate_project_taxes(revenue, costs, num_people, "Spain", "Individual", "N/A")
+    result = tax_engine.calculate_project_taxes(
+        revenue, costs, num_people, "Spain", "Individual", "N/A"
+    )
     print(f"   Take Home: ${result['net_income_group']:,.2f}")
     print(f"   Tax Rate: {result['effective_rate']:.2f}%")
 
     print("\n2️⃣  Spain Business + Dividend (19% dividend tax):")
-    result = tax_engine.calculate_project_taxes(revenue, costs, num_people, "Spain", "Business", "Dividend")
+    result = tax_engine.calculate_project_taxes(
+        revenue, costs, num_people, "Spain", "Business", "Dividend"
+    )
     print(f"   Take Home: ${result['net_income_group']:,.2f}")
     print(f"   Tax Rate: {result['effective_rate']:.2f}%")
-    dividend_item = next((item for item in result['breakdown'] if 'Dividend' in item['label']), None)
-    if dividend_item and '19' in dividend_item['label']:
+    dividend_item = next(
+        (item for item in result["breakdown"] if "Dividend" in item["label"]), None
+    )
+    if dividend_item and "19" in dividend_item["label"]:
         print("   ✅ Using Spain's 19% dividend rate")
 
     print("\n✅ Spain Tax Rates: PASSED")
     return True
+
 
 def run_all_tests():
     """Run all tests."""
@@ -275,6 +308,7 @@ def run_all_tests():
         print("\n⚠️  Some tests failed. Please review the output above.")
 
     return failed == 0
+
 
 if __name__ == "__main__":
     success = run_all_tests()

@@ -1,0 +1,32 @@
+[flake8]
+# Maximum line length
+max-line-length = 120
+
+# Exclude files and directories
+exclude =
+    .git,
+    __pycache__,
+    htmlcov,
+    .pytest_cache,
+    node_modules,
+    venv,
+    frontend,
+    .venv,
+    build,
+    dist
+
+# Ignore specific errors
+# E203: whitespace before ':'
+# W503: line break before binary operator
+# E501: line too long (handled by black)
+# F841: local variable assigned but never used
+ignore = E203, W503, E501, F841
+
+# Complexity threshold
+max-complexity = 10
+
+# Show statistics
+statistics = True
+
+# Show source code for errors
+show_source = True

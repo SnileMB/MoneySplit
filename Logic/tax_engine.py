@@ -4,33 +4,34 @@ Handles all tax scenarios: Individual, Business with Salary/Dividend/Mixed/Reinv
 """
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
 # Dividend tax rates by country
 DIVIDEND_TAX_RATES = {
-    "US": 0.15,      # Qualified dividends
-    "Spain": 0.19    # Dividends tax rate
+    "US": 0.15,  # Qualified dividends
+    "Spain": 0.19,  # Dividends tax rate
 }
 
 # Standard deductions by country (2023 tax year)
 STANDARD_DEDUCTIONS = {
-    "US": 13850,      # Single filer 2023
-    "Spain": 5550     # Minimum personal allowance
+    "US": 13850,  # Single filer 2023
+    "Spain": 5550,  # Minimum personal allowance
 }
 
 # Self-employment tax rates (US only)
 SE_TAX_RATES = {
-    "social_security": 0.124,      # 12.4%
-    "ss_wage_base": 160200,        # 2023 wage base limit
-    "medicare": 0.029,             # 2.9%
+    "social_security": 0.124,  # 12.4%
+    "ss_wage_base": 160200,  # 2023 wage base limit
+    "medicare": 0.029,  # 2.9%
     "additional_medicare": 0.009,  # 0.9%
-    "additional_medicare_threshold": 200000  # Additional Medicare threshold
+    "additional_medicare_threshold": 200000,  # Additional Medicare threshold
 }
 
 # Corporate tax rates by country
-UK_CORPORATE_TAX_RATE = 0.19       # 19% UK corporation tax
-CANADA_CORPORATE_TAX_RATE = 0.15   # 15% federal (simplified, provinces add more)
+UK_CORPORATE_TAX_RATE = 0.19  # 19% UK corporation tax
+CANADA_CORPORATE_TAX_RATE = 0.15  # 15% federal (simplified, provinces add more)
 
 # QBI (Qualified Business Income) Deduction (US only)
 QBI_DEDUCTION_RATE = 0.20  # 20% deduction on qualified business income
@@ -38,29 +39,49 @@ QBI_DEDUCTION_RATE = 0.20  # 20% deduction on qualified business income
 # State tax rates (US) - simplified progressive rates
 STATE_TAX_RATES = {
     "CA": {  # California
-        "brackets": [(10099, 0.01), (23942, 0.02), (37788, 0.04), (52455, 0.06), (66295, 0.08), (338639, 0.093), (406364, 0.103), (677275, 0.113), (float('inf'), 0.133)],
-        "standard_deduction": 5202
+        "brackets": [
+            (10099, 0.01),
+            (23942, 0.02),
+            (37788, 0.04),
+            (52455, 0.06),
+            (66295, 0.08),
+            (338639, 0.093),
+            (406364, 0.103),
+            (677275, 0.113),
+            (float("inf"), 0.133),
+        ],
+        "standard_deduction": 5202,
     },
     "NY": {  # New York
-        "brackets": [(8500, 0.04), (11700, 0.045), (13900, 0.0525), (80650, 0.055), (215400, 0.06), (1077550, 0.0685), (5000000, 0.0965), (25000000, 0.103), (float('inf'), 0.109)],
-        "standard_deduction": 8000
+        "brackets": [
+            (8500, 0.04),
+            (11700, 0.045),
+            (13900, 0.0525),
+            (80650, 0.055),
+            (215400, 0.06),
+            (1077550, 0.0685),
+            (5000000, 0.0965),
+            (25000000, 0.103),
+            (float("inf"), 0.109),
+        ],
+        "standard_deduction": 8000,
     },
     "TX": {  # Texas - No state income tax
-        "brackets": [(float('inf'), 0)],
-        "standard_deduction": 0
+        "brackets": [(float("inf"), 0)],
+        "standard_deduction": 0,
     },
     "FL": {  # Florida - No state income tax
-        "brackets": [(float('inf'), 0)],
-        "standard_deduction": 0
-    }
+        "brackets": [(float("inf"), 0)],
+        "standard_deduction": 0,
+    },
 }
 
 # UK tax brackets (2023/24)
 UK_TAX_BRACKETS = [
-    (12570, 0),      # Personal allowance
-    (50270, 0.20),   # Basic rate
+    (12570, 0),  # Personal allowance
+    (50270, 0.20),  # Basic rate
     (125140, 0.40),  # Higher rate
-    (float('inf'), 0.45)  # Additional rate
+    (float("inf"), 0.45),  # Additional rate
 ]
 
 # Canada federal tax brackets (2023)
@@ -69,7 +90,7 @@ CANADA_FEDERAL_BRACKETS = [
     (106717, 0.205),
     (165430, 0.26),
     (235675, 0.29),
-    (float('inf'), 0.33)
+    (float("inf"), 0.33),
 ]
 
 # Canada provincial tax - Ontario example (most common)
@@ -78,7 +99,7 @@ CANADA_ONTARIO_BRACKETS = [
     (98463, 0.0915),
     (150000, 0.1116),
     (220000, 0.1216),
-    (float('inf'), 0.1316)
+    (float("inf"), 0.1316),
 ]
 
 
@@ -97,7 +118,7 @@ def calculate_self_employment_tax(income: float, country: str) -> dict:
             "social_security_tax": 0,
             "medicare_tax": 0,
             "additional_medicare_tax": 0,
-            "total_se_tax": 0
+            "total_se_tax": 0,
         }
 
     # Net earnings from self-employment = 92.35% of income (deduct half of SE tax)
@@ -122,7 +143,7 @@ def calculate_self_employment_tax(income: float, country: str) -> dict:
         "social_security_tax": social_security_tax,
         "medicare_tax": medicare_tax,
         "additional_medicare_tax": additional_medicare_tax,
-        "total_se_tax": total_se_tax
+        "total_se_tax": total_se_tax,
     }
 
 
@@ -211,7 +232,7 @@ def calculate_canada_tax(income: float) -> dict:
     return {
         "federal_tax": federal_tax,
         "provincial_tax": provincial_tax,
-        "total_tax": federal_tax + provincial_tax
+        "total_tax": federal_tax + provincial_tax,
     }
 
 
@@ -252,7 +273,7 @@ def calculate_optimal_salary(after_corp_tax: float, country: str) -> dict:
         return {
             "recommended_salary": optimal_salary,
             "dividend_amount": dividend_amount,
-            "reason": f"Pay salary up to top of 12% bracket (${bracket_12_top:,}), rest as dividend to minimize tax"
+            "reason": f"Pay salary up to top of 12% bracket (${bracket_12_top:,}), rest as dividend to minimize tax",
         }
 
     elif country == "Spain":
@@ -267,7 +288,7 @@ def calculate_optimal_salary(after_corp_tax: float, country: str) -> dict:
         return {
             "recommended_salary": optimal_salary,
             "dividend_amount": dividend_amount,
-            "reason": f"Pay salary up to top of 24% bracket (€{bracket_24_top:,}), rest as dividend"
+            "reason": f"Pay salary up to top of 24% bracket (€{bracket_24_top:,}), rest as dividend",
         }
 
     else:
@@ -275,7 +296,7 @@ def calculate_optimal_salary(after_corp_tax: float, country: str) -> dict:
         return {
             "recommended_salary": after_corp_tax * 0.5,
             "dividend_amount": after_corp_tax * 0.5,
-            "reason": "50/50 salary-dividend split (country-specific optimization not available)"
+            "reason": "50/50 salary-dividend split (country-specific optimization not available)",
         }
 
 
@@ -287,7 +308,7 @@ def calculate_project_taxes(
     tax_structure: str,  # "Individual" or "Business"
     distribution_method: str = "N/A",  # "N/A", "Salary", "Dividend", "Mixed", "Reinvest"
     salary_amount: float = 0,  # Only used for "Mixed"
-    state: str = None  # US state (CA, NY, TX, FL) - optional
+    state: str = None,  # US state (CA, NY, TX, FL) - optional
 ):
     """
     Calculate taxes for a project using the specified tax structure and distribution method.
@@ -318,11 +339,16 @@ def calculate_project_taxes(
         if country == "UK":
             # UK Individual Tax
             personal_tax_per_person = calculate_uk_tax(individual_income)
-            se_tax_per_person = 0  # UK uses National Insurance instead (simplified here)
+            se_tax_per_person = (
+                0  # UK uses National Insurance instead (simplified here)
+            )
             state_tax_per_person = 0
 
             breakdown = [
-                {"label": "UK Income Tax", "amount": personal_tax_per_person * num_people}
+                {
+                    "label": "UK Income Tax",
+                    "amount": personal_tax_per_person * num_people,
+                }
             ]
 
         elif country == "Canada":
@@ -333,8 +359,14 @@ def calculate_project_taxes(
             se_tax_per_person = 0  # Canada has different system (simplified)
 
             breakdown = [
-                {"label": "Federal Tax (Canada)", "amount": personal_tax_per_person * num_people},
-                {"label": "Provincial Tax (Ontario)", "amount": state_tax_per_person * num_people}
+                {
+                    "label": "Federal Tax (Canada)",
+                    "amount": personal_tax_per_person * num_people,
+                },
+                {
+                    "label": "Provincial Tax (Ontario)",
+                    "amount": state_tax_per_person * num_people,
+                },
             ]
 
         else:
@@ -343,7 +375,9 @@ def calculate_project_taxes(
             taxable_income = apply_standard_deduction(individual_income, country)
 
             # Calculate federal/national income tax on taxable income
-            personal_tax_per_person = setup.calculate_tax_from_db(taxable_income, country, "Individual")
+            personal_tax_per_person = setup.calculate_tax_from_db(
+                taxable_income, country, "Individual"
+            )
 
             # Calculate self-employment tax (US only, on gross income before deduction)
             se_tax_result = calculate_self_employment_tax(individual_income, country)
@@ -355,26 +389,35 @@ def calculate_project_taxes(
                 state_tax_per_person = calculate_state_tax(individual_income, state)
 
             breakdown = [
-                {"label": "Federal Income Tax", "amount": personal_tax_per_person * num_people}
+                {
+                    "label": "Federal Income Tax",
+                    "amount": personal_tax_per_person * num_people,
+                }
             ]
 
             # Add SE tax breakdown if applicable
             if se_tax_per_person > 0:
-                breakdown.append({
-                    "label": "Self-Employment Tax (SS + Medicare)",
-                    "amount": se_tax_per_person * num_people,
-                    "note": f"Social Security: ${se_tax_result['social_security_tax'] * num_people:,.2f}, Medicare: ${se_tax_result['medicare_tax'] * num_people:,.2f}"
-                })
+                breakdown.append(
+                    {
+                        "label": "Self-Employment Tax (SS + Medicare)",
+                        "amount": se_tax_per_person * num_people,
+                        "note": f"Social Security: ${se_tax_result['social_security_tax'] * num_people:,.2f}, Medicare: ${se_tax_result['medicare_tax'] * num_people:,.2f}",
+                    }
+                )
 
             # Add state tax if applicable
             if state_tax_per_person > 0:
-                breakdown.append({
-                    "label": f"State Tax ({state})",
-                    "amount": state_tax_per_person * num_people
-                })
+                breakdown.append(
+                    {
+                        "label": f"State Tax ({state})",
+                        "amount": state_tax_per_person * num_people,
+                    }
+                )
 
         # Total tax per person = income tax + SE tax + state tax
-        total_tax_per_person = personal_tax_per_person + se_tax_per_person + state_tax_per_person
+        total_tax_per_person = (
+            personal_tax_per_person + se_tax_per_person + state_tax_per_person
+        )
         total_personal_tax = total_tax_per_person * num_people
 
         net_income_per_person = individual_income - total_tax_per_person
@@ -390,9 +433,13 @@ def calculate_project_taxes(
             "total_tax": total_personal_tax,
             "net_income_group": net_income_group,
             "net_income_per_person": net_income_per_person,
-            "effective_rate": (total_personal_tax / gross_income * 100) if gross_income > 0 else 0,
-            "standard_deduction_used": STANDARD_DEDUCTIONS.get(country, 0) * num_people if country not in ["UK", "Canada"] else 0,
-            "breakdown": breakdown
+            "effective_rate": (total_personal_tax / gross_income * 100)
+            if gross_income > 0
+            else 0,
+            "standard_deduction_used": STANDARD_DEDUCTIONS.get(country, 0) * num_people
+            if country not in ["UK", "Canada"]
+            else 0,
+            "breakdown": breakdown,
         }
 
     # ===== BUSINESS TAX (Corporation) =====
@@ -408,7 +455,9 @@ def calculate_project_taxes(
         elif country == "Canada":
             corporate_tax = taxable_business_income * CANADA_CORPORATE_TAX_RATE
         else:
-            corporate_tax = setup.calculate_tax_from_db(taxable_business_income, country, "Business")
+            corporate_tax = setup.calculate_tax_from_db(
+                taxable_business_income, country, "Business"
+            )
 
         after_corp_tax = gross_income - corporate_tax
 
@@ -423,7 +472,9 @@ def calculate_project_taxes(
             else:
                 # Apply standard deduction to salary
                 taxable_salary = apply_standard_deduction(after_corp_tax, country)
-                personal_tax = setup.calculate_tax_from_db(taxable_salary, country, "Individual")
+                personal_tax = setup.calculate_tax_from_db(
+                    taxable_salary, country, "Individual"
+                )
 
             dividend_tax = 0
             net_income_group = after_corp_tax - personal_tax
@@ -431,15 +482,19 @@ def calculate_project_taxes(
 
             breakdown = []
             if qbi_deduction > 0:
-                breakdown.append({
-                    "label": "QBI Deduction (20%)",
-                    "amount": -qbi_deduction,
-                    "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}"
-                })
-            breakdown.extend([
-                {"label": "Corporate Tax", "amount": corporate_tax},
-                {"label": "Personal Tax (on salary)", "amount": personal_tax}
-            ])
+                breakdown.append(
+                    {
+                        "label": "QBI Deduction (20%)",
+                        "amount": -qbi_deduction,
+                        "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}",
+                    }
+                )
+            breakdown.extend(
+                [
+                    {"label": "Corporate Tax", "amount": corporate_tax},
+                    {"label": "Personal Tax (on salary)", "amount": personal_tax},
+                ]
+            )
 
         elif distribution_method == "Dividend":
             # Pay all after-tax profit as dividends → triggers dividend tax
@@ -451,15 +506,22 @@ def calculate_project_taxes(
 
             breakdown = []
             if qbi_deduction > 0:
-                breakdown.append({
-                    "label": "QBI Deduction (20%)",
-                    "amount": -qbi_deduction,
-                    "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}"
-                })
-            breakdown.extend([
-                {"label": "Corporate Tax", "amount": corporate_tax},
-                {"label": f"Dividend Tax ({dividend_rate*100}%)", "amount": dividend_tax}
-            ])
+                breakdown.append(
+                    {
+                        "label": "QBI Deduction (20%)",
+                        "amount": -qbi_deduction,
+                        "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}",
+                    }
+                )
+            breakdown.extend(
+                [
+                    {"label": "Corporate Tax", "amount": corporate_tax},
+                    {
+                        "label": f"Dividend Tax ({dividend_rate*100}%)",
+                        "amount": dividend_tax,
+                    },
+                ]
+            )
 
         elif distribution_method == "Mixed":
             # Pay some as salary, rest as dividend
@@ -472,7 +534,9 @@ def calculate_project_taxes(
                 auto_optimized = False
 
             if salary_amount > after_corp_tax:
-                raise ValueError(f"Salary amount ({salary_amount}) exceeds after-tax profit ({after_corp_tax})")
+                raise ValueError(
+                    f"Salary amount ({salary_amount}) exceeds after-tax profit ({after_corp_tax})"
+                )
 
             # Salary portion
             if country == "UK":
@@ -483,7 +547,9 @@ def calculate_project_taxes(
             else:
                 # Apply standard deduction to salary
                 taxable_salary = apply_standard_deduction(salary_amount, country)
-                salary_tax = setup.calculate_tax_from_db(taxable_salary, country, "Individual")
+                salary_tax = setup.calculate_tax_from_db(
+                    taxable_salary, country, "Individual"
+                )
 
             after_salary = after_corp_tax - salary_amount
 
@@ -497,23 +563,37 @@ def calculate_project_taxes(
 
             breakdown = []
             if qbi_deduction > 0:
-                breakdown.append({
-                    "label": "QBI Deduction (20%)",
-                    "amount": -qbi_deduction,
-                    "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}"
-                })
-            breakdown.extend([
-                {"label": "Corporate Tax", "amount": corporate_tax},
-                {"label": f"Personal Tax (on ${salary_amount:,.0f} salary)", "amount": salary_tax},
-                {"label": f"Dividend Tax ({dividend_rate*100}% on ${after_salary:,.0f})", "amount": dividend_tax}
-            ])
+                breakdown.append(
+                    {
+                        "label": "QBI Deduction (20%)",
+                        "amount": -qbi_deduction,
+                        "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}",
+                    }
+                )
+            breakdown.extend(
+                [
+                    {"label": "Corporate Tax", "amount": corporate_tax},
+                    {
+                        "label": f"Personal Tax (on ${salary_amount:,.0f} salary)",
+                        "amount": salary_tax,
+                    },
+                    {
+                        "label": f"Dividend Tax ({dividend_rate*100}% on ${after_salary:,.0f})",
+                        "amount": dividend_tax,
+                    },
+                ]
+            )
 
             if auto_optimized:
-                breakdown.append({
-                    "label": "Auto-Optimized Split",
-                    "amount": 0,
-                    "note": calculate_optimal_salary(after_corp_tax, country)["reason"]
-                })
+                breakdown.append(
+                    {
+                        "label": "Auto-Optimized Split",
+                        "amount": 0,
+                        "note": calculate_optimal_salary(after_corp_tax, country)[
+                            "reason"
+                        ],
+                    }
+                )
 
         elif distribution_method == "Reinvest":
             # Keep money in company → no personal tax now
@@ -524,26 +604,36 @@ def calculate_project_taxes(
 
             breakdown = []
             if qbi_deduction > 0:
-                breakdown.append({
-                    "label": "QBI Deduction (20%)",
-                    "amount": -qbi_deduction,
-                    "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}"
-                })
-            breakdown.extend([
-                {"label": "Corporate Tax", "amount": corporate_tax},
-                {"label": "Personal Tax", "amount": 0, "note": "Deferred until distribution"}
-            ])
+                breakdown.append(
+                    {
+                        "label": "QBI Deduction (20%)",
+                        "amount": -qbi_deduction,
+                        "note": f"Reduces taxable business income by ${qbi_deduction:,.0f}",
+                    }
+                )
+            breakdown.extend(
+                [
+                    {"label": "Corporate Tax", "amount": corporate_tax},
+                    {
+                        "label": "Personal Tax",
+                        "amount": 0,
+                        "note": "Deferred until distribution",
+                    },
+                ]
+            )
 
         else:
             # Default to Salary if method not specified
-            personal_tax = setup.calculate_tax_from_db(after_corp_tax, country, "Individual")
+            personal_tax = setup.calculate_tax_from_db(
+                after_corp_tax, country, "Individual"
+            )
             dividend_tax = 0
             net_income_group = after_corp_tax - personal_tax
             total_tax = corporate_tax + personal_tax
 
             breakdown = [
                 {"label": "Corporate Tax", "amount": corporate_tax},
-                {"label": "Personal Tax (on salary)", "amount": personal_tax}
+                {"label": "Personal Tax (on salary)", "amount": personal_tax},
             ]
 
         net_income_per_person = net_income_group / num_people if num_people > 0 else 0
@@ -556,16 +646,24 @@ def calculate_project_taxes(
             "total_tax": total_tax,
             "net_income_group": net_income_group,
             "net_income_per_person": net_income_per_person,
-            "effective_rate": (total_tax / gross_income * 100) if gross_income > 0 else 0,
+            "effective_rate": (total_tax / gross_income * 100)
+            if gross_income > 0
+            else 0,
             "breakdown": breakdown,
-            "company_retained": after_corp_tax if distribution_method == "Reinvest" else 0
+            "company_retained": after_corp_tax
+            if distribution_method == "Reinvest"
+            else 0,
         }
 
     else:
-        raise ValueError(f"Invalid tax_structure: {tax_structure}. Must be 'Individual' or 'Business'")
+        raise ValueError(
+            f"Invalid tax_structure: {tax_structure}. Must be 'Individual' or 'Business'"
+        )
 
 
-def get_optimal_strategy(revenue: float, costs: float, num_people: int, country: str, state: str = None):
+def get_optimal_strategy(
+    revenue: float, costs: float, num_people: int, country: str, state: str = None
+):
     """
     Calculate all possible tax strategies and return the optimal one.
 
@@ -578,40 +676,50 @@ def get_optimal_strategy(revenue: float, costs: float, num_people: int, country:
     strategies = []
 
     # Individual
-    individual = calculate_project_taxes(revenue, costs, num_people, country, "Individual", "N/A", 0, state)
-    individual['strategy_name'] = "Individual Tax"
+    individual = calculate_project_taxes(
+        revenue, costs, num_people, country, "Individual", "N/A", 0, state
+    )
+    individual["strategy_name"] = "Individual Tax"
     strategies.append(individual)
 
     # Business - Salary
-    business_salary = calculate_project_taxes(revenue, costs, num_people, country, "Business", "Salary", 0, state)
-    business_salary['strategy_name'] = "Business + Salary"
+    business_salary = calculate_project_taxes(
+        revenue, costs, num_people, country, "Business", "Salary", 0, state
+    )
+    business_salary["strategy_name"] = "Business + Salary"
     strategies.append(business_salary)
 
     # Business - Dividend
-    business_dividend = calculate_project_taxes(revenue, costs, num_people, country, "Business", "Dividend", 0, state)
-    business_dividend['strategy_name'] = "Business + Dividend"
+    business_dividend = calculate_project_taxes(
+        revenue, costs, num_people, country, "Business", "Dividend", 0, state
+    )
+    business_dividend["strategy_name"] = "Business + Dividend"
     strategies.append(business_dividend)
 
     # Business - Mixed (Auto-Optimized)
-    business_mixed = calculate_project_taxes(revenue, costs, num_people, country, "Business", "Mixed", 0, state)
-    business_mixed['strategy_name'] = "Business + Mixed (Optimized)"
+    business_mixed = calculate_project_taxes(
+        revenue, costs, num_people, country, "Business", "Mixed", 0, state
+    )
+    business_mixed["strategy_name"] = "Business + Mixed (Optimized)"
     strategies.append(business_mixed)
 
     # Business - Reinvest
-    business_reinvest = calculate_project_taxes(revenue, costs, num_people, country, "Business", "Reinvest", 0, state)
-    business_reinvest['strategy_name'] = "Business + Reinvest"
+    business_reinvest = calculate_project_taxes(
+        revenue, costs, num_people, country, "Business", "Reinvest", 0, state
+    )
+    business_reinvest["strategy_name"] = "Business + Reinvest"
     strategies.append(business_reinvest)
 
     # Find optimal (highest net income for strategies that give cash now)
-    cashflow_strategies = [s for s in strategies if s['net_income_group'] > 0]
-    optimal = max(cashflow_strategies, key=lambda x: x['net_income_group'])
-    worst = min(cashflow_strategies, key=lambda x: x['net_income_group'])
+    cashflow_strategies = [s for s in strategies if s["net_income_group"] > 0]
+    optimal = max(cashflow_strategies, key=lambda x: x["net_income_group"])
+    worst = min(cashflow_strategies, key=lambda x: x["net_income_group"])
 
-    savings = optimal['net_income_group'] - worst['net_income_group']
+    savings = optimal["net_income_group"] - worst["net_income_group"]
 
     return {
         "all_strategies": strategies,
         "optimal": optimal,
         "worst": worst,
-        "savings": savings
+        "savings": savings,
     }

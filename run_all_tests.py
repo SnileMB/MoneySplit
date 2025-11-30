@@ -5,6 +5,7 @@ import sys
 from api.main import app
 from fastapi.testclient import TestClient
 
+
 def test_backend_modules():
     """Test all backend modules can be imported"""
     print("🧪 Testing Backend Modules...")
@@ -12,6 +13,7 @@ def test_backend_modules():
         from DB import setup
         from Logic import validators, pdf_generator, forecasting
         from api import main, models
+
         # ProgramBackend uses MoneySplit prefix which is fine
         print("   ✅ All modules imported successfully")
         return True
@@ -19,11 +21,13 @@ def test_backend_modules():
         print(f"   ❌ Module import failed: {e}")
         return False
 
+
 def test_database_schema():
     """Test database schema"""
     print("\n🧪 Testing Database Schema...")
     try:
         from DB import setup
+
         conn = setup.get_conn()
         cursor = conn.cursor()
 
@@ -31,7 +35,7 @@ def test_database_schema():
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = [row[0] for row in cursor.fetchall()]
 
-        required_tables = ['tax_records', 'people', 'tax_brackets']
+        required_tables = ["tax_records", "people", "tax_brackets"]
         for table in required_tables:
             if table not in tables:
                 print(f"   ❌ Missing table: {table}")
@@ -43,6 +47,7 @@ def test_database_schema():
     except Exception as e:
         print(f"   ❌ Database test failed: {e}")
         return False
+
 
 def test_api_endpoints():
     """Test API endpoints"""
@@ -68,6 +73,7 @@ def test_api_endpoints():
         print(f"   ❌ API test failed: {e}")
         return False
 
+
 def test_project_creation():
     """Test creating a project via API"""
     print("\n🧪 Testing Project Creation...")
@@ -75,28 +81,31 @@ def test_project_creation():
         client = TestClient(app)
 
         project_data = {
-            'num_people': 2,
-            'revenue': 10000,
-            'costs': [1000, 500],
-            'country': 'US',
-            'tax_type': 'Individual',
-            'people': [
-                {'name': 'Alice', 'work_share': 0.6},
-                {'name': 'Bob', 'work_share': 0.4}
-            ]
+            "num_people": 2,
+            "revenue": 10000,
+            "costs": [1000, 500],
+            "country": "US",
+            "tax_type": "Individual",
+            "people": [
+                {"name": "Alice", "work_share": 0.6},
+                {"name": "Bob", "work_share": 0.4},
+            ],
         }
 
-        response = client.post('/api/projects', json=project_data)
-        assert response.status_code == 201, f"Project creation failed: {response.status_code}"
+        response = client.post("/api/projects", json=project_data)
+        assert (
+            response.status_code == 201
+        ), f"Project creation failed: {response.status_code}"
 
         result = response.json()
-        assert 'record_id' in result, "Missing record_id in response"
+        assert "record_id" in result, "Missing record_id in response"
 
         print(f"   ✅ Project created (ID: {result['record_id']})")
         return True
     except Exception as e:
         print(f"   ❌ Project creation failed: {e}")
         return False
+
 
 def test_forecasting():
     """Test forecasting functionality"""
@@ -106,19 +115,20 @@ def test_forecasting():
 
         # Test tax optimization
         result = forecasting.tax_optimization_analysis()
-        assert 'tax_comparison' in result, "Missing tax_comparison"
-        assert 'recommendations' in result, "Missing recommendations"
+        assert "tax_comparison" in result, "Missing tax_comparison"
+        assert "recommendations" in result, "Missing recommendations"
 
         # Test comprehensive forecast
         result = forecasting.comprehensive_forecast()
-        assert 'revenue_forecast' in result, "Missing revenue_forecast"
-        assert 'tax_optimization' in result, "Missing tax_optimization"
+        assert "revenue_forecast" in result, "Missing revenue_forecast"
+        assert "tax_optimization" in result, "Missing tax_optimization"
 
         print("   ✅ Forecasting functions working")
         return True
     except Exception as e:
         print(f"   ❌ Forecasting test failed: {e}")
         return False
+
 
 def test_pdf_generation():
     """Test PDF generation"""
@@ -134,7 +144,7 @@ def test_pdf_generation():
 
             # Test project PDF
             filepath = pdf_generator.generate_project_pdf(
-                record, people, 'reports/test_project.pdf'
+                record, people, "reports/test_project.pdf"
             )
 
             print(f"   ✅ PDF generation working")
@@ -145,6 +155,7 @@ def test_pdf_generation():
     except Exception as e:
         print(f"   ❌ PDF test failed: {e}")
         return False
+
 
 def main():
     """Run all tests"""
@@ -184,6 +195,7 @@ def main():
     else:
         print(f"\n⚠️  {total - passed} test(s) failed. Please review above.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

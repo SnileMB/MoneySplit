@@ -1,6 +1,7 @@
 from MoneySplit.DB import setup
 from MoneySplit.Logic import validators
 
+
 def manage_brackets_menu():
     while True:
         print("\n=== Manage Tax Brackets 📊 ===")
@@ -21,13 +22,29 @@ def manage_brackets_menu():
 
             if sub == "1":  # Manual entry
                 try:
-                    country = validators.validate_country(input("Enter country (US/Spain): ").strip())
-                    tax_type = validators.validate_tax_type(input("Enter type (Individual/Business): ").strip())
-                    n = validators.safe_int_input("How many brackets to add? ", "Number of brackets", min_value=1)
+                    country = validators.validate_country(
+                        input("Enter country (US/Spain): ").strip()
+                    )
+                    tax_type = validators.validate_tax_type(
+                        input("Enter type (Individual/Business): ").strip()
+                    )
+                    n = validators.safe_int_input(
+                        "How many brackets to add? ", "Number of brackets", min_value=1
+                    )
                     for i in range(n):
-                        limit = input(f"Bracket {i+1} income limit (number or 'inf'): ").strip()
-                        income_limit = float("inf") if limit.lower() == "inf" else validators.safe_float_input(f"Re-enter bracket {i+1} income limit: ", "Income limit")
-                        rate = validators.safe_float_input(f"Bracket {i+1} rate (0.0-1.0, e.g. 0.21): ", "Tax rate")
+                        limit = input(
+                            f"Bracket {i+1} income limit (number or 'inf'): "
+                        ).strip()
+                        income_limit = (
+                            float("inf")
+                            if limit.lower() == "inf"
+                            else validators.safe_float_input(
+                                f"Re-enter bracket {i+1} income limit: ", "Income limit"
+                            )
+                        )
+                        rate = validators.safe_float_input(
+                            f"Bracket {i+1} rate (0.0-1.0, e.g. 0.21): ", "Tax rate"
+                        )
                         rate = validators.validate_tax_rate(rate)
                         setup.add_tax_bracket(country, tax_type, income_limit, rate)
                     print(f"✅ Added {n} brackets for {country} {tax_type}")
@@ -36,9 +53,15 @@ def manage_brackets_menu():
 
             elif sub == "2":  # CSV
                 try:
-                    country = validators.validate_country(input("Enter country (US/Spain): ").strip())
-                    tax_type = validators.validate_tax_type(input("Enter type (Individual/Business): ").strip())
-                    filepath = validators.safe_string_input("Enter path to CSV file: ", "File path")
+                    country = validators.validate_country(
+                        input("Enter country (US/Spain): ").strip()
+                    )
+                    tax_type = validators.validate_tax_type(
+                        input("Enter type (Individual/Business): ").strip()
+                    )
+                    filepath = validators.safe_string_input(
+                        "Enter path to CSV file: ", "File path"
+                    )
                     setup.add_tax_brackets_from_csv(country, tax_type, filepath)
                 except validators.ValidationError as e:
                     print(f"❌ {e}")
@@ -48,7 +71,9 @@ def manage_brackets_menu():
 
         elif choice == "2":  # Update
             bracket_id = int(input("Enter bracket ID to update: "))
-            field = input("Which field (country, tax_type, income_limit, rate)? ").strip()
+            field = input(
+                "Which field (country, tax_type, income_limit, rate)? "
+            ).strip()
             new_value = input("Enter new value: ").strip()
             if field in ("income_limit", "rate") and new_value.lower() != "inf":
                 new_value = float(new_value)

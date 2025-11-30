@@ -4,17 +4,20 @@ Compares Individual vs Business tax strategies and shows real take-home amounts.
 """
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
 # Dividend tax rates by country
 DIVIDEND_TAX_RATES = {
-    "US": 0.15,      # Qualified dividends
-    "Spain": 0.19    # Dividends tax rate
+    "US": 0.15,  # Qualified dividends
+    "Spain": 0.19,  # Dividends tax rate
 }
 
 
-def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, country: str):
+def calculate_all_tax_scenarios(
+    revenue: float, costs: float, num_people: int, country: str
+):
     """
     Calculate tax for ALL possible scenarios and return comparison data.
 
@@ -30,7 +33,9 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
     individual_income = income / num_people if num_people > 0 else 0
 
     # ===== INDIVIDUAL TAX (Freelancer/Contractor) =====
-    individual_tax = setup.calculate_tax_from_db(individual_income, country, "Individual")
+    individual_tax = setup.calculate_tax_from_db(
+        individual_income, country, "Individual"
+    )
     individual_take_home = individual_income - individual_tax
     individual_total = individual_take_home * num_people
 
@@ -41,10 +46,10 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
         "tax_paid": individual_tax,
         "take_home_per_person": individual_take_home,
         "take_home_total": individual_total,
-        "effective_rate": (individual_tax / individual_income * 100) if individual_income > 0 else 0,
-        "tax_breakdown": [
-            {"label": "Personal Income Tax", "amount": individual_tax}
-        ]
+        "effective_rate": (individual_tax / individual_income * 100)
+        if individual_income > 0
+        else 0,
+        "tax_breakdown": [{"label": "Personal Income Tax", "amount": individual_tax}],
     }
 
     # ===== BUSINESS TAX (Corporation) =====
@@ -52,7 +57,9 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
     after_corp_tax = income - corporate_tax
 
     # Option 1: Pay yourself as SALARY
-    salary_personal_tax = setup.calculate_tax_from_db(after_corp_tax, country, "Individual")
+    salary_personal_tax = setup.calculate_tax_from_db(
+        after_corp_tax, country, "Individual"
+    )
     salary_take_home = after_corp_tax - salary_personal_tax
     salary_per_person = salary_take_home / num_people if num_people > 0 else 0
 
@@ -66,11 +73,13 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
         "total_tax": corporate_tax + salary_personal_tax,
         "take_home_per_person": salary_per_person,
         "take_home_total": salary_take_home,
-        "effective_rate": ((corporate_tax + salary_personal_tax) / income * 100) if income > 0 else 0,
+        "effective_rate": ((corporate_tax + salary_personal_tax) / income * 100)
+        if income > 0
+        else 0,
         "tax_breakdown": [
             {"label": "Corporate Tax", "amount": corporate_tax},
-            {"label": "Personal Income Tax (on salary)", "amount": salary_personal_tax}
-        ]
+            {"label": "Personal Income Tax (on salary)", "amount": salary_personal_tax},
+        ],
     }
 
     # Option 2: Pay yourself as DIVIDENDS
@@ -89,11 +98,13 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
         "total_tax": corporate_tax + dividend_tax,
         "take_home_per_person": dividend_per_person,
         "take_home_total": dividend_take_home,
-        "effective_rate": ((corporate_tax + dividend_tax) / income * 100) if income > 0 else 0,
+        "effective_rate": ((corporate_tax + dividend_tax) / income * 100)
+        if income > 0
+        else 0,
         "tax_breakdown": [
             {"label": "Corporate Tax", "amount": corporate_tax},
-            {"label": f"Dividend Tax ({dividend_rate*100}%)", "amount": dividend_tax}
-        ]
+            {"label": f"Dividend Tax ({dividend_rate*100}%)", "amount": dividend_tax},
+        ],
     }
 
     # Option 3: REINVEST in company
@@ -111,16 +122,20 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
         "effective_rate": (corporate_tax / income * 100) if income > 0 else 0,
         "tax_breakdown": [
             {"label": "Corporate Tax", "amount": corporate_tax},
-            {"label": "Personal Tax", "amount": 0, "note": "Deferred until distribution"}
+            {
+                "label": "Personal Tax",
+                "amount": 0,
+                "note": "Deferred until distribution",
+            },
         ],
-        "note": "No personal income now - money stays in company"
+        "note": "No personal income now - money stays in company",
     }
 
     # ===== DETERMINE BEST OPTION =====
     scenarios = [
         ("individual", individual_scenario),
         ("business_salary", business_salary_scenario),
-        ("business_dividend", business_dividend_scenario)
+        ("business_dividend", business_dividend_scenario),
     ]
 
     # Sort by take_home_total (highest first)
@@ -138,21 +153,21 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
             "choice": "Individual Tax",
             "reason": f"You'll take home ${best_scenario['take_home_total']:,.2f} (vs ${worst_scenario['take_home_total']:,.2f} with worst option)",
             "savings": savings,
-            "warning": None
+            "warning": None,
         }
     elif best_option == "business_dividend":
         recommendation = {
             "choice": "Business Tax with Dividend Distribution",
             "reason": f"Lower tax burden than salary - save ${savings:,.2f}",
             "savings": savings,
-            "warning": "⚠️ Remember: Corporate + Dividend tax = double taxation"
+            "warning": "⚠️ Remember: Corporate + Dividend tax = double taxation",
         }
     else:
         recommendation = {
             "choice": "Business Tax with Salary",
             "reason": f"Best option for this income level - save ${savings:,.2f}",
             "savings": savings,
-            "warning": "⚠️ Remember: Corporate + Personal tax = double taxation"
+            "warning": "⚠️ Remember: Corporate + Personal tax = double taxation",
         }
 
     return {
@@ -161,11 +176,13 @@ def calculate_all_tax_scenarios(revenue: float, costs: float, num_people: int, c
         "business_dividend": business_dividend_scenario,
         "business_reinvest": business_reinvest_scenario,
         "recommendation": recommendation,
-        "all_scenarios_sorted": scenarios
+        "all_scenarios_sorted": scenarios,
     }
 
 
-def get_tax_optimization_summary(revenue: float, costs: float, num_people: int, country: str, selected_type: str):
+def get_tax_optimization_summary(
+    revenue: float, costs: float, num_people: int, country: str, selected_type: str
+):
     """
     Get a summary showing what user selected vs optimal choice.
     Used for displaying warnings/insights after project creation.
@@ -189,7 +206,7 @@ def get_tax_optimization_summary(revenue: float, costs: float, num_people: int, 
             "is_optimal": True,
             "message": f"✅ Great choice! {selected['type']} is the best option for this project.",
             "selected": selected,
-            "savings": 0
+            "savings": 0,
         }
     else:
         potential_savings = best["take_home_total"] - selected["take_home_total"]
@@ -198,5 +215,5 @@ def get_tax_optimization_summary(revenue: float, costs: float, num_people: int, 
             "message": f"💡 You could save ${potential_savings:,.2f} by using {best['type']} instead",
             "selected": selected,
             "optimal": best,
-            "savings": potential_savings
+            "savings": potential_savings,
         }

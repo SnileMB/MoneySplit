@@ -7,37 +7,46 @@ from plotly.subplots import make_subplots
 import webbrowser
 import os
 
+
 def summary_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin, tax_option,
                COUNT(*), SUM(revenue), SUM(total_costs), SUM(tax_amount),
                SUM(net_income_group)
         FROM tax_records
         GROUP BY tax_origin, tax_option
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
     print("\n=== Summary Report ===")
-    print(f"{'Origin':<8} | {'Option':<10} | {'Records':<7} | {'Revenue':>12} | {'Costs':>12} | {'Tax':>12} | {'Net Group':>12}")
+    print(
+        f"{'Origin':<8} | {'Option':<10} | {'Records':<7} | {'Revenue':>12} | {'Costs':>12} | {'Tax':>12} | {'Net Group':>12}"
+    )
     print("-" * 75)
     for origin, option, cnt, rev, cost, tax, net in rows:
-        print(f"{origin:<8} | {option:<10} | {cnt:<7} | {rev:>12,.2f} | {cost:>12,.2f} | {tax:>12,.2f} | {net:>12,.2f}")
+        print(
+            f"{origin:<8} | {option:<10} | {cnt:<7} | {rev:>12,.2f} | {cost:>12,.2f} | {tax:>12,.2f} | {net:>12,.2f}"
+        )
 
 
 def person_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name, SUM(gross_income), SUM(tax_paid), SUM(net_income)
         FROM people
         GROUP BY name
         ORDER BY SUM(gross_income) DESC
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -52,10 +61,12 @@ def record_stats():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT COUNT(*), AVG(revenue), AVG(tax_amount), MIN(net_income_group), MAX(net_income_group)
         FROM tax_records
-    """)
+    """
+    )
     total, avg_rev, avg_tax, min_net, max_net = cursor.fetchone()
     conn.close()
 
@@ -87,12 +98,14 @@ def show_report_menu():
         else:
             print("❌ Invalid choice.")
 
+
 def export_to_csv(filename, headers, rows):
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(rows)
     print(f"📄 Exported report → {filename}")
+
 
 def revenue_summary_report():
     rows = setup.get_revenue_summary()
@@ -108,34 +121,39 @@ def revenue_summary_report():
 
     # Create interactive chart
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=2,
+        cols=1,
         subplot_titles=("Revenue & Costs by Year", "Net Income by Year"),
-        vertical_spacing=0.15
+        vertical_spacing=0.15,
     )
 
     # Revenue and Costs
     fig.add_trace(
-        go.Bar(name="Revenue", x=years, y=revenues, marker_color='rgb(55, 83, 109)'),
-        row=1, col=1
+        go.Bar(name="Revenue", x=years, y=revenues, marker_color="rgb(55, 83, 109)"),
+        row=1,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(name="Costs", x=years, y=costs, marker_color='rgb(219, 64, 82)'),
-        row=1, col=1
+        go.Bar(name="Costs", x=years, y=costs, marker_color="rgb(219, 64, 82)"),
+        row=1,
+        col=1,
     )
 
     # Net Income
     fig.add_trace(
-        go.Scatter(name="Net Income", x=years, y=net_incomes,
-                   mode='lines+markers', marker_color='rgb(50, 171, 96)',
-                   line=dict(width=3)),
-        row=2, col=1
+        go.Scatter(
+            name="Net Income",
+            x=years,
+            y=net_incomes,
+            mode="lines+markers",
+            marker_color="rgb(50, 171, 96)",
+            line=dict(width=3),
+        ),
+        row=2,
+        col=1,
     )
 
-    fig.update_layout(
-        title_text="Revenue Summary by Year",
-        showlegend=True,
-        height=700
-    )
+    fig.update_layout(title_text="Revenue Summary by Year", showlegend=True, height=700)
     fig.update_xaxes(title_text="Year", row=2, col=1)
     fig.update_yaxes(title_text="Amount ($)", row=1, col=1)
     fig.update_yaxes(title_text="Net Income ($)", row=2, col=1)
@@ -144,25 +162,30 @@ def revenue_summary_report():
     filepath = "reports/revenue_summary.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Also print text summary
     print("\n=== Revenue Summary (Text) ===")
-    print(f"{'Year':<6} | {'Total Revenue':>15} | {'Total Costs':>15} | {'Net Income':>15}")
+    print(
+        f"{'Year':<6} | {'Total Revenue':>15} | {'Total Costs':>15} | {'Net Income':>15}"
+    )
     print("-" * 60)
     for year, rev, cost, net in rows:
         print(f"{year:<6} | {rev:>15,.2f} | {cost:>15,.2f} | {net:>15,.2f}")
 
     choice = input("\nExport to CSV? (y/n): ").strip().lower()
     if choice == "y":
-        filename = input("Enter filename (default: report_revenue_summary.csv): ").strip()
+        filename = input(
+            "Enter filename (default: report_revenue_summary.csv): "
+        ).strip()
         if not filename:
             filename = "report_revenue_summary.csv"
         elif not filename.endswith(".csv"):
             filename += ".csv"
         headers = ["Year", "Total Revenue", "Total Costs", "Net Income"]
         export_to_csv(filename, headers, rows)
+
 
 def top_people_report():
     rows = setup.get_top_people()
@@ -178,36 +201,57 @@ def top_people_report():
 
     # Create horizontal bar chart
     fig = make_subplots(
-        rows=1, cols=2,
+        rows=1,
+        cols=2,
         subplot_titles=("Net Income", "Gross Income vs Tax Paid"),
-        specs=[[{"type": "bar"}, {"type": "bar"}]]
+        specs=[[{"type": "bar"}, {"type": "bar"}]],
     )
 
     # Net income chart
     fig.add_trace(
-        go.Bar(name="Net Income", y=names, x=net_incomes, orientation='h',
-               marker_color='rgb(50, 171, 96)', text=net_incomes,
-               texttemplate='$%{text:,.0f}', textposition='outside'),
-        row=1, col=1
+        go.Bar(
+            name="Net Income",
+            y=names,
+            x=net_incomes,
+            orientation="h",
+            marker_color="rgb(50, 171, 96)",
+            text=net_incomes,
+            texttemplate="$%{text:,.0f}",
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
     )
 
     # Gross vs Tax chart
     fig.add_trace(
-        go.Bar(name="Gross Income", y=names, x=gross_incomes, orientation='h',
-               marker_color='rgb(55, 83, 109)'),
-        row=1, col=2
+        go.Bar(
+            name="Gross Income",
+            y=names,
+            x=gross_incomes,
+            orientation="h",
+            marker_color="rgb(55, 83, 109)",
+        ),
+        row=1,
+        col=2,
     )
     fig.add_trace(
-        go.Bar(name="Tax Paid", y=names, x=taxes_paid, orientation='h',
-               marker_color='rgb(219, 64, 82)'),
-        row=1, col=2
+        go.Bar(
+            name="Tax Paid",
+            y=names,
+            x=taxes_paid,
+            orientation="h",
+            marker_color="rgb(219, 64, 82)",
+        ),
+        row=1,
+        col=2,
     )
 
     fig.update_layout(
         title_text="Top People by Net Income",
         showlegend=True,
         height=max(400, len(names) * 40),
-        barmode='group'
+        barmode="group",
     )
     fig.update_xaxes(title_text="Net Income ($)", row=1, col=1)
     fig.update_xaxes(title_text="Amount ($)", row=1, col=2)
@@ -216,7 +260,7 @@ def top_people_report():
     filepath = "reports/top_people.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Also print text summary
@@ -235,6 +279,7 @@ def top_people_report():
         elif not filename.endswith(".csv"):
             filename += ".csv"
         export_to_csv(filename, headers, rows)
+
 
 def show_report_menu():
     while True:
@@ -280,7 +325,9 @@ def show_top_contributors(record_id: int, top_n: int = 5):
     ranked = sorted(people, key=lambda x: x[5], reverse=True)  # net_income = idx 5
     print(f"\n=== Top {min(top_n, len(ranked))} Contributors (by Net Income) ===")
     for i, (pid, name, ws, gross, tax_paid, net) in enumerate(ranked[:top_n], start=1):
-        print(f"{i}. {name:<12} → Net {net:,.2f} (Gross {gross:,.2f}, Tax {tax_paid:,.2f})")
+        print(
+            f"{i}. {name:<12} → Net {net:,.2f} (Gross {gross:,.2f}, Tax {tax_paid:,.2f})"
+        )
 
 
 def single_record_menu():
@@ -366,7 +413,8 @@ def tax_type_comparison_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin, tax_option,
                COUNT(*) as records,
                AVG(revenue) as avg_revenue,
@@ -376,7 +424,8 @@ def tax_type_comparison_report():
         FROM tax_records
         GROUP BY tax_origin, tax_option
         ORDER BY tax_origin, tax_option
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -393,53 +442,73 @@ def tax_type_comparison_report():
 
     # Create comparison charts
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Average Tax Rate (%)", "Total Net Income",
-                       "Average Revenue vs Tax", "Record Distribution"),
-        specs=[[{"type": "bar"}, {"type": "bar"}],
-               [{"type": "bar"}, {"type": "pie"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Average Tax Rate (%)",
+            "Total Net Income",
+            "Average Revenue vs Tax",
+            "Record Distribution",
+        ),
+        specs=[[{"type": "bar"}, {"type": "bar"}], [{"type": "bar"}, {"type": "pie"}]],
     )
 
     # Avg tax rate
     fig.add_trace(
-        go.Bar(x=labels, y=avg_rates, name="Avg Tax Rate",
-               marker_color='rgb(219, 64, 82)', text=avg_rates,
-               texttemplate='%{text:.2f}%', textposition='outside'),
-        row=1, col=1
+        go.Bar(
+            x=labels,
+            y=avg_rates,
+            name="Avg Tax Rate",
+            marker_color="rgb(219, 64, 82)",
+            text=avg_rates,
+            texttemplate="%{text:.2f}%",
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
     )
 
     # Total net income
     fig.add_trace(
-        go.Bar(x=labels, y=total_nets, name="Total Net",
-               marker_color='rgb(50, 171, 96)', text=total_nets,
-               texttemplate='$%{text:,.0f}', textposition='outside'),
-        row=1, col=2
+        go.Bar(
+            x=labels,
+            y=total_nets,
+            name="Total Net",
+            marker_color="rgb(50, 171, 96)",
+            text=total_nets,
+            texttemplate="$%{text:,.0f}",
+            textposition="outside",
+        ),
+        row=1,
+        col=2,
     )
 
     # Avg revenue vs tax
     fig.add_trace(
-        go.Bar(x=labels, y=avg_revenues, name="Avg Revenue",
-               marker_color='rgb(55, 83, 109)'),
-        row=2, col=1
+        go.Bar(
+            x=labels,
+            y=avg_revenues,
+            name="Avg Revenue",
+            marker_color="rgb(55, 83, 109)",
+        ),
+        row=2,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(x=labels, y=avg_taxes, name="Avg Tax",
-               marker_color='rgb(219, 64, 82)'),
-        row=2, col=1
+        go.Bar(x=labels, y=avg_taxes, name="Avg Tax", marker_color="rgb(219, 64, 82)"),
+        row=2,
+        col=1,
     )
 
     # Record distribution pie
     record_counts = [row[2] for row in rows]
     fig.add_trace(
-        go.Pie(labels=labels, values=record_counts, textinfo='label+percent+value'),
-        row=2, col=2
+        go.Pie(labels=labels, values=record_counts, textinfo="label+percent+value"),
+        row=2,
+        col=2,
     )
 
-    fig.update_layout(
-        title_text="Tax Strategy Comparison",
-        showlegend=True,
-        height=800
-    )
+    fig.update_layout(title_text="Tax Strategy Comparison", showlegend=True, height=800)
     fig.update_yaxes(title_text="Rate (%)", row=1, col=1)
     fig.update_yaxes(title_text="Net Income ($)", row=1, col=2)
     fig.update_yaxes(title_text="Amount ($)", row=2, col=1)
@@ -448,15 +517,19 @@ def tax_type_comparison_report():
     filepath = "reports/tax_strategy_comparison.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Also print text summary
     print("\n=== Tax Strategy Comparison (Text) ===")
-    print(f"{'Origin':<8} | {'Strategy':<10} | {'Records':<7} | {'Avg Revenue':>12} | {'Avg Tax':>12} | {'Avg Rate':>9} | {'Total Net':>12}")
+    print(
+        f"{'Origin':<8} | {'Strategy':<10} | {'Records':<7} | {'Avg Revenue':>12} | {'Avg Tax':>12} | {'Avg Rate':>9} | {'Total Net':>12}"
+    )
     print("-" * 90)
     for origin, option, cnt, avg_rev, avg_tax, avg_rate, total_net in rows:
-        print(f"{origin:<8} | {option:<10} | {cnt:<7} | {avg_rev:>12,.2f} | {avg_tax:>12,.2f} | {avg_rate:>8.2f}% | {total_net:>12,.2f}")
+        print(
+            f"{origin:<8} | {option:<10} | {cnt:<7} | {avg_rev:>12,.2f} | {avg_tax:>12,.2f} | {avg_rate:>8.2f}% | {total_net:>12,.2f}"
+        )
 
 
 def overall_statistics():
@@ -465,7 +538,8 @@ def overall_statistics():
     cursor = conn.cursor()
 
     # Records stats
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT COUNT(*),
                SUM(revenue),
                SUM(total_costs),
@@ -473,8 +547,16 @@ def overall_statistics():
                SUM(net_income_group),
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0))
         FROM tax_records
-    """)
-    total_records, total_rev, total_costs, total_tax, total_net, avg_rate = cursor.fetchone()
+    """
+    )
+    (
+        total_records,
+        total_rev,
+        total_costs,
+        total_tax,
+        total_net,
+        avg_rate,
+    ) = cursor.fetchone()
 
     # People stats
     cursor.execute("SELECT COUNT(*), COUNT(DISTINCT name) FROM people")
@@ -488,21 +570,31 @@ def overall_statistics():
 
     # Create dashboard with multiple visualizations
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Financial Breakdown", "Revenue Flow (Sankey)",
-                       "Database Overview", "Tax Efficiency"),
-        specs=[[{"type": "pie"}, {"type": "sankey"}],
-               [{"type": "indicator"}, {"type": "indicator"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Financial Breakdown",
+            "Revenue Flow (Sankey)",
+            "Database Overview",
+            "Tax Efficiency",
+        ),
+        specs=[
+            [{"type": "pie"}, {"type": "sankey"}],
+            [{"type": "indicator"}, {"type": "indicator"}],
+        ],
     )
 
     # Pie chart - Financial breakdown
     fig.add_trace(
-        go.Pie(labels=["Net Income", "Tax Paid", "Costs"],
-               values=[total_net, total_tax, total_costs],
-               marker_colors=['rgb(50, 171, 96)', 'rgb(219, 64, 82)', 'rgb(255, 165, 0)'],
-               textinfo='label+percent+value',
-               texttemplate='%{label}<br>$%{value:,.0f}<br>%{percent}'),
-        row=1, col=1
+        go.Pie(
+            labels=["Net Income", "Tax Paid", "Costs"],
+            values=[total_net, total_tax, total_costs],
+            marker_colors=["rgb(50, 171, 96)", "rgb(219, 64, 82)", "rgb(255, 165, 0)"],
+            textinfo="label+percent+value",
+            texttemplate="%{label}<br>$%{value:,.0f}<br>%{percent}",
+        ),
+        row=1,
+        col=1,
     )
 
     # Sankey diagram - Revenue flow
@@ -512,16 +604,22 @@ def overall_statistics():
                 pad=15,
                 thickness=20,
                 label=["Revenue", "Costs", "Income", "Tax", "Net Income"],
-                color=['rgb(55, 83, 109)', 'rgb(255, 165, 0)', 'rgb(100, 150, 200)',
-                       'rgb(219, 64, 82)', 'rgb(50, 171, 96)']
+                color=[
+                    "rgb(55, 83, 109)",
+                    "rgb(255, 165, 0)",
+                    "rgb(100, 150, 200)",
+                    "rgb(219, 64, 82)",
+                    "rgb(50, 171, 96)",
+                ],
             ),
             link=dict(
                 source=[0, 0, 2, 2],
                 target=[1, 2, 3, 4],
-                value=[total_costs, total_rev - total_costs, total_tax, total_net]
-            )
+                value=[total_costs, total_rev - total_costs, total_tax, total_net],
+            ),
         ),
-        row=1, col=2
+        row=1,
+        col=2,
     )
 
     # Indicator - Database stats
@@ -529,10 +627,13 @@ def overall_statistics():
         go.Indicator(
             mode="number",
             value=total_records,
-            title={"text": f"Total Records<br><span style='font-size:0.8em'>People: {unique_people} unique / {total_people_entries} total</span>"},
-            domain={'x': [0, 1], 'y': [0, 1]}
+            title={
+                "text": f"Total Records<br><span style='font-size:0.8em'>People: {unique_people} unique / {total_people_entries} total</span>"
+            },
+            domain={"x": [0, 1], "y": [0, 1]},
         ),
-        row=2, col=1
+        row=2,
+        col=1,
     )
 
     # Indicator - Tax efficiency
@@ -541,38 +642,41 @@ def overall_statistics():
         go.Indicator(
             mode="gauge+number+delta",
             value=net_percentage,
-            title={"text": "Net Income Efficiency<br><span style='font-size:0.8em'>(Net / Revenue %)</span>"},
-            delta={'reference': 70, 'increasing': {'color': 'green'}},
-            gauge={
-                'axis': {'range': [0, 100]},
-                'bar': {'color': 'rgb(50, 171, 96)'},
-                'steps': [
-                    {'range': [0, 50], 'color': 'rgb(255, 200, 200)'},
-                    {'range': [50, 70], 'color': 'rgb(255, 255, 200)'},
-                    {'range': [70, 100], 'color': 'rgb(200, 255, 200)'}
-                ],
-                'threshold': {
-                    'line': {'color': 'red', 'width': 4},
-                    'thickness': 0.75,
-                    'value': 70
-                }
+            title={
+                "text": "Net Income Efficiency<br><span style='font-size:0.8em'>(Net / Revenue %)</span>"
             },
-            domain={'x': [0, 1], 'y': [0, 1]}
+            delta={"reference": 70, "increasing": {"color": "green"}},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "rgb(50, 171, 96)"},
+                "steps": [
+                    {"range": [0, 50], "color": "rgb(255, 200, 200)"},
+                    {"range": [50, 70], "color": "rgb(255, 255, 200)"},
+                    {"range": [70, 100], "color": "rgb(200, 255, 200)"},
+                ],
+                "threshold": {
+                    "line": {"color": "red", "width": 4},
+                    "thickness": 0.75,
+                    "value": 70,
+                },
+            },
+            domain={"x": [0, 1], "y": [0, 1]},
         ),
-        row=2, col=2
+        row=2,
+        col=2,
     )
 
     fig.update_layout(
         title_text=f"Overall Statistics Dashboard<br><sub>Total Revenue: ${total_rev:,.0f} | Avg Tax Rate: {avg_rate:.2f}%</sub>",
         showlegend=False,
-        height=900
+        height=900,
     )
 
     # Save and open
     filepath = "reports/overall_statistics.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Also print text summary
@@ -593,7 +697,8 @@ def monthly_trends_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', created_at) as month,
                COUNT(*) as num_projects,
                SUM(revenue) as total_revenue,
@@ -603,7 +708,8 @@ def monthly_trends_report():
         FROM tax_records
         GROUP BY month
         ORDER BY month DESC
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -629,50 +735,89 @@ def monthly_trends_report():
 
     # Create visualization
     fig = make_subplots(
-        rows=3, cols=1,
-        subplot_titles=("Monthly Revenue & Costs", "Monthly Profit", "Number of Projects & Avg Tax Rate"),
-        specs=[[{"secondary_y": False}], [{"secondary_y": False}], [{"secondary_y": True}]],
-        vertical_spacing=0.1
+        rows=3,
+        cols=1,
+        subplot_titles=(
+            "Monthly Revenue & Costs",
+            "Monthly Profit",
+            "Number of Projects & Avg Tax Rate",
+        ),
+        specs=[
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+            [{"secondary_y": True}],
+        ],
+        vertical_spacing=0.1,
     )
 
     # Revenue & Costs
     fig.add_trace(
-        go.Scatter(name="Revenue", x=months, y=revenues, mode='lines+markers',
-                   line=dict(color='rgb(55, 83, 109)', width=3), fill='tozeroy'),
-        row=1, col=1
+        go.Scatter(
+            name="Revenue",
+            x=months,
+            y=revenues,
+            mode="lines+markers",
+            line=dict(color="rgb(55, 83, 109)", width=3),
+            fill="tozeroy",
+        ),
+        row=1,
+        col=1,
     )
     fig.add_trace(
-        go.Scatter(name="Costs", x=months, y=costs, mode='lines+markers',
-                   line=dict(color='rgb(219, 64, 82)', width=3)),
-        row=1, col=1
+        go.Scatter(
+            name="Costs",
+            x=months,
+            y=costs,
+            mode="lines+markers",
+            line=dict(color="rgb(219, 64, 82)", width=3),
+        ),
+        row=1,
+        col=1,
     )
 
     # Profit
     fig.add_trace(
-        go.Scatter(name="Profit", x=months, y=profits, mode='lines+markers',
-                   line=dict(color='rgb(50, 171, 96)', width=4),
-                   fill='tozeroy'),
-        row=2, col=1
+        go.Scatter(
+            name="Profit",
+            x=months,
+            y=profits,
+            mode="lines+markers",
+            line=dict(color="rgb(50, 171, 96)", width=4),
+            fill="tozeroy",
+        ),
+        row=2,
+        col=1,
     )
 
     # Projects (bar)
     fig.add_trace(
-        go.Bar(name="# Projects", x=months, y=num_projects,
-               marker_color='rgb(158, 202, 225)'),
-        row=3, col=1, secondary_y=False
+        go.Bar(
+            name="# Projects",
+            x=months,
+            y=num_projects,
+            marker_color="rgb(158, 202, 225)",
+        ),
+        row=3,
+        col=1,
+        secondary_y=False,
     )
 
     # Tax Rate (line on secondary axis)
     fig.add_trace(
-        go.Scatter(name="Avg Tax Rate", x=months, y=tax_rates, mode='lines+markers',
-                   line=dict(color='rgb(255, 127, 14)', width=3)),
-        row=3, col=1, secondary_y=True
+        go.Scatter(
+            name="Avg Tax Rate",
+            x=months,
+            y=tax_rates,
+            mode="lines+markers",
+            line=dict(color="rgb(255, 127, 14)", width=3),
+        ),
+        row=3,
+        col=1,
+        secondary_y=True,
     )
 
     fig.update_layout(
-        title_text="Monthly Trends Analysis",
-        showlegend=True,
-        height=1000
+        title_text="Monthly Trends Analysis", showlegend=True, height=1000
     )
     fig.update_xaxes(title_text="Month", row=3, col=1)
     fig.update_yaxes(title_text="Amount ($)", row=1, col=1)
@@ -684,7 +829,7 @@ def monthly_trends_report():
     filepath = "reports/monthly_trends.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
 
@@ -693,7 +838,8 @@ def work_distribution_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name,
                SUM(work_share) as total_work_share,
                COUNT(*) as num_projects,
@@ -702,7 +848,8 @@ def work_distribution_report():
         FROM people
         GROUP BY name
         ORDER BY total_net DESC
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -718,56 +865,69 @@ def work_distribution_report():
 
     # Create visualization
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Work Distribution", "Leaderboard (Net Income)",
-                       "Projects Participated", "Gross vs Net Income"),
-        specs=[[{"type": "pie"}, {"type": "bar"}],
-               [{"type": "bar"}, {"type": "bar"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Work Distribution",
+            "Leaderboard (Net Income)",
+            "Projects Participated",
+            "Gross vs Net Income",
+        ),
+        specs=[[{"type": "pie"}, {"type": "bar"}], [{"type": "bar"}, {"type": "bar"}]],
     )
 
     # Work distribution pie
     fig.add_trace(
-        go.Pie(labels=names, values=work_shares, textinfo='label+percent'),
-        row=1, col=1
+        go.Pie(labels=names, values=work_shares, textinfo="label+percent"), row=1, col=1
     )
 
     # Leaderboard
     fig.add_trace(
-        go.Bar(name="Net Income", x=names, y=net_incomes,
-               marker_color='rgb(50, 171, 96)', text=net_incomes,
-               texttemplate='$%{text:,.0f}', textposition='outside'),
-        row=1, col=2
+        go.Bar(
+            name="Net Income",
+            x=names,
+            y=net_incomes,
+            marker_color="rgb(50, 171, 96)",
+            text=net_incomes,
+            texttemplate="$%{text:,.0f}",
+            textposition="outside",
+        ),
+        row=1,
+        col=2,
     )
 
     # Projects participated
     fig.add_trace(
-        go.Bar(name="# Projects", x=names, y=num_projects,
-               marker_color='rgb(158, 202, 225)'),
-        row=2, col=1
+        go.Bar(
+            name="# Projects",
+            x=names,
+            y=num_projects,
+            marker_color="rgb(158, 202, 225)",
+        ),
+        row=2,
+        col=1,
     )
 
     # Gross vs Net
     fig.add_trace(
-        go.Bar(name="Gross", x=names, y=gross_incomes,
-               marker_color='rgb(55, 83, 109)'),
-        row=2, col=2
+        go.Bar(name="Gross", x=names, y=gross_incomes, marker_color="rgb(55, 83, 109)"),
+        row=2,
+        col=2,
     )
     fig.add_trace(
-        go.Bar(name="Net", x=names, y=net_incomes,
-               marker_color='rgb(50, 171, 96)'),
-        row=2, col=2
+        go.Bar(name="Net", x=names, y=net_incomes, marker_color="rgb(50, 171, 96)"),
+        row=2,
+        col=2,
     )
 
     fig.update_layout(
-        title_text="Team Performance & Work Distribution",
-        showlegend=True,
-        height=900
+        title_text="Team Performance & Work Distribution", showlegend=True, height=900
     )
 
     filepath = "reports/work_distribution.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
 
@@ -778,7 +938,8 @@ def person_performance_timeline():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m-%d', t.created_at) as date,
                p.gross_income,
                p.tax_paid,
@@ -789,7 +950,9 @@ def person_performance_timeline():
         JOIN tax_records t ON p.record_id = t.id
         WHERE LOWER(p.name) = LOWER(?)
         ORDER BY t.created_at
-    """, (name,))
+    """,
+        (name,),
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -805,35 +968,61 @@ def person_performance_timeline():
 
     # Create visualization
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=2,
+        cols=1,
         subplot_titles=(f"{name}'s Income Over Time", f"{name}'s Work Share %"),
         specs=[[{"secondary_y": False}], [{"secondary_y": False}]],
-        vertical_spacing=0.15
+        vertical_spacing=0.15,
     )
 
     # Income timeline
     fig.add_trace(
-        go.Scatter(name="Gross Income", x=dates, y=gross, mode='lines+markers',
-                   line=dict(color='rgb(55, 83, 109)', width=3)),
-        row=1, col=1
+        go.Scatter(
+            name="Gross Income",
+            x=dates,
+            y=gross,
+            mode="lines+markers",
+            line=dict(color="rgb(55, 83, 109)", width=3),
+        ),
+        row=1,
+        col=1,
     )
     fig.add_trace(
-        go.Scatter(name="Tax Paid", x=dates, y=tax, mode='lines+markers',
-                   line=dict(color='rgb(219, 64, 82)', width=3)),
-        row=1, col=1
+        go.Scatter(
+            name="Tax Paid",
+            x=dates,
+            y=tax,
+            mode="lines+markers",
+            line=dict(color="rgb(219, 64, 82)", width=3),
+        ),
+        row=1,
+        col=1,
     )
     fig.add_trace(
-        go.Scatter(name="Net Income", x=dates, y=net, mode='lines+markers',
-                   line=dict(color='rgb(50, 171, 96)', width=4), fill='tozeroy'),
-        row=1, col=1
+        go.Scatter(
+            name="Net Income",
+            x=dates,
+            y=net,
+            mode="lines+markers",
+            line=dict(color="rgb(50, 171, 96)", width=4),
+            fill="tozeroy",
+        ),
+        row=1,
+        col=1,
     )
 
     # Work share timeline
     fig.add_trace(
-        go.Scatter(name="Work Share %", x=dates, y=work_shares, mode='lines+markers',
-                   line=dict(color='rgb(128, 0, 128)', width=3),
-                   fill='tozeroy'),
-        row=2, col=1
+        go.Scatter(
+            name="Work Share %",
+            x=dates,
+            y=work_shares,
+            mode="lines+markers",
+            line=dict(color="rgb(128, 0, 128)", width=3),
+            fill="tozeroy",
+        ),
+        row=2,
+        col=1,
     )
 
     # Calculate totals
@@ -844,7 +1033,7 @@ def person_performance_timeline():
     fig.update_layout(
         title_text=f"{name}'s Performance Timeline<br><sub>Total: Gross ${total_gross:,.0f} | Tax ${total_tax:,.0f} | Net ${total_net:,.0f}</sub>",
         showlegend=True,
-        height=800
+        height=800,
     )
     fig.update_yaxes(title_text="Amount ($)", row=1, col=1)
     fig.update_yaxes(title_text="Work Share (%)", row=2, col=1)
@@ -853,7 +1042,7 @@ def person_performance_timeline():
     filepath = f"reports/performance_{name.replace(' ', '_')}.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
 
@@ -862,7 +1051,8 @@ def tax_efficiency_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name,
                SUM(gross_income) as total_gross,
                SUM(tax_paid) as total_tax,
@@ -872,7 +1062,8 @@ def tax_efficiency_report():
         GROUP BY name
         HAVING total_gross > 0
         ORDER BY efficiency_pct DESC
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -888,39 +1079,60 @@ def tax_efficiency_report():
 
     # Create visualization
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Tax Efficiency % (Higher = Better)", "Tax Burden by Person",
-                       "Income Breakdown", "Efficiency Gauge"),
-        specs=[[{"type": "bar"}, {"type": "bar"}],
-               [{"type": "bar"}, {"type": "indicator"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Tax Efficiency % (Higher = Better)",
+            "Tax Burden by Person",
+            "Income Breakdown",
+            "Efficiency Gauge",
+        ),
+        specs=[
+            [{"type": "bar"}, {"type": "bar"}],
+            [{"type": "bar"}, {"type": "indicator"}],
+        ],
     )
 
     # Efficiency ranking
     fig.add_trace(
-        go.Bar(name="Efficiency %", x=names, y=efficiency,
-               marker_color='rgb(50, 171, 96)', text=efficiency,
-               texttemplate='%{text:.1f}%', textposition='outside'),
-        row=1, col=1
+        go.Bar(
+            name="Efficiency %",
+            x=names,
+            y=efficiency,
+            marker_color="rgb(50, 171, 96)",
+            text=efficiency,
+            texttemplate="%{text:.1f}%",
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
     )
 
     # Tax burden
     fig.add_trace(
-        go.Bar(name="Tax Paid", x=names, y=tax,
-               marker_color='rgb(219, 64, 82)', text=tax,
-               texttemplate='$%{text:,.0f}', textposition='outside'),
-        row=1, col=2
+        go.Bar(
+            name="Tax Paid",
+            x=names,
+            y=tax,
+            marker_color="rgb(219, 64, 82)",
+            text=tax,
+            texttemplate="$%{text:,.0f}",
+            textposition="outside",
+        ),
+        row=1,
+        col=2,
     )
 
     # Income breakdown (stacked)
     fig.add_trace(
-        go.Bar(name="Net Income", x=names, y=net,
-               marker_color='rgb(50, 171, 96)'),
-        row=2, col=1
+        go.Bar(name="Net Income", x=names, y=net, marker_color="rgb(50, 171, 96)"),
+        row=2,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(name="Tax", x=names, y=tax,
-               marker_color='rgb(219, 64, 82)'),
-        row=2, col=1
+        go.Bar(name="Tax", x=names, y=tax, marker_color="rgb(219, 64, 82)"),
+        row=2,
+        col=1,
     )
 
     # Overall efficiency gauge
@@ -930,25 +1142,26 @@ def tax_efficiency_report():
             mode="gauge+number+delta",
             value=overall_efficiency,
             title={"text": "Overall Team Efficiency %"},
-            delta={'reference': 75, 'increasing': {'color': 'green'}},
+            delta={"reference": 75, "increasing": {"color": "green"}},
             gauge={
-                'axis': {'range': [0, 100]},
-                'bar': {'color': 'rgb(50, 171, 96)'},
-                'steps': [
-                    {'range': [0, 50], 'color': 'rgb(255, 200, 200)'},
-                    {'range': [50, 75], 'color': 'rgb(255, 255, 200)'},
-                    {'range': [75, 100], 'color': 'rgb(200, 255, 200)'}
-                ]
-            }
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "rgb(50, 171, 96)"},
+                "steps": [
+                    {"range": [0, 50], "color": "rgb(255, 200, 200)"},
+                    {"range": [50, 75], "color": "rgb(255, 255, 200)"},
+                    {"range": [75, 100], "color": "rgb(200, 255, 200)"},
+                ],
+            },
         ),
-        row=2, col=2
+        row=2,
+        col=2,
     )
 
     fig.update_layout(
         title_text="Tax Efficiency Analysis",
         showlegend=True,
         height=900,
-        barmode='stack'
+        barmode="stack",
     )
     fig.update_yaxes(title_text="Efficiency (%)", row=1, col=1)
     fig.update_yaxes(title_text="Tax Paid ($)", row=1, col=2)
@@ -956,7 +1169,7 @@ def tax_efficiency_report():
     filepath = "reports/tax_efficiency.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Also print text summary
@@ -971,7 +1184,8 @@ def project_profitability_report():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id,
                revenue,
                total_costs,
@@ -984,7 +1198,8 @@ def project_profitability_report():
         FROM tax_records
         WHERE revenue > 0
         ORDER BY created_at DESC
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -1003,60 +1218,93 @@ def project_profitability_report():
 
     # Create visualization
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Profit Margin % by Project", "ROI % by Project",
-                       "Revenue Breakdown", "Profit vs Team Size"),
-        specs=[[{"type": "bar"}, {"type": "bar"}],
-               [{"type": "bar"}, {"type": "scatter"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Profit Margin % by Project",
+            "ROI % by Project",
+            "Revenue Breakdown",
+            "Profit vs Team Size",
+        ),
+        specs=[
+            [{"type": "bar"}, {"type": "bar"}],
+            [{"type": "bar"}, {"type": "scatter"}],
+        ],
     )
 
     # Profit margins
-    colors = ['rgb(50, 171, 96)' if pm > 30 else 'rgb(255, 165, 0)' if pm > 10 else 'rgb(219, 64, 82)' for pm in profit_margins]
+    colors = [
+        "rgb(50, 171, 96)"
+        if pm > 30
+        else "rgb(255, 165, 0)"
+        if pm > 10
+        else "rgb(219, 64, 82)"
+        for pm in profit_margins
+    ]
     fig.add_trace(
-        go.Bar(name="Profit Margin %", x=record_ids, y=profit_margins,
-               marker_color=colors, text=profit_margins,
-               texttemplate='%{text:.1f}%', textposition='outside'),
-        row=1, col=1
+        go.Bar(
+            name="Profit Margin %",
+            x=record_ids,
+            y=profit_margins,
+            marker_color=colors,
+            text=profit_margins,
+            texttemplate="%{text:.1f}%",
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
     )
 
     # ROI
     fig.add_trace(
-        go.Bar(name="ROI %", x=record_ids, y=rois,
-               marker_color='rgb(128, 0, 128)', text=rois,
-               texttemplate='%{text:.0f}%', textposition='outside'),
-        row=1, col=2
+        go.Bar(
+            name="ROI %",
+            x=record_ids,
+            y=rois,
+            marker_color="rgb(128, 0, 128)",
+            text=rois,
+            texttemplate="%{text:.0f}%",
+            textposition="outside",
+        ),
+        row=1,
+        col=2,
     )
 
     # Revenue breakdown (stacked)
     fig.add_trace(
-        go.Bar(name="Profit", x=record_ids, y=profits,
-               marker_color='rgb(50, 171, 96)'),
-        row=2, col=1
+        go.Bar(name="Profit", x=record_ids, y=profits, marker_color="rgb(50, 171, 96)"),
+        row=2,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(name="Tax", x=record_ids, y=taxes,
-               marker_color='rgb(219, 64, 82)'),
-        row=2, col=1
+        go.Bar(name="Tax", x=record_ids, y=taxes, marker_color="rgb(219, 64, 82)"),
+        row=2,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(name="Costs", x=record_ids, y=costs,
-               marker_color='rgb(255, 165, 0)'),
-        row=2, col=1
+        go.Bar(name="Costs", x=record_ids, y=costs, marker_color="rgb(255, 165, 0)"),
+        row=2,
+        col=1,
     )
 
     # Scatter: profit vs team size
     fig.add_trace(
-        go.Scatter(name="Profit vs Team Size", x=num_people, y=profits,
-                   mode='markers', marker=dict(size=12, color=profits,
-                   colorscale='Viridis', showscale=True)),
-        row=2, col=2
+        go.Scatter(
+            name="Profit vs Team Size",
+            x=num_people,
+            y=profits,
+            mode="markers",
+            marker=dict(size=12, color=profits, colorscale="Viridis", showscale=True),
+        ),
+        row=2,
+        col=2,
     )
 
     fig.update_layout(
         title_text="Project Profitability Analysis",
         showlegend=True,
         height=900,
-        barmode='stack'
+        barmode="stack",
     )
     fig.update_yaxes(title_text="Margin (%)", row=1, col=1)
     fig.update_yaxes(title_text="ROI (%)", row=1, col=2)
@@ -1066,7 +1314,7 @@ def project_profitability_report():
     filepath = "reports/project_profitability.html"
     os.makedirs("reports", exist_ok=True)
     fig.write_html(filepath)
-    webbrowser.open('file://' + os.path.abspath(filepath))
+    webbrowser.open("file://" + os.path.abspath(filepath))
     print(f"📊 Visualization opened in browser: {filepath}")
 
     # Text summary
@@ -1093,7 +1341,8 @@ def export_record_to_pdf():
 
         # Auto-open
         import webbrowser
-        webbrowser.open('file://' + os.path.abspath(filepath))
+
+        webbrowser.open("file://" + os.path.abspath(filepath))
     except ValueError:
         print("❌ Invalid record ID.")
     except Exception as e:
@@ -1108,7 +1357,8 @@ def export_summary_to_pdf():
         # Get statistics
         conn = setup.get_conn()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*),
                    COALESCE(SUM(revenue), 0),
                    COALESCE(SUM(total_costs), 0),
@@ -1119,7 +1369,8 @@ def export_summary_to_pdf():
                        ELSE 0
                    END), 0)
             FROM tax_records
-        """)
+        """
+        )
         result = cursor.fetchone()
 
         cursor.execute("SELECT COUNT(DISTINCT name) FROM people")
@@ -1127,13 +1378,13 @@ def export_summary_to_pdf():
         conn.close()
 
         stats = {
-            'total_records': result[0],
-            'total_revenue': result[1],
-            'total_costs': result[2],
-            'total_tax': result[3],
-            'total_net_income': result[4],
-            'average_tax_rate': result[5],
-            'unique_people': unique_people
+            "total_records": result[0],
+            "total_revenue": result[1],
+            "total_costs": result[2],
+            "total_tax": result[3],
+            "total_net_income": result[4],
+            "average_tax_rate": result[5],
+            "unique_people": unique_people,
         }
 
         filepath = pdf_generator.generate_summary_pdf(records, stats)
@@ -1141,7 +1392,8 @@ def export_summary_to_pdf():
 
         # Auto-open
         import webbrowser
-        webbrowser.open('file://' + os.path.abspath(filepath))
+
+        webbrowser.open("file://" + os.path.abspath(filepath))
     except Exception as e:
         print(f"❌ Error generating PDF: {e}")
 
@@ -1155,13 +1407,15 @@ def show_forecast_report():
     forecast = forecasting.comprehensive_forecast()
 
     # Revenue Forecast
-    if forecast['revenue_forecast']['success']:
-        rf = forecast['revenue_forecast']
+    if forecast["revenue_forecast"]["success"]:
+        rf = forecast["revenue_forecast"]
         print("\n📈 Revenue Predictions (Next 3 Months):")
         print(f"{'Month':<12} | {'Predicted Revenue':>18} | {'Confidence':<10}")
         print("-" * 50)
-        for pred in rf['predictions']:
-            print(f"{pred['month']:<12} | ${pred['revenue']:>17,.2f} | {pred['confidence']:<10}")
+        for pred in rf["predictions"]:
+            print(
+                f"{pred['month']:<12} | ${pred['revenue']:>17,.2f} | {pred['confidence']:<10}"
+            )
 
         print(f"\n📊 Trend: {rf['trend'].upper()} (${rf['trend_strength']:,.0f}/month)")
         print(f"📊 Forecast Confidence: {rf['confidence']} (R² = {rf['r2_score']:.2f})")
@@ -1171,16 +1425,20 @@ def show_forecast_report():
 
     # Tax Optimization
     print("\n💰 Tax Optimization Analysis:")
-    tax_opt = forecast['tax_optimization']
-    if tax_opt['tax_comparison']:
-        print(f"\n{'Tax Type':<12} | {'Avg Tax':>12} | {'Avg Rate':>10} | {'Projects':>8}")
+    tax_opt = forecast["tax_optimization"]
+    if tax_opt["tax_comparison"]:
+        print(
+            f"\n{'Tax Type':<12} | {'Avg Tax':>12} | {'Avg Rate':>10} | {'Projects':>8}"
+        )
         print("-" * 50)
-        for tc in tax_opt['tax_comparison']:
-            print(f"{tc['type']:<12} | ${tc['avg_tax']:>11,.2f} | {tc['avg_rate']:>9.2f}% | {tc['count']:>8}")
+        for tc in tax_opt["tax_comparison"]:
+            print(
+                f"{tc['type']:<12} | ${tc['avg_tax']:>11,.2f} | {tc['avg_rate']:>9.2f}% | {tc['count']:>8}"
+            )
 
     # Trend Analysis
-    if forecast['trend_analysis']['success']:
-        ta = forecast['trend_analysis']
+    if forecast["trend_analysis"]["success"]:
+        ta = forecast["trend_analysis"]
         print(f"\n📊 Trend Analysis ({ta['months_analyzed']} months):")
         print(f"  • Revenue: {ta['revenue_trend']} ({ta['revenue_growth']:+.1f}%)")
         print(f"  • Costs: {ta['cost_trend']} ({ta['cost_growth']:+.1f}%)")
@@ -1189,17 +1447,17 @@ def show_forecast_report():
 
     # Recommendations
     print("\n💡 Recommendations:")
-    for i, rec in enumerate(forecast['recommendations'], 1):
+    for i, rec in enumerate(forecast["recommendations"], 1):
         print(f"  {i}. {rec}")
 
     # Option to export
     print("\n" + "=" * 60)
     export = input("Export forecast to PDF? (y/n): ").strip().lower()
-    if export == 'y':
+    if export == "y":
         try:
-            filepath = pdf_generator.generate_forecast_pdf(forecast['revenue_forecast'])
+            filepath = pdf_generator.generate_forecast_pdf(forecast["revenue_forecast"])
             print(f"✅ Forecast PDF exported: {filepath}")
-            webbrowser.open('file://' + os.path.abspath(filepath))
+            webbrowser.open("file://" + os.path.abspath(filepath))
         except Exception as e:
             print(f"❌ Error exporting PDF: {e}")
 

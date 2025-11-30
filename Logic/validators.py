@@ -2,8 +2,10 @@
 Input validation utilities for MoneySplit.
 """
 
+
 class ValidationError(Exception):
     """Custom exception for validation errors."""
+
     pass
 
 
@@ -49,7 +51,9 @@ def validate_tax_type(tax_type: str) -> str:
     valid_types = ["Individual", "Business"]
     tax_type = tax_type.strip().title()
     if tax_type not in valid_types:
-        raise ValidationError(f"Tax type must be one of {valid_types}, got '{tax_type}'")
+        raise ValidationError(
+            f"Tax type must be one of {valid_types}, got '{tax_type}'"
+        )
     return tax_type
 
 
@@ -60,7 +64,9 @@ def validate_tax_rate(rate: float) -> float:
     return rate
 
 
-def safe_float_input(prompt: str, field_name: str = "Value", allow_negative: bool = False) -> float:
+def safe_float_input(
+    prompt: str, field_name: str = "Value", allow_negative: bool = False
+) -> float:
     """Safely get float input from user with validation."""
     while True:
         try:
@@ -74,7 +80,9 @@ def safe_float_input(prompt: str, field_name: str = "Value", allow_negative: boo
             print(f"❌ {e}")
 
 
-def safe_int_input(prompt: str, field_name: str = "Value", min_value: int = None, max_value: int = None) -> int:
+def safe_int_input(
+    prompt: str, field_name: str = "Value", min_value: int = None, max_value: int = None
+) -> int:
     """Safely get integer input from user with validation."""
     while True:
         try:

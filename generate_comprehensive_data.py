@@ -9,21 +9,34 @@ from datetime import datetime, timedelta
 from typing import List, Tuple
 
 # Database connection
-DB_PATH = 'example.db'
+DB_PATH = "example.db"
 
 # Realistic team member names
 TEAM_MEMBERS = [
-    "Alice Johnson", "Bob Smith", "Carol Williams", "David Brown",
-    "Emma Davis", "Frank Miller", "Grace Wilson", "Henry Moore",
-    "Isabel Taylor", "Jack Anderson", "Kate Thomas", "Leo Jackson"
+    "Alice Johnson",
+    "Bob Smith",
+    "Carol Williams",
+    "David Brown",
+    "Emma Davis",
+    "Frank Miller",
+    "Grace Wilson",
+    "Henry Moore",
+    "Isabel Taylor",
+    "Jack Anderson",
+    "Kate Thomas",
+    "Leo Jackson",
 ]
 
 # Countries with their tax types
 COUNTRIES = [
-    ("US", "Individual"), ("US", "Business"),
-    ("Spain", "Individual"), ("Spain", "Business"),
-    ("UK", "Individual"), ("Canada", "Individual")
+    ("US", "Individual"),
+    ("US", "Business"),
+    ("Spain", "Individual"),
+    ("Spain", "Business"),
+    ("UK", "Individual"),
+    ("Canada", "Individual"),
 ]
+
 
 def get_seasonal_multiplier(month: int) -> float:
     """
@@ -31,22 +44,25 @@ def get_seasonal_multiplier(month: int) -> float:
     Q4 typically higher, Q1 lower.
     """
     seasonal_patterns = {
-        1: 0.7,   # January - Post-holiday slowdown
+        1: 0.7,  # January - Post-holiday slowdown
         2: 0.75,  # February - Still slow
         3: 0.85,  # March - Picking up
-        4: 0.9,   # April - Spring growth
+        4: 0.9,  # April - Spring growth
         5: 0.95,  # May
-        6: 1.0,   # June - Summer projects
+        6: 1.0,  # June - Summer projects
         7: 1.05,  # July
-        8: 1.0,   # August
-        9: 1.1,   # September - Back to business
+        8: 1.0,  # August
+        9: 1.1,  # September - Back to business
         10: 1.2,  # October - Q4 push
         11: 1.3,  # November - Holiday prep
-        12: 1.25  # December - Year-end deals
+        12: 1.25,  # December - Year-end deals
     }
     return seasonal_patterns.get(month, 1.0)
 
-def generate_project_data(month: int, year: int, base_revenue: float, trend: str = "increasing") -> dict:
+
+def generate_project_data(
+    month: int, year: int, base_revenue: float, trend: str = "increasing"
+) -> dict:
     """
     Generate realistic project data with trends and seasonality.
 
@@ -107,42 +123,44 @@ def generate_project_data(month: int, year: int, base_revenue: float, trend: str
             share = random.uniform(0.1, max_share)
             remaining_share -= share
 
-        people.append({
-            'name': selected_members[i],
-            'work_share': round(share, 2)
-        })
+        people.append({"name": selected_members[i], "work_share": round(share, 2)})
 
     # Normalize shares to exactly 1.0
-    total_share = sum(p['work_share'] for p in people)
+    total_share = sum(p["work_share"] for p in people)
     for person in people:
-        person['work_share'] = round(person['work_share'] / total_share, 2)
+        person["work_share"] = round(person["work_share"] / total_share, 2)
 
     # Ensure total is exactly 1.0 (adjust last person for rounding)
-    current_total = sum(p['work_share'] for p in people[:-1])
-    people[-1]['work_share'] = round(1.0 - current_total, 2)
+    current_total = sum(p["work_share"] for p in people[:-1])
+    people[-1]["work_share"] = round(1.0 - current_total, 2)
 
     # Random country and tax type
     country, tax_type = random.choice(COUNTRIES)
 
     return {
-        'revenue': revenue,
-        'costs': costs,
-        'num_people': num_people,
-        'people': people,
-        'country': country,
-        'tax_type': tax_type
+        "revenue": revenue,
+        "costs": costs,
+        "num_people": num_people,
+        "people": people,
+        "country": country,
+        "tax_type": tax_type,
     }
+
 
 def get_tax_brackets(conn, country: str, tax_type: str) -> List[Tuple[float, float]]:
     """Get tax brackets from database."""
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT income_limit, rate
         FROM tax_brackets
         WHERE country = ? AND tax_type = ?
         ORDER BY income_limit
-    """, (country, tax_type))
+    """,
+        (country, tax_type),
+    )
     return cursor.fetchall()
+
 
 def calculate_tax(income: float, brackets: List[Tuple[float, float]]) -> float:
     """Calculate progressive tax."""
@@ -157,19 +175,20 @@ def calculate_tax(income: float, brackets: List[Tuple[float, float]]) -> float:
             break
     return tax
 
+
 def calculate_and_insert_project(conn, project_data: dict, target_date: datetime):
     """Calculate taxes and insert project into database."""
     cursor = conn.cursor()
 
-    revenue = project_data['revenue']
-    costs = project_data['costs']
+    revenue = project_data["revenue"]
+    costs = project_data["costs"]
     total_costs = sum(costs)
     group_income = revenue - total_costs
-    num_people = project_data['num_people']
+    num_people = project_data["num_people"]
     individual_income = group_income / num_people
 
     # Get tax brackets
-    brackets = get_tax_brackets(conn, project_data['country'], project_data['tax_type'])
+    brackets = get_tax_brackets(conn, project_data["country"], project_data["tax_type"])
 
     # Calculate tax
     tax_amount = calculate_tax(individual_income, brackets)
@@ -179,41 +198,55 @@ def calculate_and_insert_project(conn, project_data: dict, target_date: datetime
     net_income_group = group_income - (tax_amount * num_people)
 
     # Insert tax record
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO tax_records (
             num_people, revenue, total_costs, group_income,
             individual_income, tax_origin, tax_option, tax_amount,
             net_income_per_person, net_income_group, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        num_people, revenue, total_costs, group_income,
-        individual_income, project_data['country'], project_data['tax_type'],
-        tax_amount, net_income_per_person, net_income_group,
-        target_date.strftime('%Y-%m-%d %H:%M:%S')
-    ))
+    """,
+        (
+            num_people,
+            revenue,
+            total_costs,
+            group_income,
+            individual_income,
+            project_data["country"],
+            project_data["tax_type"],
+            tax_amount,
+            net_income_per_person,
+            net_income_group,
+            target_date.strftime("%Y-%m-%d %H:%M:%S"),
+        ),
+    )
 
     record_id = cursor.lastrowid
 
     # Calculate individual incomes based on work shares
-    for person in project_data['people']:
-        gross_income = group_income * person['work_share']
+    for person in project_data["people"]:
+        gross_income = group_income * person["work_share"]
         tax_paid = calculate_tax(gross_income, brackets)
         net_income = gross_income - tax_paid
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            record_id,
-            person['name'],
-            person['work_share'],
-            gross_income,
-            tax_paid,
-            net_income
-        ))
+        """,
+            (
+                record_id,
+                person["name"],
+                person["work_share"],
+                gross_income,
+                tax_paid,
+                net_income,
+            ),
+        )
 
     conn.commit()
     return record_id
+
 
 def generate_historical_data():
     """Generate comprehensive historical data for the past 12 months."""
@@ -225,9 +258,24 @@ def generate_historical_data():
 
     # Define base revenue for different business scenarios
     scenarios = [
-        {"name": "Growing Startup", "base": 8000, "trend": "increasing", "projects_per_month": (3, 6)},
-        {"name": "Stable Business", "base": 15000, "trend": "stable", "projects_per_month": (2, 4)},
-        {"name": "Seasonal Service", "base": 12000, "trend": "increasing", "projects_per_month": (2, 5)},
+        {
+            "name": "Growing Startup",
+            "base": 8000,
+            "trend": "increasing",
+            "projects_per_month": (3, 6),
+        },
+        {
+            "name": "Stable Business",
+            "base": 15000,
+            "trend": "stable",
+            "projects_per_month": (2, 4),
+        },
+        {
+            "name": "Seasonal Service",
+            "base": 12000,
+            "trend": "increasing",
+            "projects_per_month": (2, 5),
+        },
     ]
 
     # Generate data for past 24 months (2 full years)
@@ -250,12 +298,12 @@ def generate_historical_data():
             month = current_date.month
 
             # Number of projects this month
-            min_proj, max_proj = scenario['projects_per_month']
+            min_proj, max_proj = scenario["projects_per_month"]
             num_projects = random.randint(min_proj, max_proj)
 
             month_key = f"{year}-{month:02d}"
             if month_key not in monthly_stats:
-                monthly_stats[month_key] = {'count': 0, 'revenue': 0}
+                monthly_stats[month_key] = {"count": 0, "revenue": 0}
 
             for i in range(num_projects):
                 # Spread projects throughout the month
@@ -263,25 +311,28 @@ def generate_historical_data():
                 hour = random.randint(9, 17)
                 minute = random.randint(0, 59)
 
-                project_date = current_date.replace(day=day, hour=hour, minute=minute, second=0, microsecond=0)
+                project_date = current_date.replace(
+                    day=day, hour=hour, minute=minute, second=0, microsecond=0
+                )
 
                 # Generate project
                 project_data = generate_project_data(
-                    month,
-                    year,
-                    scenario['base'],
-                    scenario['trend']
+                    month, year, scenario["base"], scenario["trend"]
                 )
 
                 # Insert into DB
                 try:
-                    record_id = calculate_and_insert_project(conn, project_data, project_date)
+                    record_id = calculate_and_insert_project(
+                        conn, project_data, project_date
+                    )
                     total_projects += 1
-                    monthly_stats[month_key]['count'] += 1
-                    monthly_stats[month_key]['revenue'] += project_data['revenue']
+                    monthly_stats[month_key]["count"] += 1
+                    monthly_stats[month_key]["revenue"] += project_data["revenue"]
 
                     if i == 0:  # Print first project of each month
-                        print(f"   {month_key}: Created project #{record_id} - ${project_data['revenue']:,.2f}")
+                        print(
+                            f"   {month_key}: Created project #{record_id} - ${project_data['revenue']:,.2f}"
+                        )
                 except Exception as e:
                     print(f"   ❌ Error creating project: {e}")
 
@@ -304,20 +355,24 @@ def generate_historical_data():
     for month_key in sorted(monthly_stats.keys()):
         stats = monthly_stats[month_key]
         print(f"   {month_key:<12} {stats['count']:<12} ${stats['revenue']:,.2f}")
-        total_revenue += stats['revenue']
+        total_revenue += stats["revenue"]
 
     print("   " + "-" * 50)
     print(f"   {'TOTAL':<12} {total_projects:<12} ${total_revenue:,.2f}")
-    print(f"   {'AVERAGE/MONTH':<12} {total_projects/12:.1f} projects  ${total_revenue/12:,.2f}")
+    print(
+        f"   {'AVERAGE/MONTH':<12} {total_projects/12:.1f} projects  ${total_revenue/12:,.2f}"
+    )
 
     # Show team member distribution
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name, COUNT(*) as project_count, SUM(gross_income) as total_income
         FROM people
         GROUP BY name
         ORDER BY total_income DESC
         LIMIT 10
-    """)
+    """
+    )
 
     print(f"\n👥 TOP 10 CONTRIBUTORS:")
     print(f"   {'Name':<20} {'Projects':<12} {'Total Income'}")
@@ -327,6 +382,7 @@ def generate_historical_data():
 
     conn.close()
     print("\n🎉 Database populated with realistic historical data!")
+
 
 if __name__ == "__main__":
     generate_historical_data()

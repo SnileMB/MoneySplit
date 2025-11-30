@@ -15,6 +15,7 @@ from datetime import datetime
 BACKUP_DIR = "backups"
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
+
 def backup():
     """Backup tax_records and people to timestamped CSVs."""
     conn = setup.get_conn()
@@ -53,7 +54,9 @@ def reset():
         print("❌ Reset canceled.")
         return
 
-    choice = input("Do you want to create a backup before reset? (y/n): ").strip().lower()
+    choice = (
+        input("Do you want to create a backup before reset? (y/n): ").strip().lower()
+    )
     if choice == "y":
         backup()
 
@@ -62,7 +65,9 @@ def reset():
 
 def reset_tax_brackets():
     """Reset only the tax_brackets table, with auto-backup."""
-    confirm = input("⚠️ This will DELETE ALL TAX BRACKETS. Type 'RESET' to confirm: ").strip()
+    confirm = input(
+        "⚠️ This will DELETE ALL TAX BRACKETS. Type 'RESET' to confirm: "
+    ).strip()
     if confirm != "RESET":
         print("❌ Reset canceled.")
         return
@@ -94,6 +99,7 @@ def reset_tax_brackets():
     setup.seed_default_brackets()
     print("✅ Tax brackets reset and reseeded with defaults.")
 
+
 def restore_tax_brackets():
     """Restore tax brackets from a CSV backup."""
     filepath = input("Enter path to tax_brackets CSV backup: ").strip()
@@ -112,10 +118,13 @@ def restore_tax_brackets():
         reader = csv.reader(f)
         headers = next(reader)  # skip header
         for row in reader:
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO tax_brackets ({','.join(headers)})
                 VALUES ({','.join(['?']*len(headers))})
-            """, row)
+            """,
+                row,
+            )
 
     conn.commit()
     conn.close()
@@ -141,20 +150,26 @@ def restore():
         reader = csv.reader(f)
         headers = next(reader)  # skip header
         for row in reader:
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO tax_records ({','.join(headers)})
                 VALUES ({','.join(['?']*len(headers))})
-            """, row)
+            """,
+                row,
+            )
 
     # Restore people
     with open(people_file, "r") as f:
         reader = csv.reader(f)
         headers = next(reader)
         for row in reader:
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO people ({','.join(headers)})
                 VALUES ({','.join(['?']*len(headers))})
-            """, row)
+            """,
+                row,
+            )
 
     conn.commit()
     conn.close()
@@ -177,7 +192,10 @@ def export_tax_template():
         writer.writerow([float("inf"), 0.30])
 
     print(f"📄 Tax bracket template exported → {template_file}")
-    print("💡 Edit this CSV and then upload it back through the Tax Menu (Upload from CSV).")
+    print(
+        "💡 Edit this CSV and then upload it back through the Tax Menu (Upload from CSV)."
+    )
+
 
 def main():
     while True:

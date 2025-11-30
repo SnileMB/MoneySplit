@@ -8,6 +8,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
@@ -17,7 +18,8 @@ def get_historical_data():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', created_at) as month,
                SUM(revenue) as total_revenue,
                SUM(total_costs) as total_costs,
@@ -27,7 +29,8 @@ def get_historical_data():
         FROM tax_records
         GROUP BY month
         ORDER BY month
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -46,10 +49,10 @@ def forecast_revenue(months_ahead=3):
 
     if len(historical) < 2:
         return {
-            'success': False,
-            'message': 'Not enough historical data (need at least 2 months)',
-            'predictions': [],
-            'explanation': 'Create more projects across different months to enable AI forecasting.'
+            "success": False,
+            "message": "Not enough historical data (need at least 2 months)",
+            "predictions": [],
+            "explanation": "Create more projects across different months to enable AI forecasting.",
         }
 
     # Prepare data
@@ -60,10 +63,12 @@ def forecast_revenue(months_ahead=3):
     # IMPORTANT: Use 'valid' mode to avoid data leakage (no look-ahead bias)
     if len(revenues) >= 4:
         # 3-point moving average - 'valid' mode loses 2 data points but prevents leakage
-        smoothed_revenues = np.convolve(revenues, np.ones(3)/3, mode='valid')
+        smoothed_revenues = np.convolve(revenues, np.ones(3) / 3, mode="valid")
         y = smoothed_revenues
         # Adjust indices to match smoothed data length (starts from index 1)
-        months_indices = np.array([i+1 for i in range(len(smoothed_revenues))]).reshape(-1, 1)
+        months_indices = np.array(
+            [i + 1 for i in range(len(smoothed_revenues))]
+        ).reshape(-1, 1)
     else:
         y = revenues
         months_indices = np.array([i for i in range(len(revenues))]).reshape(-1, 1)
@@ -104,7 +109,7 @@ def forecast_revenue(months_ahead=3):
     # Predict future months
     predictions = []
     last_month = historical[-1][0]  # Format: YYYY-MM
-    last_date = datetime.strptime(last_month, '%Y-%m')
+    last_date = datetime.strptime(last_month, "%Y-%m")
 
     for i in range(1, months_ahead + 1):
         future_index = len(historical) + i - 1
@@ -119,22 +124,26 @@ def forecast_revenue(months_ahead=3):
         predicted_revenue = max(0, predicted_revenue)
 
         # Calculate next month
-        next_month = last_date + timedelta(days=30*i)
-        month_str = next_month.strftime('%B %Y')  # e.g., "November 2025"
+        next_month = last_date + timedelta(days=30 * i)
+        month_str = next_month.strftime("%B %Y")  # e.g., "November 2025"
 
         # Calculate confidence interval (95%)
-        std_error = np.std(y - model.predict(X_poly if len(historical) >= 6 else months_indices))
+        std_error = np.std(
+            y - model.predict(X_poly if len(historical) >= 6 else months_indices)
+        )
         lower_bound = max(0, predicted_revenue - 1.96 * std_error)
         upper_bound = predicted_revenue + 1.96 * std_error
 
-        predictions.append({
-            'month': month_str,
-            'revenue': predicted_revenue,
-            'confidence': confidence,
-            'lower_bound': lower_bound,
-            'upper_bound': upper_bound,
-            'range': f"${lower_bound:,.0f} - ${upper_bound:,.0f}"
-        })
+        predictions.append(
+            {
+                "month": month_str,
+                "revenue": predicted_revenue,
+                "confidence": confidence,
+                "lower_bound": lower_bound,
+                "upper_bound": upper_bound,
+                "range": f"${lower_bound:,.0f} - ${upper_bound:,.0f}",
+            }
+        )
 
     # Calculate trend with clearer description
     if len(historical) >= 6:
@@ -156,7 +165,9 @@ def forecast_revenue(months_ahead=3):
     # Generate plain English explanation
     avg_revenue = np.mean(revenues)
     last_revenue = revenues[-1]
-    growth_rate = ((last_revenue - revenues[0]) / revenues[0] * 100) if revenues[0] > 0 else 0
+    growth_rate = (
+        ((last_revenue - revenues[0]) / revenues[0] * 100) if revenues[0] > 0 else 0
+    )
 
     explanation = f"""📊 What this means:
 
@@ -178,19 +189,23 @@ Your business has {len(historical)} months of data. The AI analyzed this and fou
     }"""
 
     return {
-        'success': True,
-        'predictions': predictions,
-        'trend': trend,
-        'trend_strength': trend_strength,
-        'r2_score': r2_score,
-        'confidence': confidence,
-        'confidence_description': confidence_desc,
-        'historical_avg': avg_revenue,
-        'model_slope': slope,
-        'growth_rate': growth_rate,
-        'model_type': model_type,
-        'explanation': explanation.strip(),
-        'data_quality': "Excellent" if len(historical) >= 10 else "Good" if len(historical) >= 6 else "Fair"
+        "success": True,
+        "predictions": predictions,
+        "trend": trend,
+        "trend_strength": trend_strength,
+        "r2_score": r2_score,
+        "confidence": confidence,
+        "confidence_description": confidence_desc,
+        "historical_avg": avg_revenue,
+        "model_slope": slope,
+        "growth_rate": growth_rate,
+        "model_type": model_type,
+        "explanation": explanation.strip(),
+        "data_quality": "Excellent"
+        if len(historical) >= 10
+        else "Good"
+        if len(historical) >= 6
+        else "Fair",
     }
 
 
@@ -200,7 +215,8 @@ def tax_optimization_analysis():
     cursor = conn.cursor()
 
     # Compare Individual vs Business tax for recent projects
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_option,
                AVG(tax_amount) as avg_tax,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_rate,
@@ -208,24 +224,29 @@ def tax_optimization_analysis():
                AVG(revenue) as avg_revenue
         FROM tax_records
         GROUP BY tax_option
-    """)
+    """
+    )
     tax_comparison = cursor.fetchall()
 
     # Get most efficient strategy per country
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin, tax_option,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_rate
         FROM tax_records
         GROUP BY tax_origin, tax_option
         ORDER BY tax_origin, avg_rate
-    """)
+    """
+    )
     country_analysis = cursor.fetchall()
 
     # Get overall rate before closing connection
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as overall_rate
         FROM tax_records
-    """)
+    """
+    )
     overall_rate = cursor.fetchone()[0] or 0
 
     conn.close()
@@ -234,8 +255,8 @@ def tax_optimization_analysis():
 
     # Analyze tax comparison
     if len(tax_comparison) >= 2:
-        individual = next((t for t in tax_comparison if t[0] == 'Individual'), None)
-        business = next((t for t in tax_comparison if t[0] == 'Business'), None)
+        individual = next((t for t in tax_comparison if t[0] == "Individual"), None)
+        business = next((t for t in tax_comparison if t[0] == "Business"), None)
 
         if individual and business:
             if individual[2] < business[2]:
@@ -273,16 +294,19 @@ def tax_optimization_analysis():
         )
 
     return {
-        'tax_comparison': [
+        "tax_comparison": [
             {
-                'type': t[0],
-                'avg_tax': t[1],
-                'avg_rate': t[2],
-                'count': t[3],
-                'avg_revenue': t[4]
-            } for t in tax_comparison
+                "type": t[0],
+                "avg_tax": t[1],
+                "avg_rate": t[2],
+                "count": t[3],
+                "avg_revenue": t[4],
+            }
+            for t in tax_comparison
         ],
-        'recommendations': recommendations if recommendations else ['Your tax strategy appears optimal based on current data.']
+        "recommendations": recommendations
+        if recommendations
+        else ["Your tax strategy appears optimal based on current data."],
     }
 
 
@@ -292,13 +316,13 @@ def break_even_analysis(revenue, costs):
     margin = (profit / revenue * 100) if revenue > 0 else 0
 
     return {
-        'revenue': revenue,
-        'costs': costs,
-        'profit': profit,
-        'profit_margin': margin,
-        'break_even_revenue': costs,
-        'margin_of_safety': revenue - costs,
-        'margin_of_safety_pct': margin
+        "revenue": revenue,
+        "costs": costs,
+        "profit": profit,
+        "profit_margin": margin,
+        "break_even_revenue": costs,
+        "margin_of_safety": revenue - costs,
+        "margin_of_safety_pct": margin,
     }
 
 
@@ -308,8 +332,8 @@ def trend_analysis():
 
     if len(historical) < 3:
         return {
-            'success': False,
-            'message': 'Need at least 3 months of data for trend analysis'
+            "success": False,
+            "message": "Need at least 3 months of data for trend analysis",
         }
 
     months = [row[0] for row in historical]
@@ -324,31 +348,43 @@ def trend_analysis():
     profit_trend = "increasing" if profits[-1] > profits[0] else "decreasing"
 
     # Calculate growth rates
-    revenue_growth = ((revenues[-1] - revenues[0]) / revenues[0] * 100) if revenues[0] > 0 else 0
+    revenue_growth = (
+        ((revenues[-1] - revenues[0]) / revenues[0] * 100) if revenues[0] > 0 else 0
+    )
     cost_growth = ((costs[-1] - costs[0]) / costs[0] * 100) if costs[0] > 0 else 0
-    profit_growth = ((profits[-1] - profits[0]) / profits[0] * 100) if profits[0] > 0 else 0
+    profit_growth = (
+        ((profits[-1] - profits[0]) / profits[0] * 100) if profits[0] > 0 else 0
+    )
 
     # Seasonality detection (simple moving average)
     if len(revenues) >= 6:
         avg_revenue = np.mean(revenues)
         volatility = np.std(revenues) / avg_revenue if avg_revenue > 0 else 0
-        seasonality = "High seasonality detected" if volatility > 0.3 else "Low seasonality" if volatility > 0.1 else "Stable"
+        seasonality = (
+            "High seasonality detected"
+            if volatility > 0.3
+            else "Low seasonality"
+            if volatility > 0.1
+            else "Stable"
+        )
     else:
         seasonality = "Insufficient data"
 
     return {
-        'success': True,
-        'months_analyzed': len(historical),
-        'revenue_trend': revenue_trend,
-        'cost_trend': cost_trend,
-        'profit_trend': profit_trend,
-        'revenue_growth': revenue_growth,
-        'cost_growth': cost_growth,
-        'profit_growth': profit_growth,
-        'seasonality': seasonality,
-        'avg_projects_per_month': np.mean(num_projects),
-        'current_month_projects': num_projects[-1] if num_projects else 0,
-        'insights': generate_insights(revenue_trend, cost_trend, profit_trend, revenue_growth, cost_growth)
+        "success": True,
+        "months_analyzed": len(historical),
+        "revenue_trend": revenue_trend,
+        "cost_trend": cost_trend,
+        "profit_trend": profit_trend,
+        "revenue_growth": revenue_growth,
+        "cost_growth": cost_growth,
+        "profit_growth": profit_growth,
+        "seasonality": seasonality,
+        "avg_projects_per_month": np.mean(num_projects),
+        "current_month_projects": num_projects[-1] if num_projects else 0,
+        "insights": generate_insights(
+            revenue_trend, cost_trend, profit_trend, revenue_growth, cost_growth
+        ),
     }
 
 
@@ -358,15 +394,21 @@ def generate_insights(rev_trend, cost_trend, profit_trend, rev_growth, cost_grow
 
     if rev_trend == "increasing" and cost_trend == "increasing":
         if cost_growth > rev_growth:
-            insights.append("⚠️ Warning: Costs are growing faster than revenue. Review cost management.")
+            insights.append(
+                "⚠️ Warning: Costs are growing faster than revenue. Review cost management."
+            )
         else:
             insights.append("✅ Good: Revenue growth is outpacing cost growth.")
 
     if rev_trend == "decreasing":
-        insights.append("⚠️ Revenue is declining. Consider marketing efforts or new revenue streams.")
+        insights.append(
+            "⚠️ Revenue is declining. Consider marketing efforts or new revenue streams."
+        )
 
     if profit_trend == "decreasing":
-        insights.append("⚠️ Profitability is declining. Focus on cost reduction or pricing optimization.")
+        insights.append(
+            "⚠️ Profitability is declining. Focus on cost reduction or pricing optimization."
+        )
 
     if profit_trend == "increasing":
         insights.append("✅ Profitability is improving. Maintain current strategy.")
@@ -386,8 +428,8 @@ def comprehensive_forecast():
     recommendations = []
 
     # Add revenue forecast recommendations
-    if revenue_forecast['success']:
-        if revenue_forecast['trend'] == 'increasing':
+    if revenue_forecast["success"]:
+        if revenue_forecast["trend"] == "increasing":
             recommendations.append(
                 f"📈 Revenue is trending upward (+${revenue_forecast['trend_strength']:,.0f}/month). "
                 f"Expected next month: ${revenue_forecast['predictions'][0]['revenue']:,.2f}"
@@ -398,21 +440,21 @@ def comprehensive_forecast():
                 "Consider strategies to reverse this trend."
             )
 
-        if revenue_forecast['confidence'] == 'Low':
+        if revenue_forecast["confidence"] == "Low":
             recommendations.append(
                 "⚠️ Low forecast confidence. Predictions may be unreliable due to data volatility."
             )
 
     # Add tax optimization recommendations
-    recommendations.extend(tax_optimization['recommendations'])
+    recommendations.extend(tax_optimization["recommendations"])
 
     # Add trend insights
-    if trends['success']:
-        recommendations.extend(trends['insights'])
+    if trends["success"]:
+        recommendations.extend(trends["insights"])
 
     return {
-        'revenue_forecast': revenue_forecast,
-        'tax_optimization': tax_optimization,
-        'trend_analysis': trends,
-        'recommendations': recommendations
+        "revenue_forecast": revenue_forecast,
+        "tax_optimization": tax_optimization,
+        "trend_analysis": trends,
+        "recommendations": recommendations,
     }

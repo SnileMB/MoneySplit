@@ -18,15 +18,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 from Logic import pdf_generator, forecasting, tax_comparison, tax_engine
 from api.models import (
-    ProjectCreate, ProjectCreateResponse, RecordResponse,
-    RecordWithPeople, PersonResponse, TaxBracketCreate,
-    TaxBracketResponse, RecordUpdate, MessageResponse
+    ProjectCreate,
+    ProjectCreateResponse,
+    RecordResponse,
+    RecordWithPeople,
+    PersonResponse,
+    TaxBracketCreate,
+    TaxBracketResponse,
+    RecordUpdate,
+    MessageResponse,
 )
 
 app = FastAPI(
     title="MoneySplit API",
     description="RESTful API for commission-based income splitting with tax calculations",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Enable CORS for frontend integration
@@ -40,6 +46,7 @@ app.add_middleware(
 
 
 # ===== Project/Record Endpoints =====
+
 
 @app.post("/api/projects", response_model=ProjectCreateResponse, status_code=201)
 async def create_project(project: ProjectCreate):
@@ -59,44 +66,49 @@ async def create_project(project: ProjectCreate):
             country=project.country,
             tax_structure=project.tax_type,
             distribution_method=project.distribution_method,
-            salary_amount=project.salary_amount or 0
+            salary_amount=project.salary_amount or 0,
         )
 
         # Extract values from tax_result
-        tax = tax_result['total_tax']
-        net_income_group = tax_result['net_income_group']
-        net_income_per_person = tax_result['net_income_per_person']
+        tax = tax_result["total_tax"]
+        net_income_group = tax_result["net_income_group"]
+        net_income_per_person = tax_result["net_income_per_person"]
 
         # Save to database
         conn = setup.get_conn()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO tax_records (
                 num_people, revenue, total_costs, group_income, individual_income,
                 tax_origin, tax_option, tax_amount,
                 net_income_per_person, net_income_group,
                 distribution_method, salary_amount
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            project.num_people,
-            project.revenue,
-            total_costs,
-            group_income,
-            individual_income,
-            project.country,
-            project.tax_type,
-            tax,
-            net_income_per_person,
-            net_income_group,
-            project.distribution_method,
-            project.salary_amount or 0
-        ))
+        """,
+            (
+                project.num_people,
+                project.revenue,
+                total_costs,
+                group_income,
+                individual_income,
+                project.country,
+                project.tax_type,
+                tax,
+                net_income_per_person,
+                net_income_group,
+                project.distribution_method,
+                project.salary_amount or 0,
+            ),
+        )
         record_id = cursor.lastrowid
 
         # Save people
         for person in project.people:
             if project.tax_type == "Individual":
-                gross_income = individual_income * person.work_share * project.num_people
+                gross_income = (
+                    individual_income * person.work_share * project.num_people
+                )
                 tax_paid = tax * person.work_share
                 net_income = gross_income - tax_paid
             else:
@@ -104,10 +116,20 @@ async def create_project(project: ProjectCreate):
                 tax_paid = tax * person.work_share
                 net_income = net_income_group * person.work_share
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO people (record_id, name, work_share, gross_income, tax_paid, net_income)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (record_id, person.name, person.work_share, gross_income, tax_paid, net_income))
+            """,
+                (
+                    record_id,
+                    person.name,
+                    person.work_share,
+                    gross_income,
+                    tax_paid,
+                    net_income,
+                ),
+            )
 
         conn.commit()
         conn.close()
@@ -122,8 +144,8 @@ async def create_project(project: ProjectCreate):
                 "net_income_group": net_income_group,
                 "net_income_per_person": net_income_per_person,
                 "distribution_method": project.distribution_method,
-                "effective_rate": tax_result['effective_rate']
-            }
+                "effective_rate": tax_result["effective_rate"],
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -135,14 +157,22 @@ async def get_records(limit: int = Query(10, ge=1, le=100)):
     records = setup.fetch_last_records(limit)
     return [
         RecordResponse(
-            id=r[0], tax_origin=r[1], tax_option=r[2],
-            revenue=r[3], total_costs=r[4], tax_amount=r[5],
-            net_income_group=r[6], net_income_per_person=r[7],
+            id=r[0],
+            tax_origin=r[1],
+            tax_option=r[2],
+            revenue=r[3],
+            total_costs=r[4],
+            tax_amount=r[5],
+            net_income_group=r[6],
+            net_income_per_person=r[7],
             created_at=r[8],
-            num_people=r[9], group_income=r[10], individual_income=r[11],
+            num_people=r[9],
+            group_income=r[10],
+            individual_income=r[11],
             distribution_method=r[12] if len(r) > 12 else "N/A",
-            salary_amount=r[13] if len(r) > 13 else 0
-        ) for r in records
+            salary_amount=r[13] if len(r) > 13 else 0,
+        )
+        for r in records
     ]
 
 
@@ -156,19 +186,31 @@ async def get_record(record_id: int):
     people = setup.fetch_people_by_record(record_id)
 
     return RecordWithPeople(
-        id=record[0], tax_origin=record[1], tax_option=record[2],
-        revenue=record[3], total_costs=record[4], tax_amount=record[5],
-        net_income_group=record[6], net_income_per_person=record[7],
+        id=record[0],
+        tax_origin=record[1],
+        tax_option=record[2],
+        revenue=record[3],
+        total_costs=record[4],
+        tax_amount=record[5],
+        net_income_group=record[6],
+        net_income_per_person=record[7],
         created_at=record[8],
-        num_people=record[9], group_income=record[10], individual_income=record[11],
+        num_people=record[9],
+        group_income=record[10],
+        individual_income=record[11],
         distribution_method=record[12] if len(record) > 12 else "N/A",
         salary_amount=record[13] if len(record) > 13 else 0,
         people=[
             PersonResponse(
-                id=p[0], name=p[1], work_share=p[2],
-                gross_income=p[3], tax_paid=p[4], net_income=p[5]
-            ) for p in people
-        ]
+                id=p[0],
+                name=p[1],
+                work_share=p[2],
+                gross_income=p[3],
+                tax_paid=p[4],
+                net_income=p[5],
+            )
+            for p in people
+        ],
     )
 
 
@@ -195,19 +237,24 @@ async def delete_record(record_id: int):
 
 # ===== Tax Bracket Endpoints =====
 
+
 @app.get("/api/tax-brackets", response_model=List[TaxBracketResponse])
 async def get_tax_brackets(country: str, tax_type: str):
     """Get tax brackets for a country and type."""
     import math
+
     brackets = setup.get_tax_brackets(country, tax_type, include_id=True)
     return [
         TaxBracketResponse(
             id=b[0],
-            income_limit=999999999 if math.isinf(b[1]) else b[1],  # Convert inf to large number for JSON
+            income_limit=999999999
+            if math.isinf(b[1])
+            else b[1],  # Convert inf to large number for JSON
             rate=b[2],
             country=country,
-            tax_type=tax_type
-        ) for b in brackets
+            tax_type=tax_type,
+        )
+        for b in brackets
     ]
 
 
@@ -215,7 +262,9 @@ async def get_tax_brackets(country: str, tax_type: str):
 async def create_tax_bracket(bracket: TaxBracketCreate):
     """Add a new tax bracket."""
     try:
-        setup.add_tax_bracket(bracket.country, bracket.tax_type, bracket.income_limit, bracket.rate)
+        setup.add_tax_bracket(
+            bracket.country, bracket.tax_type, bracket.income_limit, bracket.rate
+        )
         return MessageResponse(message="Tax bracket created successfully")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -233,12 +282,16 @@ async def delete_tax_bracket(bracket_id: int):
 
 # ===== People Endpoints =====
 
+
 @app.get("/api/people/{person_id}", response_model=PersonResponse)
 async def get_person(person_id: int):
     """Get a specific person by ID."""
     conn = setup.get_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, work_share, gross_income, tax_paid, net_income FROM people WHERE id=?", (person_id,))
+    cursor.execute(
+        "SELECT id, name, work_share, gross_income, tax_paid, net_income FROM people WHERE id=?",
+        (person_id,),
+    )
     person = cursor.fetchone()
     conn.close()
 
@@ -246,8 +299,12 @@ async def get_person(person_id: int):
         raise HTTPException(status_code=404, detail=f"Person {person_id} not found")
 
     return PersonResponse(
-        id=person[0], name=person[1], work_share=person[2],
-        gross_income=person[3], tax_paid=person[4], net_income=person[5]
+        id=person[0],
+        name=person[1],
+        work_share=person[2],
+        gross_income=person[3],
+        tax_paid=person[4],
+        net_income=person[5],
     )
 
 
@@ -264,24 +321,22 @@ async def get_person_history(name: str):
             "gross_income": r[4],
             "tax_paid": r[5],
             "net_income": r[6],
-            "created_at": r[7]
-        } for r in records
+            "created_at": r[7],
+        }
+        for r in records
     ]
 
 
 # ===== Report Endpoints =====
+
 
 @app.get("/api/reports/revenue-summary")
 async def revenue_summary():
     """Get revenue summary by year."""
     rows = setup.get_revenue_summary()
     return [
-        {
-            "year": r[0],
-            "total_revenue": r[1],
-            "total_costs": r[2],
-            "net_income": r[3]
-        } for r in rows
+        {"year": r[0], "total_revenue": r[1], "total_costs": r[2], "net_income": r[3]}
+        for r in rows
     ]
 
 
@@ -290,12 +345,8 @@ async def top_people(limit: int = Query(10, ge=1, le=50)):
     """Get top people by net income."""
     rows = setup.get_top_people(limit)
     return [
-        {
-            "name": r[0],
-            "total_gross": r[1],
-            "total_tax_paid": r[2],
-            "total_net": r[3]
-        } for r in rows
+        {"name": r[0], "total_gross": r[1], "total_tax_paid": r[2], "total_net": r[3]}
+        for r in rows
     ]
 
 
@@ -305,7 +356,8 @@ async def overall_statistics():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT COUNT(*),
                COALESCE(SUM(revenue), 0),
                COALESCE(SUM(total_costs), 0),
@@ -316,7 +368,8 @@ async def overall_statistics():
                    ELSE 0
                END), 0)
         FROM tax_records
-    """)
+    """
+    )
     result = cursor.fetchone()
     total_records = result[0] or 0
     total_rev = result[1] or 0
@@ -340,16 +393,19 @@ async def overall_statistics():
         "total_net_income": float(total_net),
         "average_tax_rate": float(avg_rate),
         "total_people_entries": total_people_entries,
-        "unique_people": unique_people
+        "unique_people": unique_people,
     }
 
 
 # ===== Visualization Endpoints =====
 
+
 def create_stunning_html(plotly_fig, title, emoji, description):
     """Wrap Plotly figure in world-class premium HTML template."""
-    plot_config = {'displayModeBar': True, 'displaylogo': False}
-    plotly_html = plotly_fig.to_html(include_plotlyjs='cdn', full_html=False, config=plot_config)
+    plot_config = {"displayModeBar": True, "displaylogo": False}
+    plotly_html = plotly_fig.to_html(
+        include_plotlyjs="cdn", full_html=False, config=plot_config
+    )
 
     return f"""
 <!DOCTYPE html>
@@ -743,7 +799,8 @@ async def revenue_summary_viz(view: str = Query("yearly", regex="^(yearly|monthl
 
     if view == "monthly":
         # Monthly view
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT strftime('%Y-%m', created_at) as period,
                    SUM(revenue) as total_revenue,
                    SUM(total_costs) as total_costs,
@@ -752,12 +809,14 @@ async def revenue_summary_viz(view: str = Query("yearly", regex="^(yearly|monthl
             FROM tax_records
             GROUP BY period
             ORDER BY period ASC
-        """)
+        """
+        )
         title_suffix = "by Month"
         x_label = "Month"
     else:
         # Yearly view
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT strftime('%Y', created_at) as period,
                    SUM(revenue) as total_revenue,
                    SUM(total_costs) as total_costs,
@@ -766,7 +825,8 @@ async def revenue_summary_viz(view: str = Query("yearly", regex="^(yearly|monthl
             FROM tax_records
             GROUP BY period
             ORDER BY period ASC
-        """)
+        """
+        )
         title_suffix = "by Year"
         x_label = "Year"
 
@@ -783,59 +843,92 @@ async def revenue_summary_viz(view: str = Query("yearly", regex="^(yearly|monthl
     num_projects = [row[4] for row in rows]
 
     fig = make_subplots(
-        rows=3, cols=1,
-        subplot_titles=(f"Revenue & Costs {title_suffix}", f"Net Income {title_suffix}", f"Number of Projects {title_suffix}"),
+        rows=3,
+        cols=1,
+        subplot_titles=(
+            f"Revenue & Costs {title_suffix}",
+            f"Net Income {title_suffix}",
+            f"Number of Projects {title_suffix}",
+        ),
         vertical_spacing=0.12,
-        specs=[[{"secondary_y": False}], [{"secondary_y": False}], [{"secondary_y": False}]]
+        specs=[
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+        ],
     )
 
     # Revenue & Costs
     fig.add_trace(
-        go.Bar(name="Revenue", x=periods, y=revenues, marker_color='rgb(102, 126, 234)'),
-        row=1, col=1
+        go.Bar(
+            name="Revenue", x=periods, y=revenues, marker_color="rgb(102, 126, 234)"
+        ),
+        row=1,
+        col=1,
     )
     fig.add_trace(
-        go.Bar(name="Costs", x=periods, y=costs, marker_color='rgb(239, 68, 68)'),
-        row=1, col=1
+        go.Bar(name="Costs", x=periods, y=costs, marker_color="rgb(239, 68, 68)"),
+        row=1,
+        col=1,
     )
 
     # Net Income
     fig.add_trace(
-        go.Scatter(name="Net Income", x=periods, y=net_incomes,
-                   mode='lines+markers', marker_color='rgb(16, 185, 129)',
-                   line=dict(width=4), fill='tozeroy'),
-        row=2, col=1
+        go.Scatter(
+            name="Net Income",
+            x=periods,
+            y=net_incomes,
+            mode="lines+markers",
+            marker_color="rgb(16, 185, 129)",
+            line=dict(width=4),
+            fill="tozeroy",
+        ),
+        row=2,
+        col=1,
     )
 
     # Number of Projects
     fig.add_trace(
-        go.Bar(name="Projects", x=periods, y=num_projects,
-               marker_color='rgb(251, 191, 36)', showlegend=False),
-        row=3, col=1
+        go.Bar(
+            name="Projects",
+            x=periods,
+            y=num_projects,
+            marker_color="rgb(251, 191, 36)",
+            showlegend=False,
+        ),
+        row=3,
+        col=1,
     )
 
     fig.update_layout(
         title_text="",
         showlegend=True,
         height=1000,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=14),
-        legend=dict(bgcolor='rgba(15, 12, 41, 0.8)', bordercolor='rgba(102, 126, 234, 0.3)', borderwidth=2)
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=14),
+        legend=dict(
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
-    fig.update_xaxes(title_text=x_label, gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(title_text="Amount ($)", row=1, col=1, gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(title_text="Net Income ($)", row=2, col=1, gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(title_text="Projects", row=3, col=1, gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(title_text=x_label, gridcolor="rgba(255, 255, 255, 0.1)")
+    fig.update_yaxes(
+        title_text="Amount ($)", row=1, col=1, gridcolor="rgba(255, 255, 255, 0.1)"
+    )
+    fig.update_yaxes(
+        title_text="Net Income ($)", row=2, col=1, gridcolor="rgba(255, 255, 255, 0.1)"
+    )
+    fig.update_yaxes(
+        title_text="Projects", row=3, col=1, gridcolor="rgba(255, 255, 255, 0.1)"
+    )
 
     description = f"Comprehensive {view} revenue analysis showing total earnings, operational costs, net income trends, and project volume. Data sorted chronologically from oldest to newest."
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        f"Revenue Summary ({view.title()})",
-        "📈",
-        description
-    ))
+    return HTMLResponse(
+        create_stunning_html(fig, f"Revenue Summary ({view.title()})", "📈", description)
+    )
 
 
 @app.get("/api/visualizations/monthly-trends", response_class=HTMLResponse)
@@ -847,7 +940,8 @@ async def monthly_trends_viz():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', created_at) as month,
                SUM(revenue) as total_revenue,
                SUM(total_costs) as total_costs,
@@ -857,7 +951,8 @@ async def monthly_trends_viz():
         FROM tax_records
         GROUP BY month
         ORDER BY month
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -872,35 +967,70 @@ async def monthly_trends_viz():
     tax_rates = [row[5] for row in rows]
 
     fig = make_subplots(
-        rows=3, cols=1,
-        subplot_titles=("Revenue & Costs Over Time", "Profit Trend", "Projects & Tax Rate"),
-        specs=[[{"secondary_y": False}], [{"secondary_y": False}], [{"secondary_y": True}]]
+        rows=3,
+        cols=1,
+        subplot_titles=(
+            "Revenue & Costs Over Time",
+            "Profit Trend",
+            "Projects & Tax Rate",
+        ),
+        specs=[
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+            [{"secondary_y": True}],
+        ],
     )
 
-    fig.add_trace(go.Bar(name="Revenue", x=months, y=revenues, marker_color='#667eea'), row=1, col=1)
-    fig.add_trace(go.Bar(name="Costs", x=months, y=costs, marker_color='#ef4444'), row=1, col=1)
-    fig.add_trace(go.Scatter(name="Profit", x=months, y=profits, mode='lines+markers',
-                            marker_color='#10b981', line=dict(width=3)), row=2, col=1)
-    fig.add_trace(go.Bar(name="# Projects", x=months, y=projects, marker_color='#f093fb'), row=3, col=1)
+    fig.add_trace(
+        go.Bar(name="Revenue", x=months, y=revenues, marker_color="#667eea"),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Bar(name="Costs", x=months, y=costs, marker_color="#ef4444"), row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            name="Profit",
+            x=months,
+            y=profits,
+            mode="lines+markers",
+            marker_color="#10b981",
+            line=dict(width=3),
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Bar(name="# Projects", x=months, y=projects, marker_color="#f093fb"),
+        row=3,
+        col=1,
+    )
 
     fig.update_layout(
         title_text="",
         showlegend=True,
         height=1000,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=14),
-        legend=dict(bgcolor='rgba(15, 12, 41, 0.8)', bordercolor='rgba(102, 126, 234, 0.3)', borderwidth=2)
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=14),
+        legend=dict(
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
-    fig.update_xaxes(gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.1)")
+    fig.update_yaxes(gridcolor="rgba(255, 255, 255, 0.1)")
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        "Monthly Trends",
-        "📊",
-        "Detailed month-over-month analysis tracking revenue, costs, profit trends, and project activity patterns."
-    ))
+    return HTMLResponse(
+        create_stunning_html(
+            fig,
+            "Monthly Trends",
+            "📊",
+            "Detailed month-over-month analysis tracking revenue, costs, profit trends, and project activity patterns.",
+        )
+    )
 
 
 @app.get("/api/visualizations/work-distribution", response_class=HTMLResponse)
@@ -913,13 +1043,15 @@ async def work_distribution_viz():
     cursor = conn.cursor()
 
     # Get overall team stats
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name, COUNT(*) as num_projects,
                SUM(gross_income) as total_gross, SUM(net_income) as total_net,
                SUM(tax_paid) as total_tax, AVG(work_share) as avg_work_share
         FROM people GROUP BY name ORDER BY total_net DESC
         LIMIT 12
-    """)
+    """
+    )
     rows = cursor.fetchall()
 
     if not rows:
@@ -935,7 +1067,8 @@ async def work_distribution_viz():
 
     # Get monthly performance for top contributor
     top_person = names[0]
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', t.created_at) as month,
                SUM(p.net_income) as monthly_income
         FROM people p
@@ -943,7 +1076,9 @@ async def work_distribution_viz():
         WHERE p.name = ?
         GROUP BY month
         ORDER BY month
-    """, (top_person,))
+    """,
+        (top_person,),
+    )
     monthly_data = cursor.fetchall()
     months = [row[0] for row in monthly_data]
     monthly_income = [row[1] for row in monthly_data]
@@ -952,83 +1087,118 @@ async def work_distribution_viz():
 
     # Create comprehensive 6-chart layout
     fig = make_subplots(
-        rows=3, cols=2,
+        rows=3,
+        cols=2,
         subplot_titles=(
             "💰 Total Earnings Leaderboard",
             "📊 Projects per Person",
             "💸 Tax Paid by Person",
             "🎯 Average Work Share %",
             f"📈 {top_person}'s Monthly Income",
-            "💵 Gross vs Net Income"
+            "💵 Gross vs Net Income",
         ),
         specs=[
             [{"type": "bar"}, {"type": "bar"}],
             [{"type": "bar"}, {"type": "bar"}],
-            [{"type": "scatter"}, {"type": "bar"}]
+            [{"type": "scatter"}, {"type": "bar"}],
         ],
         vertical_spacing=0.12,
-        horizontal_spacing=0.15
+        horizontal_spacing=0.15,
     )
 
     # 1. Earnings leaderboard
     fig.add_trace(
-        go.Bar(x=names, y=net_incomes, marker_color='#10b981',
-               text=[f'${v:,.0f}' for v in net_incomes], textposition='outside'),
-        row=1, col=1
+        go.Bar(
+            x=names,
+            y=net_incomes,
+            marker_color="#10b981",
+            text=[f"${v:,.0f}" for v in net_incomes],
+            textposition="outside",
+        ),
+        row=1,
+        col=1,
     )
 
     # 2. Projects per person
     fig.add_trace(
-        go.Bar(x=names, y=projects, marker_color='#667eea',
-               text=projects, textposition='outside'),
-        row=1, col=2
+        go.Bar(
+            x=names,
+            y=projects,
+            marker_color="#667eea",
+            text=projects,
+            textposition="outside",
+        ),
+        row=1,
+        col=2,
     )
 
     # 3. Tax paid
     fig.add_trace(
-        go.Bar(x=names, y=tax_paid, marker_color='#ef4444',
-               text=[f'${v:,.0f}' for v in tax_paid], textposition='outside'),
-        row=2, col=1
+        go.Bar(
+            x=names,
+            y=tax_paid,
+            marker_color="#ef4444",
+            text=[f"${v:,.0f}" for v in tax_paid],
+            textposition="outside",
+        ),
+        row=2,
+        col=1,
     )
 
     # 4. Average work share
     fig.add_trace(
-        go.Bar(x=names, y=avg_shares, marker_color='#f59e0b',
-               text=[f'{v:.1f}%' for v in avg_shares], textposition='outside'),
-        row=2, col=2
+        go.Bar(
+            x=names,
+            y=avg_shares,
+            marker_color="#f59e0b",
+            text=[f"{v:.1f}%" for v in avg_shares],
+            textposition="outside",
+        ),
+        row=2,
+        col=2,
     )
 
     # 5. Top person monthly income
     fig.add_trace(
-        go.Scatter(x=months, y=monthly_income, mode='lines+markers',
-                   line=dict(color='#8b5cf6', width=3), marker=dict(size=10),
-                   fill='tozeroy'),
-        row=3, col=1
+        go.Scatter(
+            x=months,
+            y=monthly_income,
+            mode="lines+markers",
+            line=dict(color="#8b5cf6", width=3),
+            marker=dict(size=10),
+            fill="tozeroy",
+        ),
+        row=3,
+        col=1,
     )
 
     # 6. Gross vs Net comparison
     fig.add_trace(
-        go.Bar(name='Gross', x=names, y=gross_incomes, marker_color='#667eea'),
-        row=3, col=2
+        go.Bar(name="Gross", x=names, y=gross_incomes, marker_color="#667eea"),
+        row=3,
+        col=2,
     )
     fig.add_trace(
-        go.Bar(name='Net', x=names, y=net_incomes, marker_color='#10b981'),
-        row=3, col=2
+        go.Bar(name="Net", x=names, y=net_incomes, marker_color="#10b981"), row=3, col=2
     )
 
     fig.update_layout(
         title_text="",
         showlegend=True,
         height=1400,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=13),
-        legend=dict(bgcolor='rgba(15, 12, 41, 0.8)', bordercolor='rgba(102, 126, 234, 0.3)', borderwidth=2)
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=13),
+        legend=dict(
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
 
     # Update all axes
-    fig.update_xaxes(gridcolor='rgba(255, 255, 255, 0.1)', tickangle=-45)
-    fig.update_yaxes(gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.1)", tickangle=-45)
+    fig.update_yaxes(gridcolor="rgba(255, 255, 255, 0.1)")
 
     # Add labels
     fig.update_yaxes(title_text="Net Income ($)", row=1, col=1)
@@ -1038,12 +1208,14 @@ async def work_distribution_viz():
     fig.update_yaxes(title_text="Income ($)", row=3, col=1)
     fig.update_yaxes(title_text="Amount ($)", row=3, col=2)
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        "Team Performance Analytics",
-        "👥",
-        "Comprehensive team performance dashboard showing earnings, project distribution, tax burden, work shares, and individual performance trends."
-    ))
+    return HTMLResponse(
+        create_stunning_html(
+            fig,
+            "Team Performance Analytics",
+            "👥",
+            "Comprehensive team performance dashboard showing earnings, project distribution, tax burden, work shares, and individual performance trends.",
+        )
+    )
 
 
 @app.get("/api/visualizations/tax-comparison", response_class=HTMLResponse)
@@ -1056,7 +1228,8 @@ async def tax_comparison_viz():
     cursor = conn.cursor()
 
     # 1. Get tax strategy comparison by country and type
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin, tax_option, COUNT(*) as records,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_tax_rate,
                SUM(tax_amount * num_people) as total_tax_paid,
@@ -1064,11 +1237,13 @@ async def tax_comparison_viz():
         FROM tax_records
         GROUP BY tax_origin, tax_option
         ORDER BY tax_origin, tax_option
-    """)
+    """
+    )
     strategy_data = cursor.fetchall()
 
     # 2. Get Individual vs Business comparison
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_option,
                COUNT(*) as count,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_rate,
@@ -1077,22 +1252,26 @@ async def tax_comparison_viz():
         FROM tax_records
         GROUP BY tax_option
         ORDER BY tax_option
-    """)
+    """
+    )
     ind_vs_bus = cursor.fetchall()
 
     # 3. Get tax burden over time (monthly)
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m', created_at) as month,
                tax_option,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_rate
         FROM tax_records
         GROUP BY month, tax_option
         ORDER BY month ASC, tax_option
-    """)
+    """
+    )
     monthly_tax = cursor.fetchall()
 
     # 4. Get country-specific breakdown
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin,
                COUNT(*) as projects,
                SUM(tax_amount * num_people) as total_tax,
@@ -1100,11 +1279,13 @@ async def tax_comparison_viz():
         FROM tax_records
         GROUP BY tax_origin
         ORDER BY total_tax DESC
-    """)
+    """
+    )
     country_breakdown = cursor.fetchall()
 
     # 5. Get effective tax rate distribution
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT tax_origin || ' - ' || tax_option as strategy,
                AVG(tax_amount * 100.0 / NULLIF(group_income, 0)) as avg_rate,
                MIN(tax_amount * 100.0 / NULLIF(group_income, 0)) as min_rate,
@@ -1112,7 +1293,8 @@ async def tax_comparison_viz():
         FROM tax_records
         GROUP BY tax_origin, tax_option
         ORDER BY avg_rate
-    """)
+    """
+    )
     rate_distribution = cursor.fetchall()
 
     conn.close()
@@ -1122,39 +1304,44 @@ async def tax_comparison_viz():
 
     # Create 6-chart comprehensive dashboard
     fig = make_subplots(
-        rows=3, cols=2,
+        rows=3,
+        cols=2,
         subplot_titles=(
             "📊 Average Tax Rate by Strategy",
             "💰 Individual vs Business Tax Comparison",
             "📈 Tax Rate Trend Over Time",
             "🌍 Total Tax Paid by Country",
             "🎯 Effective Tax Rate Range",
-            "💸 Net Income After Tax by Strategy"
+            "💸 Net Income After Tax by Strategy",
         ),
         specs=[
             [{"type": "bar"}, {"type": "bar"}],
             [{"type": "scatter"}, {"type": "bar"}],
-            [{"type": "bar"}, {"type": "bar"}]
+            [{"type": "bar"}, {"type": "bar"}],
         ],
         vertical_spacing=0.12,
-        horizontal_spacing=0.15
+        horizontal_spacing=0.15,
     )
 
     # Chart 1: Average Tax Rate by Strategy (with labels)
     strategies = [f"{row[0]} - {row[1]}" for row in strategy_data]
     avg_rates = [row[3] for row in strategy_data]
-    colors_1 = ['#10b981' if rate < 20 else '#f59e0b' if rate < 30 else '#ef4444' for rate in avg_rates]
+    colors_1 = [
+        "#10b981" if rate < 20 else "#f59e0b" if rate < 30 else "#ef4444"
+        for rate in avg_rates
+    ]
 
     fig.add_trace(
         go.Bar(
             x=strategies,
             y=avg_rates,
             marker_color=colors_1,
-            text=[f'{rate:.1f}%' for rate in avg_rates],
-            textposition='outside',
-            name='Avg Tax Rate'
+            text=[f"{rate:.1f}%" for rate in avg_rates],
+            textposition="outside",
+            name="Avg Tax Rate",
         ),
-        row=1, col=1
+        row=1,
+        col=1,
     )
 
     # Chart 2: Individual vs Business Direct Comparison
@@ -1165,62 +1352,70 @@ async def tax_comparison_viz():
 
         fig.add_trace(
             go.Bar(
-                name='Avg Tax Rate %',
+                name="Avg Tax Rate %",
                 x=tax_types,
                 y=avg_rates_comp,
-                marker_color='#ef4444',
-                text=[f'{v:.1f}%' for v in avg_rates_comp],
-                textposition='outside',
-                yaxis='y'
+                marker_color="#ef4444",
+                text=[f"{v:.1f}%" for v in avg_rates_comp],
+                textposition="outside",
+                yaxis="y",
             ),
-            row=1, col=2
+            row=1,
+            col=2,
         )
 
         fig.add_trace(
             go.Bar(
-                name='Avg Net Income/Person',
+                name="Avg Net Income/Person",
                 x=tax_types,
                 y=avg_net,
-                marker_color='#10b981',
-                text=[f'${v:,.0f}' for v in avg_net],
-                textposition='outside',
-                yaxis='y2'
+                marker_color="#10b981",
+                text=[f"${v:,.0f}" for v in avg_net],
+                textposition="outside",
+                yaxis="y2",
             ),
-            row=1, col=2
+            row=1,
+            col=2,
         )
 
     # Chart 3: Tax Rate Trend Over Time (monthly)
     if monthly_tax:
         # Group by tax_option
-        individual_data = [(row[0], row[2]) for row in monthly_tax if row[1] == 'Individual']
-        business_data = [(row[0], row[2]) for row in monthly_tax if row[1] == 'Business']
+        individual_data = [
+            (row[0], row[2]) for row in monthly_tax if row[1] == "Individual"
+        ]
+        business_data = [
+            (row[0], row[2]) for row in monthly_tax if row[1] == "Business"
+        ]
 
         if individual_data:
             months_ind, rates_ind = zip(*individual_data)
             fig.add_trace(
                 go.Scatter(
-                    name='Individual Tax',
+                    name="Individual Tax",
                     x=list(months_ind),
                     y=list(rates_ind),
-                    mode='lines+markers',
-                    marker_color='#667eea',
-                    line=dict(width=3)
+                    mode="lines+markers",
+                    marker_color="#667eea",
+                    line=dict(width=3),
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
         if business_data:
             months_bus, rates_bus = zip(*business_data)
             fig.add_trace(
                 go.Scatter(
-                    name='Business Tax',
+                    name="Business Tax",
                     x=list(months_bus),
                     y=list(rates_bus),
-                    mode='lines+markers',
-                    marker_color='#f093fb',
-                    line=dict(width=3)
+                    mode="lines+markers",
+                    marker_color="#f093fb",
+                    line=dict(width=3),
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
     # Chart 4: Total Tax Paid by Country
@@ -1230,12 +1425,13 @@ async def tax_comparison_viz():
         go.Bar(
             x=countries,
             y=total_taxes,
-            marker_color='#667eea',
-            text=[f'${v:,.0f}' for v in total_taxes],
-            textposition='outside',
-            name='Total Tax Paid'
+            marker_color="#667eea",
+            text=[f"${v:,.0f}" for v in total_taxes],
+            textposition="outside",
+            name="Total Tax Paid",
         ),
-        row=2, col=2
+        row=2,
+        col=2,
     )
 
     # Chart 5: Effective Tax Rate Range (min-max)
@@ -1246,14 +1442,15 @@ async def tax_comparison_viz():
 
     fig.add_trace(
         go.Bar(
-            name='Average Rate',
+            name="Average Rate",
             x=rate_strategies,
             y=avg_rates_dist,
-            marker_color='#10b981',
-            text=[f'{v:.1f}%' for v in avg_rates_dist],
-            textposition='outside'
+            marker_color="#10b981",
+            text=[f"{v:.1f}%" for v in avg_rates_dist],
+            textposition="outside",
         ),
-        row=3, col=1
+        row=3,
+        col=1,
     )
 
     # Chart 6: Net Income After Tax by Strategy
@@ -1262,12 +1459,13 @@ async def tax_comparison_viz():
         go.Bar(
             x=strategies,
             y=net_incomes,
-            marker_color='#10b981',
-            text=[f'${v:,.0f}' for v in net_incomes],
-            textposition='outside',
-            name='Total Net Income'
+            marker_color="#10b981",
+            text=[f"${v:,.0f}" for v in net_incomes],
+            textposition="outside",
+            name="Total Net Income",
         ),
-        row=3, col=2
+        row=3,
+        col=2,
     )
 
     # Update layout
@@ -1275,19 +1473,19 @@ async def tax_comparison_viz():
         title_text="",
         showlegend=True,
         height=1400,  # Taller for 6 charts
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=12),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=12),
         legend=dict(
-            bgcolor='rgba(15, 12, 41, 0.8)',
-            bordercolor='rgba(102, 126, 234, 0.3)',
-            borderwidth=2
-        )
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
 
     # Update all axes
-    fig.update_xaxes(gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.1)")
+    fig.update_yaxes(gridcolor="rgba(255, 255, 255, 0.1)")
 
     # Specific axis labels
     fig.update_yaxes(title_text="Tax Rate (%)", row=1, col=1)
@@ -1297,12 +1495,14 @@ async def tax_comparison_viz():
     fig.update_yaxes(title_text="Tax Rate (%)", row=3, col=1)
     fig.update_yaxes(title_text="Net Income ($)", row=3, col=2)
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        "Tax Strategy Comparison",
-        "💼",
-        "Comprehensive tax analysis with 6 detailed charts comparing tax strategies, rates, trends, and net income across countries and tax types."
-    ))
+    return HTMLResponse(
+        create_stunning_html(
+            fig,
+            "Tax Strategy Comparison",
+            "💼",
+            "Comprehensive tax analysis with 6 detailed charts comparing tax strategies, rates, trends, and net income across countries and tax types.",
+        )
+    )
 
 
 @app.get("/api/visualizations/person-performance/{name}", response_class=HTMLResponse)
@@ -1314,12 +1514,15 @@ async def person_performance_viz(name: str):
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT strftime('%Y-%m-%d', t.created_at) as date, p.gross_income, p.tax_paid,
                p.net_income, p.work_share, t.id as record_id
         FROM people p JOIN tax_records t ON p.record_id = t.id
         WHERE p.name = ? ORDER BY t.created_at
-    """, (name,))
+    """,
+        (name,),
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -1332,37 +1535,81 @@ async def person_performance_viz(name: str):
     work_shares = [row[4] * 100 for row in rows]
 
     fig = make_subplots(
-        rows=2, cols=1,
-        subplot_titles=(f"{name}'s Income Over Time", f"{name}'s Work Share Percentage"),
-        vertical_spacing=0.15
+        rows=2,
+        cols=1,
+        subplot_titles=(
+            f"{name}'s Income Over Time",
+            f"{name}'s Work Share Percentage",
+        ),
+        vertical_spacing=0.15,
     )
 
-    fig.add_trace(go.Scatter(name="Gross Income", x=dates, y=gross, mode='lines+markers',
-                            marker_color='#667eea', line=dict(width=3)), row=1, col=1)
-    fig.add_trace(go.Scatter(name="Net Income", x=dates, y=net, mode='lines+markers',
-                            marker_color='#10b981', line=dict(width=3)), row=1, col=1)
-    fig.add_trace(go.Scatter(name="Work Share %", x=dates, y=work_shares, mode='lines+markers',
-                            marker_color='#f093fb', line=dict(width=3)), row=2, col=1)
+    fig.add_trace(
+        go.Scatter(
+            name="Gross Income",
+            x=dates,
+            y=gross,
+            mode="lines+markers",
+            marker_color="#667eea",
+            line=dict(width=3),
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            name="Net Income",
+            x=dates,
+            y=net,
+            mode="lines+markers",
+            marker_color="#10b981",
+            line=dict(width=3),
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            name="Work Share %",
+            x=dates,
+            y=work_shares,
+            mode="lines+markers",
+            marker_color="#f093fb",
+            line=dict(width=3),
+        ),
+        row=2,
+        col=1,
+    )
 
     fig.update_layout(
         title_text="",
         showlegend=True,
         height=800,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=14),
-        legend=dict(bgcolor='rgba(15, 12, 41, 0.8)', bordercolor='rgba(102, 126, 234, 0.3)', borderwidth=2)
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=14),
+        legend=dict(
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
-    fig.update_xaxes(title_text="Date", gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(title_text="Income ($)", row=1, col=1, gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(title_text="Work Share (%)", row=2, col=1, gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(title_text="Date", gridcolor="rgba(255, 255, 255, 0.1)")
+    fig.update_yaxes(
+        title_text="Income ($)", row=1, col=1, gridcolor="rgba(255, 255, 255, 0.1)"
+    )
+    fig.update_yaxes(
+        title_text="Work Share (%)", row=2, col=1, gridcolor="rgba(255, 255, 255, 0.1)"
+    )
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        f"Performance Timeline - {name}",
-        "🎯",
-        f"Individual performance tracking for {name}, displaying income progression and work contribution over time."
-    ))
+    return HTMLResponse(
+        create_stunning_html(
+            fig,
+            f"Performance Timeline - {name}",
+            "🎯",
+            f"Individual performance tracking for {name}, displaying income progression and work contribution over time.",
+        )
+    )
 
 
 @app.get("/api/visualizations/project-profitability", response_class=HTMLResponse)
@@ -1374,12 +1621,14 @@ async def project_profitability_viz():
     conn = setup.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id, revenue, total_costs, net_income_group, tax_amount, num_people,
                (net_income_group * 100.0 / NULLIF(revenue - total_costs, 0)) as profit_margin,
                (net_income_group * 100.0 / NULLIF(total_costs, 0)) as roi
         FROM tax_records WHERE revenue > 0 ORDER BY created_at
-    """)
+    """
+    )
     rows = cursor.fetchall()
     conn.close()
 
@@ -1394,42 +1643,79 @@ async def project_profitability_viz():
     profits = [row[3] for row in rows]
     team_sizes = [row[5] for row in rows]
 
-    colors = ['#10b981' if pm > 30 else '#f093fb' if pm > 10 else '#ef4444' for pm in profit_margins]
+    colors = [
+        "#10b981" if pm > 30 else "#f093fb" if pm > 10 else "#ef4444"
+        for pm in profit_margins
+    ]
 
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Profit Margins (%)", "ROI (%)", "Revenue Breakdown", "Profit vs Team Size"),
-        specs=[[{"type": "bar"}, {"type": "bar"}], [{"type": "bar"}, {"type": "scatter"}]]
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Profit Margins (%)",
+            "ROI (%)",
+            "Revenue Breakdown",
+            "Profit vs Team Size",
+        ),
+        specs=[
+            [{"type": "bar"}, {"type": "bar"}],
+            [{"type": "bar"}, {"type": "scatter"}],
+        ],
     )
 
-    fig.add_trace(go.Bar(x=record_ids, y=profit_margins, marker_color=colors), row=1, col=1)
-    fig.add_trace(go.Bar(x=record_ids, y=rois, marker_color='#667eea'), row=1, col=2)
-    fig.add_trace(go.Bar(name="Costs", x=record_ids, y=costs, marker_color='#ef4444'), row=2, col=1)
-    fig.add_trace(go.Bar(name="Profit", x=record_ids, y=profits, marker_color='#10b981'), row=2, col=1)
-    fig.add_trace(go.Scatter(x=team_sizes, y=profits, mode='markers',
-                            marker=dict(size=12, color='#f093fb', line=dict(width=2, color='white'))), row=2, col=2)
+    fig.add_trace(
+        go.Bar(x=record_ids, y=profit_margins, marker_color=colors), row=1, col=1
+    )
+    fig.add_trace(go.Bar(x=record_ids, y=rois, marker_color="#667eea"), row=1, col=2)
+    fig.add_trace(
+        go.Bar(name="Costs", x=record_ids, y=costs, marker_color="#ef4444"),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Bar(name="Profit", x=record_ids, y=profits, marker_color="#10b981"),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=team_sizes,
+            y=profits,
+            mode="markers",
+            marker=dict(size=12, color="#f093fb", line=dict(width=2, color="white")),
+        ),
+        row=2,
+        col=2,
+    )
 
     fig.update_layout(
         title_text="",
         showlegend=True,
         height=900,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15, 12, 41, 0.3)',
-        font=dict(color='white', size=14),
-        legend=dict(bgcolor='rgba(15, 12, 41, 0.8)', bordercolor='rgba(102, 126, 234, 0.3)', borderwidth=2)
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 12, 41, 0.3)",
+        font=dict(color="white", size=14),
+        legend=dict(
+            bgcolor="rgba(15, 12, 41, 0.8)",
+            bordercolor="rgba(102, 126, 234, 0.3)",
+            borderwidth=2,
+        ),
     )
-    fig.update_xaxes(gridcolor='rgba(255, 255, 255, 0.1)')
-    fig.update_yaxes(gridcolor='rgba(255, 255, 255, 0.1)')
+    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.1)")
+    fig.update_yaxes(gridcolor="rgba(255, 255, 255, 0.1)")
 
-    return HTMLResponse(create_stunning_html(
-        fig,
-        "Project Profitability",
-        "💰",
-        "Comprehensive profitability analysis displaying profit margins, ROI, revenue breakdown, and team size correlation for all projects."
-    ))
+    return HTMLResponse(
+        create_stunning_html(
+            fig,
+            "Project Profitability",
+            "💰",
+            "Comprehensive profitability analysis displaying profit margins, ROI, revenue breakdown, and team size correlation for all projects.",
+        )
+    )
 
 
 # ===== PDF Export Endpoints =====
+
 
 @app.get("/api/export/record/{record_id}/pdf", response_class=FileResponse)
 async def export_record_pdf(record_id: int):
@@ -1441,13 +1727,10 @@ async def export_record_pdf(record_id: int):
     people = setup.fetch_people_by_record(record_id)
 
     filepath = pdf_generator.generate_project_pdf(
-        record, people,
-        filepath=f"reports/project_{record_id}.pdf"
+        record, people, filepath=f"reports/project_{record_id}.pdf"
     )
     return FileResponse(
-        filepath,
-        media_type="application/pdf",
-        filename=f"project_{record_id}.pdf"
+        filepath, media_type="application/pdf", filename=f"project_{record_id}.pdf"
     )
 
 
@@ -1459,7 +1742,8 @@ async def export_summary_pdf(limit: int = Query(20, ge=1, le=100)):
     # Get statistics
     conn = setup.get_conn()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT COUNT(*),
                COALESCE(SUM(revenue), 0),
                COALESCE(SUM(total_costs), 0),
@@ -1470,7 +1754,8 @@ async def export_summary_pdf(limit: int = Query(20, ge=1, le=100)):
                    ELSE 0
                END), 0)
         FROM tax_records
-    """)
+    """
+    )
     result = cursor.fetchone()
 
     cursor.execute("SELECT COUNT(DISTINCT name) FROM people")
@@ -1478,20 +1763,18 @@ async def export_summary_pdf(limit: int = Query(20, ge=1, le=100)):
     conn.close()
 
     stats = {
-        'total_records': result[0],
-        'total_revenue': result[1],
-        'total_costs': result[2],
-        'total_tax': result[3],
-        'total_net_income': result[4],
-        'average_tax_rate': result[5],
-        'unique_people': unique_people
+        "total_records": result[0],
+        "total_revenue": result[1],
+        "total_costs": result[2],
+        "total_tax": result[3],
+        "total_net_income": result[4],
+        "average_tax_rate": result[5],
+        "unique_people": unique_people,
     }
 
     filepath = pdf_generator.generate_summary_pdf(records, stats)
     return FileResponse(
-        filepath,
-        media_type="application/pdf",
-        filename="summary_report.pdf"
+        filepath, media_type="application/pdf", filename="summary_report.pdf"
     )
 
 
@@ -1501,13 +1784,12 @@ async def export_forecast_pdf():
     forecast = forecasting.forecast_revenue(3)
     filepath = pdf_generator.generate_forecast_pdf(forecast)
     return FileResponse(
-        filepath,
-        media_type="application/pdf",
-        filename="forecast_report.pdf"
+        filepath, media_type="application/pdf", filename="forecast_report.pdf"
     )
 
 
 # ===== Forecasting Endpoints =====
+
 
 @app.get("/api/forecast/revenue")
 async def forecast_revenue_endpoint(months: int = Query(3, ge=1, le=12)):
@@ -1539,18 +1821,21 @@ async def trend_analysis_endpoint():
 
 # ===== Tax Comparison Endpoints =====
 
+
 @app.get("/api/tax-comparison")
 async def compare_tax_strategies(
     revenue: float = Query(..., description="Project revenue"),
     costs: float = Query(..., description="Total project costs"),
     num_people: int = Query(..., description="Number of people"),
-    country: str = Query(..., description="Country (US or Spain)")
+    country: str = Query(..., description="Country (US or Spain)"),
 ):
     """
     Compare all tax strategies (Individual vs Business with different distributions).
     Returns detailed breakdown showing which option saves the most money.
     """
-    comparison = tax_comparison.calculate_all_tax_scenarios(revenue, costs, num_people, country)
+    comparison = tax_comparison.calculate_all_tax_scenarios(
+        revenue, costs, num_people, country
+    )
     return comparison
 
 
@@ -1560,7 +1845,7 @@ async def get_optimal_strategy(
     costs: float = Query(..., description="Total project costs"),
     num_people: int = Query(..., description="Number of people"),
     country: str = Query(..., description="Country"),
-    state: str = Query(None, description="US State (CA, NY, TX, FL) - optional")
+    state: str = Query(None, description="US State (CA, NY, TX, FL) - optional"),
 ):
     """
     Get the optimal tax strategy using the enhanced tax engine.
@@ -1568,7 +1853,9 @@ async def get_optimal_strategy(
     Supports US state taxes, UK, and Canada calculations.
     """
     try:
-        result = tax_engine.get_optimal_strategy(revenue, costs, num_people, country, state)
+        result = tax_engine.get_optimal_strategy(
+            revenue, costs, num_people, country, state
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1580,21 +1867,25 @@ async def get_tax_optimization(
     costs: float,
     num_people: int,
     country: str,
-    selected_type: str = Query(..., description="Individual or Business")
+    selected_type: str = Query(..., description="Individual or Business"),
 ):
     """
     Get optimization summary showing if user's choice is optimal.
     """
-    summary = tax_comparison.get_tax_optimization_summary(revenue, costs, num_people, country, selected_type)
+    summary = tax_comparison.get_tax_optimization_summary(
+        revenue, costs, num_people, country, selected_type
+    )
     return summary
 
 
 # ===== Root Endpoint =====
 
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """API documentation homepage."""
-    return HTMLResponse("""
+    return HTMLResponse(
+        """
     <html>
         <head>
             <title>MoneySplit API</title>
@@ -1655,7 +1946,8 @@ async def root():
             </ul>
         </body>
     </html>
-    """)
+    """
+    )
 
 
 @app.get("/api/forecast/tax-impact")
@@ -1664,7 +1956,7 @@ async def forecast_with_tax_impact(
     growth_rate: float = Query(0.1, description="Expected growth rate (0.1 = 10%)"),
     quarters: int = Query(4, description="Number of quarters to forecast"),
     country: str = Query("US", description="Country"),
-    state: str = Query(None, description="US State (optional)")
+    state: str = Query(None, description="US State (optional)"),
 ):
     """
     Forecast revenue with tax impact analysis and strategy recommendations.
@@ -1677,35 +1969,52 @@ async def forecast_with_tax_impact(
         costs = projected_revenue * 0.2  # Assume 20% costs
 
         # Calculate all strategies for this revenue level
-        result = tax_engine.get_optimal_strategy(projected_revenue, costs, 2, country, state)
+        result = tax_engine.get_optimal_strategy(
+            projected_revenue, costs, 2, country, state
+        )
 
         # Find breakeven points
-        individual = next((s for s in result['all_strategies'] if s['strategy_name'] == 'Individual Tax'), None)
-        business_mixed = next((s for s in result['all_strategies'] if 'Mixed' in s['strategy_name']), None)
+        individual = next(
+            (
+                s
+                for s in result["all_strategies"]
+                if s["strategy_name"] == "Individual Tax"
+            ),
+            None,
+        )
+        business_mixed = next(
+            (s for s in result["all_strategies"] if "Mixed" in s["strategy_name"]), None
+        )
 
         recommendation = ""
         if business_mixed and individual:
-            if business_mixed['net_income_group'] > individual['net_income_group']:
-                savings = business_mixed['net_income_group'] - individual['net_income_group']
-                recommendation = f"Switch to Business+Mixed - save ${savings:,.0f}/quarter"
+            if business_mixed["net_income_group"] > individual["net_income_group"]:
+                savings = (
+                    business_mixed["net_income_group"] - individual["net_income_group"]
+                )
+                recommendation = (
+                    f"Switch to Business+Mixed - save ${savings:,.0f}/quarter"
+                )
             else:
                 recommendation = "Stay with Individual tax"
 
-        forecasts.append({
-            "quarter": q,
-            "projected_revenue": projected_revenue,
-            "optimal_strategy": result['optimal']['strategy_name'],
-            "take_home": result['optimal']['net_income_group'],
-            "total_tax": result['optimal']['total_tax'],
-            "effective_rate": result['optimal']['effective_rate'],
-            "recommendation": recommendation,
-            "all_strategies": result['all_strategies']
-        })
+        forecasts.append(
+            {
+                "quarter": q,
+                "projected_revenue": projected_revenue,
+                "optimal_strategy": result["optimal"]["strategy_name"],
+                "take_home": result["optimal"]["net_income_group"],
+                "total_tax": result["optimal"]["total_tax"],
+                "effective_rate": result["optimal"]["effective_rate"],
+                "recommendation": recommendation,
+                "all_strategies": result["all_strategies"],
+            }
+        )
 
     return {
         "current_revenue": current_revenue,
         "growth_rate": growth_rate * 100,
-        "forecasts": forecasts
+        "forecasts": forecasts,
     }
 
 
@@ -1715,7 +2024,7 @@ async def breakeven_analysis(
     max_revenue: float = Query(300000, description="Maximum revenue to test"),
     step: float = Query(10000, description="Revenue increment"),
     country: str = Query("US"),
-    state: str = Query(None)
+    state: str = Query(None),
 ):
     """
     Find revenue breakeven points where tax strategies become optimal.
@@ -1730,31 +2039,32 @@ async def breakeven_analysis(
         costs = revenue * 0.2
         result = tax_engine.get_optimal_strategy(revenue, costs, 2, country, state)
 
-        optimal_name = result['optimal']['strategy_name']
+        optimal_name = result["optimal"]["strategy_name"]
 
         # Detect strategy change
         if previous_optimal and previous_optimal != optimal_name:
-            breakeven_points.append({
-                "revenue_threshold": revenue,
-                "switch_from": previous_optimal,
-                "switch_to": optimal_name,
-                "savings": result['savings']
-            })
+            breakeven_points.append(
+                {
+                    "revenue_threshold": revenue,
+                    "switch_from": previous_optimal,
+                    "switch_to": optimal_name,
+                    "savings": result["savings"],
+                }
+            )
 
-        results.append({
-            "revenue": revenue,
-            "optimal_strategy": optimal_name,
-            "take_home": result['optimal']['net_income_group'],
-            "effective_rate": result['optimal']['effective_rate']
-        })
+        results.append(
+            {
+                "revenue": revenue,
+                "optimal_strategy": optimal_name,
+                "take_home": result["optimal"]["net_income_group"],
+                "effective_rate": result["optimal"]["effective_rate"],
+            }
+        )
 
         previous_optimal = optimal_name
         revenue += step
 
-    return {
-        "breakeven_points": breakeven_points,
-        "analysis": results
-    }
+    return {"breakeven_points": breakeven_points, "analysis": results}
 
 
 @app.get("/api/analytics/year-over-year")
@@ -1778,7 +2088,7 @@ async def year_over_year_analysis():
                 "total_net_income": 0,
                 "project_count": 0,
                 "strategies": {},
-                "avg_effective_rate": 0
+                "avg_effective_rate": 0,
             }
 
         revenue = r[3]
@@ -1790,12 +2100,16 @@ async def year_over_year_analysis():
         years[year]["total_tax"] += tax
         years[year]["total_net_income"] += net
         years[year]["project_count"] += 1
-        years[year]["strategies"][strategy] = years[year]["strategies"].get(strategy, 0) + 1
+        years[year]["strategies"][strategy] = (
+            years[year]["strategies"].get(strategy, 0) + 1
+        )
 
     # Calculate averages
     for year_data in years.values():
         if year_data["total_revenue"] > 0:
-            year_data["avg_effective_rate"] = (year_data["total_tax"] / year_data["total_revenue"]) * 100
+            year_data["avg_effective_rate"] = (
+                year_data["total_tax"] / year_data["total_revenue"]
+            ) * 100
 
     return {
         "years": sorted(years.values(), key=lambda x: x["year"]),
@@ -1806,10 +2120,10 @@ async def year_over_year_analysis():
                 "tax_paid": y["total_tax"],
                 "take_home": y["total_net_income"],
                 "projects": y["project_count"],
-                "effective_rate": y["avg_effective_rate"]
+                "effective_rate": y["avg_effective_rate"],
             }
             for y in sorted(years.values(), key=lambda x: x["year"])
-        ]
+        ],
     }
 
 
@@ -1836,7 +2150,7 @@ async def strategy_effectiveness():
                 "total_revenue": 0,
                 "total_tax": 0,
                 "total_take_home": 0,
-                "avg_effective_rate": 0
+                "avg_effective_rate": 0,
             }
 
         strategies[strategy]["count"] += 1
@@ -1847,7 +2161,9 @@ async def strategy_effectiveness():
     # Calculate averages and rank
     for strat in strategies.values():
         if strat["total_revenue"] > 0:
-            strat["avg_effective_rate"] = (strat["total_tax"] / strat["total_revenue"]) * 100
+            strat["avg_effective_rate"] = (
+                strat["total_tax"] / strat["total_revenue"]
+            ) * 100
             strat["avg_take_home"] = strat["total_take_home"] / strat["count"]
 
     ranked = sorted(strategies.values(), key=lambda x: x["avg_effective_rate"])
@@ -1855,7 +2171,7 @@ async def strategy_effectiveness():
     return {
         "strategies": ranked,
         "best_strategy": ranked[0] if ranked else None,
-        "worst_strategy": ranked[-1] if ranked else None
+        "worst_strategy": ranked[-1] if ranked else None,
     }
 
 
@@ -1874,7 +2190,7 @@ async def analytics_summary():
             "total_tax_paid": 0,
             "total_take_home": 0,
             "avg_effective_rate": 0,
-            "top_strategy": None
+            "top_strategy": None,
         }
 
     total_revenue = sum(r[3] for r in records)
@@ -1887,17 +2203,21 @@ async def analytics_summary():
         strategy = f"{r[1]} {r[2]}"
         strategy_counts[strategy] = strategy_counts.get(strategy, 0) + 1
 
-    top_strategy = max(strategy_counts.items(), key=lambda x: x[1])[0] if strategy_counts else None
+    top_strategy = (
+        max(strategy_counts.items(), key=lambda x: x[1])[0] if strategy_counts else None
+    )
 
     return {
         "total_projects": len(records),
         "total_revenue": total_revenue,
         "total_tax_paid": total_tax,
         "total_take_home": total_take_home,
-        "avg_effective_rate": (total_tax / total_revenue * 100) if total_revenue > 0 else 0,
+        "avg_effective_rate": (total_tax / total_revenue * 100)
+        if total_revenue > 0
+        else 0,
         "top_strategy": top_strategy,
         "avg_project_revenue": total_revenue / len(records),
-        "avg_tax_per_project": total_tax / len(records)
+        "avg_tax_per_project": total_tax / len(records),
     }
 
 
@@ -1910,10 +2230,7 @@ async def analytics_timeline(limit: int = Query(100)):
     records = setup.fetch_last_records(limit)
 
     if not records:
-        return {
-            "monthly": [],
-            "projects": []
-        }
+        return {"monthly": [], "projects": []}
 
     # Monthly aggregation
     monthly_data = {}
@@ -1930,7 +2247,7 @@ async def analytics_timeline(limit: int = Query(100)):
                 "revenue": 0,
                 "tax": 0,
                 "net_income": 0,
-                "projects": 0
+                "projects": 0,
             }
 
         monthly_data[month]["revenue"] += r[3]
@@ -1939,27 +2256,31 @@ async def analytics_timeline(limit: int = Query(100)):
         monthly_data[month]["projects"] += 1
 
         # Project timeline
-        project_timeline.append({
-            "id": r[0],
-            "date": created_at,
-            "revenue": r[3],
-            "tax": r[5],
-            "net_income": r[6],
-            "effective_rate": (r[5] / r[3] * 100) if r[3] > 0 else 0,
-            "strategy": f"{r[1]} {r[2]}"
-        })
+        project_timeline.append(
+            {
+                "id": r[0],
+                "date": created_at,
+                "revenue": r[3],
+                "tax": r[5],
+                "net_income": r[6],
+                "effective_rate": (r[5] / r[3] * 100) if r[3] > 0 else 0,
+                "strategy": f"{r[1]} {r[2]}",
+            }
+        )
 
     # Sort monthly data by month
     monthly_sorted = sorted(monthly_data.values(), key=lambda x: x["month"])
 
     return {
         "monthly": monthly_sorted,
-        "projects": sorted(project_timeline, key=lambda x: x["date"])
+        "projects": sorted(project_timeline, key=lambda x: x["date"]),
     }
 
 
 @app.get("/api/export-csv")
-async def export_projects_csv(limit: int = Query(100, description="Number of records to export")):
+async def export_projects_csv(
+    limit: int = Query(100, description="Number of records to export")
+):
     """
     Export projects to CSV format.
     Returns CSV file with all project data.
@@ -1967,7 +2288,9 @@ async def export_projects_csv(limit: int = Query(100, description="Number of rec
     records = setup.fetch_last_records(limit)
 
     csv_lines = []
-    csv_lines.append("id,country,tax_type,revenue,costs,tax_amount,net_income,created_at,num_people,distribution_method")
+    csv_lines.append(
+        "id,country,tax_type,revenue,costs,tax_amount,net_income,created_at,num_people,distribution_method"
+    )
 
     for r in records:
         record_id = r[0]
@@ -1981,17 +2304,18 @@ async def export_projects_csv(limit: int = Query(100, description="Number of rec
         num_people = r[9] if len(r) > 9 else 0
         distribution = r[12] if len(r) > 12 else "N/A"
 
-        csv_lines.append(f"{record_id},{country},{tax_type},{revenue},{costs},{tax_amount},{net_income},{created_at},{num_people},{distribution}")
+        csv_lines.append(
+            f"{record_id},{country},{tax_type},{revenue},{costs},{tax_amount},{net_income},{created_at},{num_people},{distribution}"
+        )
 
     csv_content = "\n".join(csv_lines)
 
     from fastapi.responses import Response
+
     return Response(
         content=csv_content,
         media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename=moneysplit_export.csv"
-        }
+        headers={"Content-Disposition": f"attachment; filename=moneysplit_export.csv"},
     )
 
 
@@ -2004,37 +2328,41 @@ async def export_projects_json(limit: int = Query(100)):
 
     projects = []
     for r in records:
-        projects.append({
-            "id": r[0],
-            "country": r[1],
-            "tax_type": r[2],
-            "revenue": r[3],
-            "costs": r[4],
-            "tax_amount": r[5],
-            "net_income": r[6],
-            "net_income_per_person": r[7] if len(r) > 7 else 0,
-            "created_at": r[8] if len(r) > 8 else "",
-            "num_people": r[9] if len(r) > 9 else 0,
-            "gross_income": r[10] if len(r) > 10 else 0,
-            "distribution_method": r[12] if len(r) > 12 else "N/A"
-        })
+        projects.append(
+            {
+                "id": r[0],
+                "country": r[1],
+                "tax_type": r[2],
+                "revenue": r[3],
+                "costs": r[4],
+                "tax_amount": r[5],
+                "net_income": r[6],
+                "net_income_per_person": r[7] if len(r) > 7 else 0,
+                "created_at": r[8] if len(r) > 8 else "",
+                "num_people": r[9] if len(r) > 9 else 0,
+                "gross_income": r[10] if len(r) > 10 else 0,
+                "distribution_method": r[12] if len(r) > 12 else "N/A",
+            }
+        )
 
     return {
         "total_projects": len(projects),
         "export_date": datetime.now().isoformat(),
-        "projects": projects
+        "projects": projects,
     }
 
 
 @app.get("/api/compare-projects")
 async def compare_projects(
-    project_ids: str = Query(..., description="Comma-separated project IDs (e.g., 1,2,3)")
+    project_ids: str = Query(
+        ..., description="Comma-separated project IDs (e.g., 1,2,3)"
+    )
 ):
     """
     Compare multiple projects side-by-side.
     Shows tax differences, savings, and strategy effectiveness.
     """
-    ids = [int(id.strip()) for id in project_ids.split(',')]
+    ids = [int(id.strip()) for id in project_ids.split(",")]
 
     comparisons = []
     for project_id in ids:
@@ -2042,20 +2370,24 @@ async def compare_projects(
         if not record:
             continue
 
-        comparisons.append({
-            "id": record[0],
-            "country": record[1],
-            "tax_type": record[2],
-            "revenue": record[3],
-            "costs": record[4],
-            "gross_income": record[3] - record[4],
-            "tax_amount": record[5],
-            "net_income": record[6],
-            "effective_rate": (record[5] / (record[3] - record[4]) * 100) if (record[3] - record[4]) > 0 else 0,
-            "num_people": record[9] if len(record) > 9 else 0,
-            "distribution": record[12] if len(record) > 12 else "N/A",
-            "created_at": record[8] if len(record) > 8 else ""
-        })
+        comparisons.append(
+            {
+                "id": record[0],
+                "country": record[1],
+                "tax_type": record[2],
+                "revenue": record[3],
+                "costs": record[4],
+                "gross_income": record[3] - record[4],
+                "tax_amount": record[5],
+                "net_income": record[6],
+                "effective_rate": (record[5] / (record[3] - record[4]) * 100)
+                if (record[3] - record[4]) > 0
+                else 0,
+                "num_people": record[9] if len(record) > 9 else 0,
+                "distribution": record[12] if len(record) > 12 else "N/A",
+                "created_at": record[8] if len(record) > 8 else "",
+            }
+        )
 
     if not comparisons:
         raise HTTPException(status_code=404, detail="No projects found")
@@ -2069,7 +2401,7 @@ async def compare_projects(
         "best_project": best,
         "worst_project": worst,
         "max_savings": best["net_income"] - worst["net_income"],
-        "comparison_count": len(comparisons)
+        "comparison_count": len(comparisons),
     }
 
 
@@ -2099,10 +2431,9 @@ async def import_projects_csv_text(csv_content: str):
                     share_key = f"person{i}_share"
 
                     if name_key in row and row[name_key]:
-                        people.append({
-                            "name": row[name_key],
-                            "work_share": float(row[share_key])
-                        })
+                        people.append(
+                            {"name": row[name_key], "work_share": float(row[share_key])}
+                        )
 
                 if not people:
                     errors.append(f"Row {row_num}: No people defined")
@@ -2110,13 +2441,16 @@ async def import_projects_csv_text(csv_content: str):
 
                 # Create project
                 project_data = ProjectCreate(
-                    tax_origin=row['country'],
-                    tax_option=row['tax_type'],
-                    revenue=float(row['revenue']),
-                    total_costs=float(row['costs']),
+                    tax_origin=row["country"],
+                    tax_option=row["tax_type"],
+                    revenue=float(row["revenue"]),
+                    total_costs=float(row["costs"]),
                     people=people,
-                    distribution_method=row.get('distribution_method', 'N/A'),
-                    project_name=row.get('project_name', f"Imported {datetime.now().strftime('%Y-%m-%d')}")
+                    distribution_method=row.get("distribution_method", "N/A"),
+                    project_name=row.get(
+                        "project_name",
+                        f"Imported {datetime.now().strftime('%Y-%m-%d')}",
+                    ),
                 )
 
                 # Calculate taxes
@@ -2126,7 +2460,7 @@ async def import_projects_csv_text(csv_content: str):
                     num_people=len(people),
                     country=project_data.tax_origin,
                     tax_structure=project_data.tax_option,
-                    distribution_method=project_data.distribution_method
+                    distribution_method=project_data.distribution_method,
                 )
 
                 # Store in database
@@ -2135,29 +2469,31 @@ async def import_projects_csv_text(csv_content: str):
                     tax_option=project_data.tax_option,
                     revenue=project_data.revenue,
                     total_costs=project_data.total_costs,
-                    tax_amount=result['total_tax'],
-                    net_income_group=result['net_income_group'],
-                    net_income_per_person=result['net_income_per_person'],
+                    tax_amount=result["total_tax"],
+                    net_income_group=result["net_income_group"],
+                    net_income_per_person=result["net_income_per_person"],
                     num_people=len(people),
-                    group_income=result['gross_income'],
-                    individual_income=result['gross_income'] / len(people),
+                    group_income=result["gross_income"],
+                    individual_income=result["gross_income"] / len(people),
                     distribution_method=project_data.distribution_method,
-                    salary_amount=0
+                    salary_amount=0,
                 )
 
                 # Insert people
                 for person in people:
-                    person_income = result['gross_income'] * (person['work_share'] / 100)
-                    person_tax = result['total_tax'] * (person['work_share'] / 100)
+                    person_income = result["gross_income"] * (
+                        person["work_share"] / 100
+                    )
+                    person_tax = result["total_tax"] * (person["work_share"] / 100)
                     person_net = person_income - person_tax
 
                     setup.insert_person(
                         record_id=record_id,
-                        name=person['name'],
-                        work_share=person['work_share'],
+                        name=person["name"],
+                        work_share=person["work_share"],
                         gross_income=person_income,
                         tax_paid=person_tax,
-                        net_income=person_net
+                        net_income=person_net,
                     )
 
                 imported_count += 1
@@ -2169,7 +2505,7 @@ async def import_projects_csv_text(csv_content: str):
             "success": True,
             "imported_count": imported_count,
             "errors": errors if errors else None,
-            "message": f"Successfully imported {imported_count} project(s)"
+            "message": f"Successfully imported {imported_count} project(s)",
         }
 
     except Exception as e:
@@ -2178,4 +2514,5 @@ async def import_projects_csv_text(csv_content: str):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

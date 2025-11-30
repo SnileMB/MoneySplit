@@ -20,8 +20,8 @@ class TestProjectEndpoints:
             "tax_type": "Individual",
             "people": [
                 {"name": "Alice", "work_share": 0.6},
-                {"name": "Bob", "work_share": 0.4}
-            ]
+                {"name": "Bob", "work_share": 0.4},
+            ],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -41,8 +41,8 @@ class TestProjectEndpoints:
             "tax_type": "Individual",
             "people": [
                 {"name": "Alice", "work_share": 0.7},
-                {"name": "Bob", "work_share": 0.7}  # Sums to 1.4
-            ]
+                {"name": "Bob", "work_share": 0.7},  # Sums to 1.4
+            ],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -56,9 +56,7 @@ class TestProjectEndpoints:
             "costs": [1000],
             "country": "US",
             "tax_type": "Individual",
-            "people": [
-                {"name": "Alice", "work_share": 1.0}
-            ]
+            "people": [{"name": "Alice", "work_share": 1.0}],
         }
 
         response = client.post("/api/projects", json=payload)
@@ -81,9 +79,7 @@ class TestProjectEndpoints:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": [
-                {"name": "Test User", "work_share": 1.0}
-            ]
+            "people": [{"name": "Test User", "work_share": 1.0}],
         }
 
         create_response = client.post("/api/projects", json=payload)
@@ -237,9 +233,7 @@ class TestPDFExportEndpoints:
             "costs": [500],
             "country": "US",
             "tax_type": "Individual",
-            "people": [
-                {"name": "PDF Test User", "work_share": 1.0}
-            ]
+            "people": [{"name": "PDF Test User", "work_share": 1.0}],
         }
 
         create_response = client.post("/api/projects", json=payload)

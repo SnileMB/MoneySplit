@@ -8,6 +8,7 @@ from datetime import datetime
 
 # ===== Request Models =====
 
+
 class PersonInput(BaseModel):
     name: str = Field(..., min_length=1, description="Person's name")
     work_share: float = Field(..., ge=0, le=1, description="Work share (0.0 to 1.0)")
@@ -17,20 +18,34 @@ class ProjectCreate(BaseModel):
     num_people: int = Field(..., gt=0, description="Number of people")
     revenue: float = Field(..., ge=0, description="Total revenue")
     costs: List[float] = Field(..., description="List of costs")
-    country: str = Field(..., min_length=1, description="Country (e.g., US, Spain, UK, etc.)")
-    tax_type: str = Field(..., pattern="^(Individual|Business)$", description="Tax type: Individual or Business")
-    distribution_method: str = Field(default="N/A", pattern="^(N/A|Salary|Dividend|Mixed|Reinvest)$", description="Distribution method for Business tax")
-    salary_amount: Optional[float] = Field(default=0, ge=0, description="Salary amount for Mixed distribution method")
-    people: List[PersonInput] = Field(..., description="List of people with work shares")
+    country: str = Field(
+        ..., min_length=1, description="Country (e.g., US, Spain, UK, etc.)"
+    )
+    tax_type: str = Field(
+        ...,
+        pattern="^(Individual|Business)$",
+        description="Tax type: Individual or Business",
+    )
+    distribution_method: str = Field(
+        default="N/A",
+        pattern="^(N/A|Salary|Dividend|Mixed|Reinvest)$",
+        description="Distribution method for Business tax",
+    )
+    salary_amount: Optional[float] = Field(
+        default=0, ge=0, description="Salary amount for Mixed distribution method"
+    )
+    people: List[PersonInput] = Field(
+        ..., description="List of people with work shares"
+    )
 
-    @field_validator('people')
+    @field_validator("people")
     @classmethod
     def validate_people_count(cls, v, info):
-        if 'num_people' in info.data and len(v) != info.data['num_people']:
+        if "num_people" in info.data and len(v) != info.data["num_people"]:
             raise ValueError(f"Expected {info.data['num_people']} people, got {len(v)}")
         return v
 
-    @field_validator('people')
+    @field_validator("people")
     @classmethod
     def validate_work_shares(cls, v):
         total_share = sum(person.work_share for person in v)
@@ -47,11 +62,15 @@ class TaxBracketCreate(BaseModel):
 
 
 class RecordUpdate(BaseModel):
-    field: str = Field(..., pattern="^(num_people|revenue|total_costs|tax_origin|tax_option|distribution_method|salary_amount)$")
+    field: str = Field(
+        ...,
+        pattern="^(num_people|revenue|total_costs|tax_origin|tax_option|distribution_method|salary_amount)$",
+    )
     value: str | int | float
 
 
 # ===== Response Models =====
+
 
 class PersonResponse(BaseModel):
     id: int
