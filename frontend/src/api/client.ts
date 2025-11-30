@@ -1,11 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -20,7 +20,7 @@ export interface ProjectCreate {
   revenue: number;
   costs: number[];
   country: string;
-  tax_type: 'Individual' | 'Business';
+  tax_type: "Individual" | "Business";
   people: Person[];
 }
 
@@ -109,7 +109,7 @@ export interface TaxBracketCreate {
 }
 
 export const projectsApi = {
-  create: (data: ProjectCreate) => apiClient.post('/projects', data),
+  create: (data: ProjectCreate) => apiClient.post("/projects", data),
   getRecords: (limit = 10) => apiClient.get<Record[]>(`/records?limit=${limit}`),
   getRecord: (id: number) => apiClient.get<RecordWithPeople>(`/records/${id}`),
   updateRecord: (id: number, update: RecordUpdate) => apiClient.put(`/records/${id}`, update),
@@ -118,21 +118,21 @@ export const projectsApi = {
 
 export const taxBracketsApi = {
   getTaxBrackets: (country: string, taxType: string) => apiClient.get<TaxBracket[]>(`/tax-brackets?country=${country}&tax_type=${taxType}`),
-  createTaxBracket: (data: TaxBracketCreate) => apiClient.post('/tax-brackets', data),
+  createTaxBracket: (data: TaxBracketCreate) => apiClient.post("/tax-brackets", data),
   deleteTaxBracket: (id: number) => apiClient.delete(`/tax-brackets/${id}`),
 };
 
 export const reportsApi = {
-  getStatistics: () => apiClient.get<Statistics>('/reports/statistics'),
-  getRevenueSummary: () => apiClient.get('/reports/revenue-summary'),
+  getStatistics: () => apiClient.get<Statistics>("/reports/statistics"),
+  getRevenueSummary: () => apiClient.get("/reports/revenue-summary"),
   getTopPeople: (limit = 10) => apiClient.get(`/reports/top-people?limit=${limit}`),
 };
 
 export const forecastApi = {
   getRevenueForecast: (months = 3) => apiClient.get<Forecast>(`/forecast/revenue?months=${months}`),
-  getComprehensive: () => apiClient.get('/forecast/comprehensive'),
-  getTaxOptimization: () => apiClient.get('/forecast/tax-optimization'),
-  getTrends: () => apiClient.get('/forecast/trends'),
+  getComprehensive: () => apiClient.get("/forecast/comprehensive"),
+  getTaxOptimization: () => apiClient.get("/forecast/tax-optimization"),
+  getTrends: () => apiClient.get("/forecast/trends"),
 };
 
 export const exportApi = {
