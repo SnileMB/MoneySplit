@@ -2,6 +2,8 @@
 
 **Commission-Based Income Splitting with Tax Calculations**
 
+[![CI/CD Pipeline](https://github.com/SnileMB/MoneySplit/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/SnileMB/MoneySplit/actions)
+
 A full-stack application for managing commission-based income splitting among team members with automatic tax calculations, forecasting, and professional reporting.
 
 ---
