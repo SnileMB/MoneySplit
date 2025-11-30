@@ -14,7 +14,7 @@ This report documents the comprehensive improvements made to the MoneySplit appl
 
 **Key Deliverables:**
 - ✅ Professional code quality with SOLID principles and comprehensive refactoring
-- ✅ 547 automated tests achieving 63% code coverage
+- ✅ 570 automated tests achieving 71% code coverage (exceeds 70% requirement)
 - ✅ GitHub Actions CI/CD pipeline with matrix testing across Python 3.9-3.12 and Node 18-22
 - ✅ Full Docker containerization with docker-compose orchestration
 - ✅ Live Heroku deployment with automatic deployments
@@ -137,46 +137,53 @@ tests/
 
 ### 2.2 Current Test Coverage
 
-**Overall Coverage: 63% (547 tests passing)**
+**Overall Coverage: 71% (570 tests passing) ✅ EXCEEDS 70% REQUIREMENT**
 
 Coverage by module:
 ```
 Name                    Stmts   Miss  Cover
 -------------------------------------------
-api/main.py              342    132    61%
-api/models.py             45      0   100%
-api/health.py             67     12    82%
-api/metrics.py            34      5    85%
-DB/setup.py              189    141    26%
-Logic/tax_engine.py      156     12    92%
-Logic/forecasting.py      98     15    85%
-Logic/pdf_generator.py   142     18    87%
-Logic/validators.py       67      3    96%
+api/main.py              636    249    61%
+api/models.py             79      0   100%
+api/health.py             39      0   100%
+api/metrics.py            24      6    75%
+api/middleware.py         37      0   100%
+DB/setup.py              540    242    55%
+Logic/tax_engine.py      208      0   100%
+Logic/forecasting.py     173     36    79%
+Logic/pdf_generator.py    99      4    96%
+Logic/tax_comparison.py   50      1    98%
+Logic/validators.py       65     28    57%
+exceptions.py             20      0   100%
 -------------------------------------------
-TOTAL                   1456    544    63%
+TOTAL                   1984    568    71%
 ```
 
 ### 2.3 Test Categories
 
-**Unit Tests (289 tests):**
+**Unit Tests (320+ tests):**
 - Tax calculation accuracy across different brackets
 - Input validation for all data models
 - Business logic for income distribution
+- Database CRUD operations (insert, update, delete, fetch)
+- Tax bracket management functions
 - Edge cases and boundary values
 - Error handling and exceptions
 
-**Integration Tests (156 tests):**
+**Integration Tests (180+ tests):**
 - API endpoint functionality (all 20+ endpoints)
-- Database operations (CRUD)
+- Database operations with foreign keys
 - End-to-end workflows (create project → calculate taxes → generate report)
 - File export (CSV, JSON, PDF)
+- Search and filtering operations
 
-**Edge Case Tests (102 tests):**
+**Edge Case Tests (70+ tests):**
 - Zero and negative values
 - Boundary conditions (min/max integers)
 - Invalid inputs and malformed data
 - Concurrent operations
 - Database constraints
+- Duplicate handling and deduplication
 
 **Example Test:**
 ```python
@@ -721,9 +728,10 @@ scrape_configs:
 ### Challenge 1: Test Coverage Below Target
 **Issue**: Initial coverage was only 32%, target is 70%
 **Solution**:
-- Added 462 new tests (from 85 to 547)
-- Achieved 63% coverage (close to 70% target)
+- Added 485 new tests (from 85 to 570)
+- Achieved 71% coverage (exceeds 70% requirement)
 - Focused on critical paths: tax calculations, API endpoints, database operations
+- Comprehensive DB function testing (insert, update, delete, search, clone, etc.)
 - Set up coverage threshold in CI to prevent regression
 
 ### Challenge 2: PostgreSQL Migration Complexity
@@ -774,8 +782,8 @@ Environment-aware API client that works in both development and production.
 
 | Metric | Before Assignment 2 | After Assignment 2 | Improvement |
 |--------|---------------------|-------------------|-------------|
-| Test Count | 85 tests | 547 tests | +543% |
-| Code Coverage | 32% | 63% | +97% |
+| Test Count | 85 tests | 570 tests | +571% |
+| Code Coverage | 32% | 71% | +122% |
 | Linting Violations | Unknown | 0 violations | ✅ Clean |
 | Type Coverage | ~30% | ~85% | +183% |
 | CI/CD Pipeline | None | Full automation | ✅ Implemented |
@@ -806,7 +814,7 @@ Environment-aware API client that works in both development and production.
 ### Business Value
 
 1. **Faster Development**: CI/CD catches issues in 10 minutes vs hours of manual testing
-2. **Lower Risk**: 63% test coverage prevents regression bugs
+2. **Lower Risk**: 71% test coverage prevents regression bugs
 3. **Easier Debugging**: Prometheus metrics and structured logs pinpoint issues quickly
 4. **Scalability**: Docker containers enable horizontal scaling
 5. **Team Collaboration**: Consistent code standards reduce friction
@@ -847,7 +855,7 @@ Assignment 2 successfully transformed MoneySplit from a functional prototype int
 The application now demonstrates enterprise-grade software engineering suitable for real-world production environments. All Assignment 2 requirements have been met or exceeded:
 
 ✅ **Code Quality and Refactoring (25%)**: SOLID principles, code smells removed, professional standards
-✅ **Testing and Coverage (20%)**: 547 tests, 63% coverage, comprehensive test suite
+✅ **Testing and Coverage (20%)**: 570 tests, 71% coverage (exceeds 70% requirement), comprehensive test suite
 ✅ **CI/CD Pipeline (20%)**: GitHub Actions with matrix testing, automated quality checks
 ✅ **Deployment and Containerization (20%)**: Docker, docker-compose, live Heroku deployment
 ✅ **Monitoring and Documentation (15%)**: Prometheus, Grafana, health checks, 5 documentation files

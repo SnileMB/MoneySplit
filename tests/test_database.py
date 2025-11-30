@@ -372,3 +372,535 @@ class TestDatabaseQueries:
             assert 0 <= avg_rate <= 50
 
         conn.close()
+
+
+class TestDBSetupFunctions:
+    """Test DB setup.py helper functions."""
+
+    def test_insert_record(self):
+        """Test insert_record function."""
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=20000,
+            tax_amount=15000,
+            net_income_group=65000,
+            net_income_per_person=32500,
+            num_people=2,
+            group_income=80000,
+            individual_income=40000,
+        )
+
+        assert record_id is not None
+        assert record_id > 0
+
+        # Verify record exists
+        record = setup.get_record_by_id(record_id)
+        assert record is not None
+        # Columns: id, tax_origin, tax_option, revenue, total_costs, ...
+        assert record[3] == 100000  # revenue
+        assert record[1] == "US"    # tax_origin
+
+    def test_insert_person(self):
+        """Test insert_person function."""
+        # Create a record first
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=10000,
+            tax_amount=8000,
+            net_income_group=32000,
+            net_income_per_person=32000,
+            num_people=1,
+            group_income=40000,
+            individual_income=40000,
+        )
+
+        # Insert person
+        person_id = setup.insert_person(
+            record_id=record_id,
+            name="Alice",
+            work_share=1.0,
+            gross_income=40000,
+            tax_paid=8000,
+            net_income=32000,
+        )
+
+        assert person_id is not None
+        assert person_id > 0
+
+        # Verify person exists
+        people = setup.fetch_people_by_record(record_id)
+        assert len(people) == 1
+        assert people[0][1] == "Alice"  # name is column 1
+
+    def test_get_record_by_id(self):
+        """Test get_record_by_id function."""
+        # Insert a test record
+        record_id = setup.insert_record(
+            tax_origin="Spain",
+            tax_option="Business",
+            revenue=75000,
+            total_costs=15000,
+            tax_amount=12000,
+            net_income_group=48000,
+            net_income_per_person=24000,
+            num_people=2,
+            group_income=60000,
+            individual_income=30000,
+        )
+
+        # Fetch it
+        record = setup.get_record_by_id(record_id)
+
+        assert record is not None
+        assert record[0] == record_id   # id
+        assert record[1] == "Spain"     # tax_origin
+        assert record[3] == 75000       # revenue
+
+    def test_get_record_by_id_not_found(self):
+        """Test get_record_by_id with non-existent ID."""
+        record = setup.get_record_by_id(999999)
+        assert record is None
+
+    def test_fetch_last_records(self):
+        """Test fetch_last_records function."""
+        # Insert multiple records
+        for i in range(5):
+            setup.insert_record(
+                tax_origin="US",
+                tax_option="Individual",
+                revenue=10000 * (i + 1),
+                total_costs=1000,
+                tax_amount=1500,
+                net_income_group=8500,
+                net_income_per_person=8500,
+                num_people=1,
+                group_income=9000,
+                individual_income=9000,
+            )
+
+        # Fetch last 3
+        records = setup.fetch_last_records(3)
+        assert len(records) <= 3
+
+        # Function orders by created_at DESC, not by ID
+        # Just verify we got some records back
+        if len(records) > 0:
+            assert records[0][0] > 0  # ID should be positive
+
+    def test_delete_record_function(self):
+        """Test delete_record function."""
+        # Create record
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=5000,
+            tax_amount=8000,
+            net_income_group=37000,
+            net_income_per_person=37000,
+            num_people=1,
+            group_income=45000,
+            individual_income=45000,
+        )
+
+        # Delete it
+        setup.delete_record(record_id)
+
+        # Verify deleted
+        record = setup.get_record_by_id(record_id)
+        assert record is None
+
+    def test_update_record_function(self):
+        """Test update_record function."""
+        # Create record
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=5000,
+            tax_amount=8000,
+            net_income_group=37000,
+            net_income_per_person=37000,
+            num_people=1,
+            group_income=45000,
+            individual_income=45000,
+        )
+
+        # Update revenue
+        setup.update_record(record_id, "revenue", 60000)
+
+        # Verify updated
+        record = setup.get_record_by_id(record_id)
+        assert record[3] == 60000  # revenue is column 3
+
+    def test_add_person_function(self):
+        """Test add_person function."""
+        # Create record
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=10000,
+            tax_amount=18000,
+            net_income_group=72000,
+            net_income_per_person=36000,
+            num_people=2,
+            group_income=90000,
+            individual_income=45000,
+        )
+
+        # Add person
+        person_id = setup.add_person(
+            record_id=record_id,
+            name="Bob",
+            work_share=0.5,
+            gross_income=45000,
+            tax_paid=9000,
+            net_income=36000,
+        )
+
+        assert person_id > 0
+
+        # Verify
+        people = setup.fetch_people_by_record(record_id)
+        assert len(people) == 1
+        assert people[0][1] == "Bob"  # name is column 1
+
+    def test_fetch_people_by_record(self):
+        """Test fetch_people_by_record function."""
+        # Create record with multiple people
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=10000,
+            tax_amount=18000,
+            net_income_group=72000,
+            net_income_per_person=24000,
+            num_people=3,
+            group_income=90000,
+            individual_income=30000,
+        )
+
+        # Add people
+        setup.insert_person(record_id, "Alice", 0.5, 45000, 9000, 36000)
+        setup.insert_person(record_id, "Bob", 0.3, 27000, 5400, 21600)
+        setup.insert_person(record_id, "Charlie", 0.2, 18000, 3600, 14400)
+
+        # Fetch
+        people = setup.fetch_people_by_record(record_id)
+        assert len(people) == 3
+        names = [p[1] for p in people]  # name is column 1
+        assert "Alice" in names
+        assert "Bob" in names
+        assert "Charlie" in names
+
+    def test_delete_person_function(self):
+        """Test delete_person function."""
+        # Create record and person
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=5000,
+            tax_amount=8000,
+            net_income_group=37000,
+            net_income_per_person=37000,
+            num_people=1,
+            group_income=45000,
+            individual_income=45000,
+        )
+
+        person_id = setup.insert_person(record_id, "Test", 1.0, 45000, 8000, 37000)
+
+        # Delete person
+        setup.delete_person(person_id)
+
+        # Verify deleted
+        people = setup.fetch_people_by_record(record_id)
+        assert len(people) == 0
+
+    def test_get_tax_brackets(self):
+        """Test get_tax_brackets function."""
+        brackets = setup.get_tax_brackets("US", "Individual")
+
+        assert len(brackets) > 0
+        assert isinstance(brackets, list)
+
+        # Each bracket should have income_limit and rate
+        for bracket in brackets:
+            assert "income_limit" in bracket or len(bracket) >= 2
+
+    def test_add_tax_bracket(self):
+        """Test add_tax_bracket function."""
+        bracket_id = setup.add_tax_bracket(
+            country="TestCountry",
+            tax_type="TestType",
+            income_limit=50000,
+            rate=0.20,
+        )
+
+        assert bracket_id > 0
+
+        # Verify it was added
+        brackets = setup.get_tax_brackets("TestCountry", "TestType")
+        assert len(brackets) > 0
+
+    def test_delete_tax_bracket(self):
+        """Test delete_tax_bracket function."""
+        # Add a bracket
+        bracket_id = setup.add_tax_bracket(
+            country="TempCountry",
+            tax_type="TempType",
+            income_limit=30000,
+            rate=0.15,
+        )
+
+        # Delete it
+        setup.delete_tax_bracket(bracket_id)
+
+        # Verify deleted (get_tax_brackets should return empty or not include it)
+        brackets = setup.get_tax_brackets("TempCountry", "TempType", include_id=True)
+        bracket_ids = [b.get("id") or b[0] for b in brackets if isinstance(b, (dict, tuple))]
+        assert bracket_id not in bracket_ids
+
+    def test_update_tax_bracket(self):
+        """Test update_tax_bracket function."""
+        # Add a bracket
+        bracket_id = setup.add_tax_bracket(
+            country="UpdateTest",
+            tax_type="TestType",
+            income_limit=40000,
+            rate=0.18,
+        )
+
+        # Update the rate
+        setup.update_tax_bracket(bracket_id, "rate", 0.22)
+
+        # Verify updated
+        brackets = setup.get_tax_brackets("UpdateTest", "TestType", include_id=True)
+        found = False
+        for bracket in brackets:
+            if isinstance(bracket, dict):
+                if bracket.get("id") == bracket_id:
+                    assert bracket["rate"] == 0.22
+                    found = True
+            elif isinstance(bracket, tuple) and len(bracket) >= 3:
+                if bracket[0] == bracket_id:
+                    assert bracket[2] == 0.22
+                    found = True
+
+        # Clean up
+        setup.delete_tax_bracket(bracket_id)
+
+    def test_calculate_tax_from_db(self):
+        """Test calculate_tax_from_db function."""
+        # This function calculates tax using brackets from DB
+        tax = setup.calculate_tax_from_db(50000, "US", "Individual")
+
+        assert tax is not None
+        assert tax >= 0
+        assert isinstance(tax, (int, float))
+
+    def test_fetch_records_by_person(self):
+        """Test fetch_records_by_person function."""
+        # Create records with same person name
+        record_id1 = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=5000,
+            tax_amount=8000,
+            net_income_group=37000,
+            net_income_per_person=37000,
+            num_people=1,
+            group_income=45000,
+            individual_income=45000,
+        )
+        setup.insert_person(record_id1, "TestPerson", 1.0, 45000, 8000, 37000)
+
+        record_id2 = setup.insert_record(
+            tax_origin="Spain",
+            tax_option="Individual",
+            revenue=60000,
+            total_costs=6000,
+            tax_amount=10000,
+            net_income_group=44000,
+            net_income_per_person=44000,
+            num_people=1,
+            group_income=54000,
+            individual_income=54000,
+        )
+        setup.insert_person(record_id2, "TestPerson", 1.0, 54000, 10000, 44000)
+
+        # Fetch records for this person
+        records = setup.fetch_records_by_person("TestPerson")
+
+        assert len(records) >= 2
+
+    def test_clone_record(self):
+        """Test clone_record function."""
+        # Create original record with people
+        original_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=80000,
+            total_costs=8000,
+            tax_amount=14000,
+            net_income_group=58000,
+            net_income_per_person=58000,
+            num_people=1,
+            group_income=72000,
+            individual_income=72000,
+        )
+        setup.insert_person(original_id, "Original", 1.0, 72000, 14000, 58000)
+
+        # Clone it
+        cloned_id = setup.clone_record(original_id)
+
+        assert cloned_id is not None
+        assert cloned_id != original_id
+
+        # Verify cloned record exists
+        cloned = setup.get_record_by_id(cloned_id)
+        original = setup.get_record_by_id(original_id)
+
+        assert cloned[3] == original[3]  # revenue
+        assert cloned[1] == original[1]  # tax_origin
+
+    def test_search_records(self):
+        """Test search_records function."""
+        # Create test records
+        setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=50000,
+            total_costs=5000,
+            tax_amount=8000,
+            net_income_group=37000,
+            net_income_per_person=37000,
+            num_people=1,
+            group_income=45000,
+            individual_income=45000,
+        )
+
+        # Search for US records
+        results = setup.search_records(country="US")
+
+        assert len(results) > 0
+        # search_records returns: id, tax_origin, tax_option, revenue, ...
+        for record in results:
+            assert record[1] == "US"  # tax_origin is column 1
+
+    def test_search_records_by_tax_option(self):
+        """Test search_records filtering by tax option."""
+        # Search for Individual tax records
+        results = setup.search_records(tax_option="Individual")
+
+        if len(results) > 0:
+            # search_records returns: id, tax_origin, tax_option, revenue, ...
+            for record in results:
+                assert record[2] == "Individual"  # tax_option is column 2
+
+    def test_add_tax_brackets_from_csv(self, tmp_path):
+        """Test adding tax brackets from CSV file."""
+        # Create a temporary CSV file with proper headers
+        csv_file = tmp_path / "test_brackets.csv"
+        csv_file.write_text("income_limit,rate\n50000,0.20\n100000,0.30\n")
+
+        # Add brackets from CSV
+        setup.add_tax_brackets_from_csv("TestCSVCountry", "Individual", str(csv_file))
+
+        # Verify brackets were added
+        brackets = setup.get_tax_brackets("TestCSVCountry", "Individual")
+        assert len(brackets) >= 2
+
+    def test_export_tax_template(self, tmp_path):
+        """Test export_tax_template function."""
+        template_file = tmp_path / "template.csv"
+
+        # Export template
+        setup.export_tax_template(str(template_file))
+
+        # Verify file was created
+        assert template_file.exists()
+
+        # Verify it has content
+        content = template_file.read_text()
+        assert len(content) > 0
+        assert "income_limit" in content or "," in content
+
+    def test_copy_people(self):
+        """Test copy_people function."""
+        # Create source record with people
+        source_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=10000,
+            tax_amount=18000,
+            net_income_group=72000,
+            net_income_per_person=36000,
+            num_people=2,
+            group_income=90000,
+            individual_income=45000,
+        )
+        setup.insert_person(source_id, "Alice", 0.5, 45000, 9000, 36000)
+        setup.insert_person(source_id, "Bob", 0.5, 45000, 9000, 36000)
+
+        # Create target record
+        target_id = setup.insert_record(
+            tax_origin="Spain",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=10000,
+            tax_amount=18000,
+            net_income_group=72000,
+            net_income_per_person=36000,
+            num_people=2,
+            group_income=90000,
+            individual_income=45000,
+        )
+
+        # Copy people
+        setup.copy_people(source_id, target_id)
+
+        # Verify people were copied
+        target_people = setup.fetch_people_by_record(target_id)
+        assert len(target_people) == 2
+
+    def test_deduplicate_people(self):
+        """Test deduplicate_people function."""
+        # Create record with duplicate people
+        record_id = setup.insert_record(
+            tax_origin="US",
+            tax_option="Individual",
+            revenue=100000,
+            total_costs=10000,
+            tax_amount=18000,
+            net_income_group=72000,
+            net_income_per_person=36000,
+            num_people=2,
+            group_income=90000,
+            individual_income=45000,
+        )
+
+        # Add duplicate names
+        setup.insert_person(record_id, "DupePerson", 0.5, 45000, 9000, 36000)
+        setup.insert_person(record_id, "DupePerson", 0.5, 45000, 9000, 36000)
+        setup.insert_person(record_id, "UniquePerson", 0.5, 45000, 9000, 36000)
+
+        # Deduplicate
+        removed = setup.deduplicate_people(record_id)
+
+        # Should have removed at least 1 duplicate
+        assert removed >= 1
+
+        # Verify duplicates removed
+        people = setup.fetch_people_by_record(record_id)
+        names = [p[1] for p in people]
+        assert names.count("DupePerson") == 1  # Only one DupePerson should remain

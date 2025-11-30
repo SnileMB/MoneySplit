@@ -3,7 +3,7 @@
 **Commission-Based Income Splitting with Tax Calculations**
 
 [![CI/CD Pipeline](https://github.com/SnileMB/MoneySplit/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/SnileMB/MoneySplit/actions)
-[![Coverage](https://img.shields.io/badge/coverage-63%25-yellow)](https://github.com/SnileMB/MoneySplit)
+[![Coverage](https://img.shields.io/badge/coverage-71%25-brightgreen)](https://github.com/SnileMB/MoneySplit)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -193,8 +193,8 @@ open htmlcov/index.html
 ```
 
 ### Test Coverage
-- **Current Coverage**: 63% (547 tests passing)
-- **Target**: 70% (Assignment 2 requirement)
+- **Current Coverage**: 71% (570 tests passing) ✅
+- **Target**: 70% (Assignment 2 requirement) - **EXCEEDED**
 
 **Test Breakdown:**
 - **Unit Tests**: Tax calculations, validation, business logic
@@ -508,8 +508,8 @@ MoneySplit/
 - [x] Comprehensive error handling and logging
 
 ### ✅ Testing & Coverage (20%)
-- [x] 547 automated tests (unit + integration)
-- [x] Current coverage: 63% (target: 70%)
+- [x] 570 automated tests (unit + integration)
+- [x] Current coverage: 71% (exceeds 70% target) ✅
 - [x] Tests for all critical paths
 - [x] Coverage reports in `htmlcov/`
 - [x] Documentation in [TESTING.md](TESTING.md)
