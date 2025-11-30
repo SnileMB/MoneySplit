@@ -22,12 +22,36 @@ def calculate_all_tax_scenarios(
     """
     Calculate tax for ALL possible scenarios and return comparison data.
 
-    Returns dict with:
-    - individual: Individual tax scenario
-    - business_salary: Business with salary distribution
-    - business_dividend: Business with dividend distribution
-    - business_reinvest: Business with reinvestment
-    - recommendation: Which option is best
+    This is the core comparative analysis function that calculates tax outcomes
+    for every possible tax structure (Individual vs Business) and distribution method.
+    Users can see exactly how much they'll keep under each strategy.
+
+    Args:
+        revenue (float): Total project revenue.
+        costs (float): Total project costs/expenses.
+        num_people (int): Number of people splitting the income.
+        country (str): Country for tax bracket lookup (e.g., "US", "Spain").
+
+    Returns:
+        Dict[str, Any]: Comprehensive comparison including:
+            - individual: Individual tax scenario results
+            - business_salary: Business with salary distribution results
+            - business_dividend: Business with dividend distribution results
+            - business_reinvest: Business with reinvestment results
+            - recommendation: Best strategy with savings calculation
+            - all_scenarios_sorted: All scenarios ranked by net income
+
+    Example:
+        >>> result = calculate_all_tax_scenarios(100000, 10000, 2, "US")
+        >>> best = result["recommendation"]
+        >>> print(f"Best option: {best['choice']}")
+        >>> print(f"Potential savings: ${best['savings']:,.2f}")
+
+    Notes:
+        - Compares Individual vs 3 Business distribution methods
+        - Individual tax assumes self-employment situation
+        - Business scenarios account for corporate + personal tax layers
+        - Reinvest option shows deferred tax strategy
     """
 
     income = revenue - costs
@@ -186,7 +210,36 @@ def get_tax_optimization_summary(
 ) -> Dict[str, Any]:
     """
     Get a summary showing what user selected vs optimal choice.
+
+    Compares the user's chosen tax structure against the mathematically optimal one.
+    Provides actionable insights and potential savings if switching strategies.
     Used for displaying warnings/insights after project creation.
+
+    Args:
+        revenue (float): Total project revenue.
+        costs (float): Total project costs/expenses.
+        num_people (int): Number of people in the project.
+        country (str): Country for tax bracket lookup.
+        selected_type (str): User's selected tax type ("Individual" or "Business").
+
+    Returns:
+        Dict[str, Any]: Summary containing:
+            - is_optimal: Boolean whether selected choice is optimal
+            - message: Human-readable message with savings if applicable
+            - selected: Details of the selected tax strategy
+            - optimal: Details of the optimal tax strategy (if different)
+            - savings: Amount that could be saved by switching (0 if optimal)
+
+    Example:
+        >>> result = get_tax_optimization_summary(100000, 10000, 2, "US", "Individual")
+        >>> if not result["is_optimal"]:
+        ...     print(result["message"])
+        >>> print(f"You could save: ${result['savings']:,.2f}")
+
+    Notes:
+        - Used after project creation to inform users
+        - Non-optimal suggestions are shown as opportunities, not warnings
+        - Helps users make informed tax structure decisions
     """
     comparison = calculate_all_tax_scenarios(revenue, costs, num_people, country)
 

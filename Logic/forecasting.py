@@ -45,11 +45,39 @@ def get_historical_data() -> List[Tuple[str, float, float, float, int, float]]:
 
 def forecast_revenue(months_ahead: int = 3) -> Dict[str, Any]:
     """
-    Forecast revenue using an enhanced algorithm.
+    Forecast revenue using an enhanced machine learning algorithm.
 
+    Predicts future revenue based on historical data using adaptive regression techniques.
     Uses polynomial regression when enough data is available (better for non-linear trends).
-    Falls back to linear regression for smaller datasets.
-    Includes moving average smoothing to reduce noise.
+    Falls back to linear regression for smaller datasets. Includes moving average smoothing
+    to reduce noise and improve prediction accuracy.
+
+    Args:
+        months_ahead (int): Number of months to forecast into the future. Default: 3.
+                           Must be positive integer.
+
+    Returns:
+        Dict[str, Any]: Forecast results containing:
+            - success: Boolean indicating if forecast succeeded
+            - predictions: List of predicted revenue for each month ahead
+            - trend: Trend description ("Strongly Increasing", "Growing", "Stable", "Declining")
+            - confidence: Confidence level ("High", "Medium-High", "Medium", "Low")
+            - r2_score: R-squared score indicating model fit quality (0-1)
+            - explanation: Plain English interpretation of forecast
+            - model_type: Type of model used ("Polynomial" or "Linear")
+            - data_quality: Assessment of historical data quality
+
+    Example:
+        >>> forecast = forecast_revenue(months_ahead=6)
+        >>> if forecast["success"]:
+        ...     for pred in forecast["predictions"]:
+        ...         print(f"Predicted: ${pred['revenue']:,.0f}")
+
+    Notes:
+        - Requires at least 2 months of historical data
+        - Uses confidence scoring to indicate prediction reliability
+        - Adjusts automatically based on available data
+        - Includes uncertainty ranges for each prediction
     """
     historical = get_historical_data()
 
@@ -216,7 +244,31 @@ Your business has {len(historical)} months of data. The AI analyzed this and fou
 
 
 def tax_optimization_analysis() -> Dict[str, Any]:
-    """Analyze tax strategies and provide optimization recommendations."""
+    """
+    Analyze tax strategies and provide optimization recommendations.
+
+    Compares Individual vs Business tax effectiveness across all historical projects
+    to identify which tax structure performs best for the user's specific situation.
+    Provides data-driven recommendations for future projects.
+
+    Returns:
+        Dict[str, Any]: Analysis results containing:
+            - tax_comparison: Breakdown of Individual vs Business effectiveness
+            - country_analysis: Best tax strategy by country
+            - recommendations: Strategic recommendations based on patterns
+            - historical_rates: Average tax rates by structure
+
+    Example:
+        >>> analysis = tax_optimization_analysis()
+        >>> for rec in analysis["recommendations"]:
+        ...     print(rec["message"])
+
+    Notes:
+        - Analyzes all completed projects in database
+        - Individual vs Business effectiveness varies by income level
+        - Country-specific tax laws affect recommendations
+        - Results inform optimal strategy choice for new projects
+    """
     conn = setup.get_conn()
     cursor = conn.cursor()
 
