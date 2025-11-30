@@ -1,10 +1,8 @@
 """
 Pydantic models for API request/response validation.
 """
-from __future__ import annotations
-
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
 
 
@@ -68,7 +66,7 @@ class RecordUpdate(BaseModel):
         ...,
         pattern="^(num_people|revenue|total_costs|tax_origin|tax_option|distribution_method|salary_amount)$",
     )
-    value: str | int | float
+    value: Union[str, int, float]
 
 
 # ===== Response Models =====
