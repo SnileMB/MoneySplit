@@ -103,6 +103,37 @@ CANADA_ONTARIO_BRACKETS = [
 ]
 
 
+def calculate_tax_from_brackets(income: float, brackets: list[tuple[float, float]]) -> float:
+    """
+    Calculate tax from progressive tax brackets using standard algorithm.
+
+    This is a DRY (Don't Repeat Yourself) helper function to eliminate duplicate
+    bracket calculation code throughout the module.
+
+    Args:
+        income: The income amount to calculate tax on
+        brackets: List of (limit, rate) tuples representing tax brackets
+
+    Returns:
+        Total tax calculated
+
+    Example:
+        >>> brackets = [(11000, 0.10), (44725, 0.12), (95375, 0.22)]
+        >>> calculate_tax_from_brackets(50000, brackets)
+        6037.0
+    """
+    tax = 0
+    prev = 0
+    for limit, rate in brackets:
+        if income > limit:
+            tax += (limit - prev) * rate
+            prev = limit
+        else:
+            tax += (income - prev) * rate
+            break
+    return tax
+
+
 def calculate_self_employment_tax(income: float, country: str) -> dict:
     """
     Calculate self-employment tax (US only - Social Security + Medicare).
@@ -170,36 +201,14 @@ def calculate_state_tax(income: float, state: str) -> float:
 
     state_data = STATE_TAX_RATES[state]
     brackets = state_data["brackets"]
-
-    tax = 0
-    prev = 0
-    for limit, rate in brackets:
-        if income > limit:
-            tax += (limit - prev) * rate
-            prev = limit
-        else:
-            tax += (income - prev) * rate
-            break
-
-    return tax
+    return calculate_tax_from_brackets(income, brackets)
 
 
 def calculate_uk_tax(income: float) -> float:
     """
     Calculate UK income tax using UK brackets.
     """
-    tax = 0
-    prev = 0
-
-    for limit, rate in UK_TAX_BRACKETS:
-        if income > limit:
-            tax += (limit - prev) * rate
-            prev = limit
-        else:
-            tax += (income - prev) * rate
-            break
-
-    return tax
+    return calculate_tax_from_brackets(income, UK_TAX_BRACKETS)
 
 
 def calculate_canada_tax(income: float) -> dict:
@@ -208,26 +217,10 @@ def calculate_canada_tax(income: float) -> dict:
     Using Ontario as default province.
     """
     # Federal tax
-    federal_tax = 0
-    prev = 0
-    for limit, rate in CANADA_FEDERAL_BRACKETS:
-        if income > limit:
-            federal_tax += (limit - prev) * rate
-            prev = limit
-        else:
-            federal_tax += (income - prev) * rate
-            break
+    federal_tax = calculate_tax_from_brackets(income, CANADA_FEDERAL_BRACKETS)
 
     # Provincial tax (Ontario)
-    provincial_tax = 0
-    prev = 0
-    for limit, rate in CANADA_ONTARIO_BRACKETS:
-        if income > limit:
-            provincial_tax += (limit - prev) * rate
-            prev = limit
-        else:
-            provincial_tax += (income - prev) * rate
-            break
+    provincial_tax = calculate_tax_from_brackets(income, CANADA_ONTARIO_BRACKETS)
 
     return {
         "federal_tax": federal_tax,

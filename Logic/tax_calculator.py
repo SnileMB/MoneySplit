@@ -1,13 +1,20 @@
 """
 Tax calculation module - testable functions without side effects.
+
+This module provides core tax calculation functionality that is used
+throughout the application. To reduce duplication, core bracket-based
+calculations are imported from tax_engine.
 """
 
 from DB import setup
+from Logic.tax_engine import calculate_tax_from_brackets
 
 
 def calculate_tax(income: float, tax_brackets: list[tuple[float, float]]) -> float:
     """
     Calculate tax using progressive tax brackets.
+
+    This is now a wrapper around calculate_tax_from_brackets for backward compatibility.
 
     Args:
         income: The income amount to calculate tax for
@@ -16,16 +23,7 @@ def calculate_tax(income: float, tax_brackets: list[tuple[float, float]]) -> flo
     Returns:
         Total tax amount
     """
-    tax = 0
-    prev = 0
-    for limit, rate in tax_brackets:
-        if income > limit:
-            tax += (limit - prev) * rate
-            prev = limit
-        else:
-            tax += (income - prev) * rate
-            break
-    return tax
+    return calculate_tax_from_brackets(income, tax_brackets)
 
 
 def calculate_tax_from_db(income: float, country: str, tax_type: str) -> float:
