@@ -27,7 +27,6 @@ env/
 reports/
 *.csv
 backups/
-*.html
 
 # OS
 .DS_Store
