@@ -52,13 +52,34 @@ class DatabaseCursor:
     def __init__(self, cursor, is_postgres):
         self._cursor = cursor
         self._is_postgres = is_postgres
+        self._lastrowid = None
 
     def execute(self, query, params=None):
         """Execute query, converting ? to %s for PostgreSQL."""
         if self._is_postgres and params:
             # Convert ? placeholders to %s for PostgreSQL
             query = query.replace("?", "%s")
-        return self._cursor.execute(query, params) if params else self._cursor.execute(query)
+
+            # For INSERT queries, add RETURNING id to get lastrowid
+            if query.strip().upper().startswith("INSERT"):
+                # Check if RETURNING clause already exists
+                if "RETURNING" not in query.upper():
+                    query = query.rstrip().rstrip(";") + " RETURNING id"
+
+                result = self._cursor.execute(query, params)
+                # Fetch the returned ID
+                row = self._cursor.fetchone()
+                if row:
+                    self._lastrowid = row[0]
+                return result
+
+        result = self._cursor.execute(query, params) if params else self._cursor.execute(query)
+
+        # For SQLite, store lastrowid
+        if not self._is_postgres:
+            self._lastrowid = self._cursor.lastrowid
+
+        return result
 
     def executemany(self, query, params_list):
         """Execute many, converting ? to %s for PostgreSQL."""
@@ -77,7 +98,7 @@ class DatabaseCursor:
 
     @property
     def lastrowid(self):
-        return self._cursor.lastrowid
+        return self._lastrowid if self._is_postgres else self._cursor.lastrowid
 
     @property
     def rowcount(self):
