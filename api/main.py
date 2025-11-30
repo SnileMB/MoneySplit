@@ -3,7 +3,7 @@ MoneySplit FastAPI Application
 RESTful API for commission-based income splitting with tax calculations.
 """
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import sys
@@ -11,6 +11,7 @@ import os
 import csv
 import io
 from datetime import datetime
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -2510,6 +2511,28 @@ async def import_projects_csv_text(csv_content: str):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing CSV: {str(e)}")
+
+
+# ===== Prometheus Metrics Endpoint =====
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """
+    Prometheus metrics endpoint.
+    Exposes all application metrics for monitoring and observability.
+
+    Returns metrics in Prometheus text format for scraping by Prometheus server.
+    Used by monitoring stacks (Prometheus + Grafana) to track:
+    - Request rates and latencies
+    - Error rates by type
+    - Business logic metrics (projects created, tax calculations)
+    - Database performance metrics
+    """
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 
 if __name__ == "__main__":
