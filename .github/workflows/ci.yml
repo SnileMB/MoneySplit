@@ -59,7 +59,7 @@ jobs:
           coverage report --fail-under=70 || echo "Coverage below 70%"
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           flags: backend
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload HTML coverage reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report-${{ matrix.python-version }}
           path: htmlcov/
@@ -111,7 +111,7 @@ jobs:
           npm test -- --coverage --watchAll=false || true
 
       - name: Upload frontend build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/build/
@@ -164,7 +164,7 @@ jobs:
           cat bandit-report.json
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-reports
