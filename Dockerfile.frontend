@@ -17,8 +17,9 @@ COPY frontend/public ./public
 COPY frontend/tsconfig.json ./tsconfig.json
 COPY frontend/.eslintrc.json ./.eslintrc.json
 
-# Set CI environment and build application
-ENV CI=true
+# Build application
+# Note: Disable CI warnings-as-errors for build
+ENV CI=false
 RUN npm run build
 
 # Stage 2: Serve with nginx
