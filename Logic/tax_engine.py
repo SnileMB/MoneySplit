@@ -4,18 +4,19 @@ Handles all tax scenarios: Individual, Business with Salary/Dividend/Mixed/Reinv
 """
 import sys
 import os
+from typing import Dict, List, Tuple, Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
 # Dividend tax rates by country
-DIVIDEND_TAX_RATES = {
+DIVIDEND_TAX_RATES: Dict[str, float] = {
     "US": 0.15,  # Qualified dividends
     "Spain": 0.19,  # Dividends tax rate
 }
 
 # Standard deductions by country (2023 tax year)
-STANDARD_DEDUCTIONS = {
+STANDARD_DEDUCTIONS: Dict[str, int] = {
     "US": 13850,  # Single filer 2023
     "Spain": 5550,  # Minimum personal allowance
 }
@@ -178,7 +179,7 @@ def calculate_self_employment_tax(income: float, country: str) -> dict:
     }
 
 
-def apply_standard_deduction(income: float, country: str, state: str = None) -> float:
+def apply_standard_deduction(income: float, country: str, state: Optional[str] = None) -> float:
     """
     Apply standard deduction to reduce taxable income.
     Includes state deduction if applicable.
@@ -301,8 +302,8 @@ def calculate_project_taxes(
     tax_structure: str,  # "Individual" or "Business"
     distribution_method: str = "N/A",  # "N/A", "Salary", "Dividend", "Mixed", "Reinvest"
     salary_amount: float = 0,  # Only used for "Mixed"
-    state: str = None,  # US state (CA, NY, TX, FL) - optional
-):
+    state: Optional[str] = None,  # US state (CA, NY, TX, FL) - optional
+) -> Dict[str, Any]:
     """
     Calculate taxes for a project using the specified tax structure and distribution method.
 
@@ -655,8 +656,8 @@ def calculate_project_taxes(
 
 
 def get_optimal_strategy(
-    revenue: float, costs: float, num_people: int, country: str, state: str = None
-):
+    revenue: float, costs: float, num_people: int, country: str, state: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Calculate all possible tax strategies and return the optimal one.
 

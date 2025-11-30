@@ -4,12 +4,13 @@ Compares Individual vs Business tax strategies and shows real take-home amounts.
 """
 import sys
 import os
+from typing import Dict, List, Tuple, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
 # Dividend tax rates by country
-DIVIDEND_TAX_RATES = {
+DIVIDEND_TAX_RATES: Dict[str, float] = {
     "US": 0.15,  # Qualified dividends
     "Spain": 0.19,  # Dividends tax rate
 }
@@ -17,7 +18,7 @@ DIVIDEND_TAX_RATES = {
 
 def calculate_all_tax_scenarios(
     revenue: float, costs: float, num_people: int, country: str
-):
+) -> Dict[str, Any]:
     """
     Calculate tax for ALL possible scenarios and return comparison data.
 
@@ -182,7 +183,7 @@ def calculate_all_tax_scenarios(
 
 def get_tax_optimization_summary(
     revenue: float, costs: float, num_people: int, country: str, selected_type: str
-):
+) -> Dict[str, Any]:
     """
     Get a summary showing what user selected vs optimal choice.
     Used for displaying warnings/insights after project creation.

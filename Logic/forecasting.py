@@ -8,13 +8,19 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import sys
 import os
+from typing import List, Dict, Tuple, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from DB import setup
 
 
-def get_historical_data():
-    """Fetch historical revenue data grouped by month."""
+def get_historical_data() -> List[Tuple[str, float, float, float, int, float]]:
+    """
+    Fetch historical revenue data grouped by month.
+
+    Returns:
+        List of tuples: (month, total_revenue, total_costs, total_profit, num_projects, avg_tax_rate)
+    """
     conn = setup.get_conn()
     cursor = conn.cursor()
 
@@ -37,7 +43,7 @@ def get_historical_data():
     return rows
 
 
-def forecast_revenue(months_ahead=3):
+def forecast_revenue(months_ahead: int = 3) -> Dict[str, Any]:
     """
     Forecast revenue using an enhanced algorithm.
 
@@ -209,7 +215,7 @@ Your business has {len(historical)} months of data. The AI analyzed this and fou
     }
 
 
-def tax_optimization_analysis():
+def tax_optimization_analysis() -> Dict[str, Any]:
     """Analyze tax strategies and provide optimization recommendations."""
     conn = setup.get_conn()
     cursor = conn.cursor()
