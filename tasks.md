@@ -53,39 +53,39 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 ---
 
 ### Category 3: Continuous Integration (20%)
-- [ ] **3.1** - Create `.github/workflows/` directory
-- [ ] **3.2** - Create `.github/workflows/ci.yml` pipeline configuration
-- [ ] **3.3** - Configure CI to run on push to all branches
-- [ ] **3.4** - Configure CI to run on pull requests to main
-- [ ] **3.5** - Add Python setup step (3.8, 3.9, 3.10 matrix)
-- [ ] **3.6** - Add backend dependency installation step
-- [ ] **3.7** - Add frontend dependency installation step
-- [ ] **3.8** - Add linting checks step (pylint/flake8)
-- [ ] **3.9** - Add backend unit tests step
-- [ ] **3.10** - Add backend integration tests step
-- [ ] **3.11** - Add coverage measurement step
-- [ ] **3.12** - Fail CI if coverage < 70%
-- [ ] **3.13** - Add frontend build step
-- [ ] **3.14** - Add frontend tests step (Jest)
-- [ ] **3.15** - Configure artifact uploads (coverage reports)
-- [ ] **3.16** - Add dependency caching to speed up CI
+- [x] **3.1** - Create `.github/workflows/` directory
+- [x] **3.2** - Create `.github/workflows/ci.yml` pipeline configuration
+- [x] **3.3** - Configure CI to run on push to all branches
+- [x] **3.4** - Configure CI to run on pull requests to main
+- [x] **3.5** - Add Python setup step (3.8, 3.9, 3.10, 3.11 matrix)
+- [x] **3.6** - Add backend dependency installation step
+- [x] **3.7** - Add frontend dependency installation step
+- [x] **3.8** - Add linting checks step (pylint/flake8)
+- [x] **3.9** - Add backend unit tests step
+- [x] **3.10** - Add backend integration tests step
+- [x] **3.11** - Add coverage measurement step
+- [x] **3.12** - Fail CI if coverage < 70%
+- [x] **3.13** - Add frontend build step
+- [x] **3.14** - Add frontend tests step (Jest)
+- [x] **3.15** - Configure artifact uploads (coverage reports)
+- [x] **3.16** - Add dependency caching to speed up CI
 - [ ] **3.17** - Test CI pipeline by pushing to assignment-2
 - [ ] **3.18** - Add CI status badge to README.md
 
-**Status:** Not Started
-**Completed:** 0/18
+**Status:** In Progress
+**Completed:** 16/18
 
 ---
 
 ### Category 4: Deployment & Containerization (20%)
-- [ ] **4.1** - Create `Dockerfile` for backend (multi-stage build)
-- [ ] **4.2** - Create `Dockerfile.frontend` for React frontend
-- [ ] **4.3** - Create `.dockerignore` for optimizing Docker builds
-- [ ] **4.4** - Add health checks to backend Dockerfile
-- [ ] **4.5** - Create `docker-compose.yml` for local development
-- [ ] **4.6** - Add backend service to docker-compose
-- [ ] **4.7** - Add frontend service to docker-compose
-- [ ] **4.8** - Create `.env.example` with all required environment variables
+- [x] **4.1** - Create `Dockerfile` for backend (multi-stage build)
+- [x] **4.2** - Create `Dockerfile.frontend` for React frontend
+- [x] **4.3** - Create `.dockerignore` for optimizing Docker builds
+- [x] **4.4** - Add health checks to backend Dockerfile
+- [x] **4.5** - Create `docker-compose.yml` for local development
+- [x] **4.6** - Add backend service to docker-compose
+- [x] **4.7** - Add frontend service to docker-compose
+- [x] **4.8** - Create `.env.example` with all required environment variables
 - [ ] **4.9** - Update code to use environment variables (python-dotenv)
 - [ ] **4.10** - Test Docker Compose locally (build and run)
 - [ ] **4.11** - Create cloud deployment configuration (AWS/GCP/Azure/Heroku - TBD)
@@ -95,8 +95,8 @@ This document tracks all tasks for Assignment 2. Each task is marked with status
 - [ ] **4.15** - Test deployment process end-to-end
 - [ ] **4.16** - Add deployment instructions to README.md
 
-**Status:** Not Started
-**Completed:** 0/16
+**Status:** In Progress
+**Completed:** 8/16
 
 ---
 
@@ -204,11 +204,11 @@ After each task (or group of related tasks), create a commit with a meaningful m
 |----------|-------------|-----------|------------|
 | Code Quality | 14 | 9 | 64% |
 | Testing | 14 | 3 | 21% |
-| CI/CD | 18 | 0 | 0% |
-| Deployment | 16 | 0 | 0% |
+| CI/CD | 18 | 16 | 89% |
+| Deployment | 16 | 8 | 50% |
 | Monitoring | 20 | 13 | 65% |
 | Documentation | 17 | 0 | 0% |
-| **TOTAL** | **99** | **25** | **25%** |
+| **TOTAL** | **99** | **49** | **49%** |
 
 ---
 
