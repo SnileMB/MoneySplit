@@ -2,10 +2,10 @@
  * Test Setup and Fixtures
  * Provides mocking utilities and test data for React component tests
  */
-import axios from 'axios';
+import axios from "axios";
 
 // Mock axios module
-jest.mock('axios');
+jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 /**
@@ -20,7 +20,7 @@ export const mockProjects = [
     tax_amount: 1500,
     net_income_per_person: 4250,
     net_income_group: 8500,
-    created_at: '2024-01-01T00:00:00Z',
+    created_at: "2024-01-01T00:00:00Z",
   },
   {
     record_id: 2,
@@ -30,28 +30,28 @@ export const mockProjects = [
     tax_amount: 3000,
     net_income_per_person: 5333.33,
     net_income_group: 17000,
-    created_at: '2024-01-02T00:00:00Z',
+    created_at: "2024-01-02T00:00:00Z",
   },
 ];
 
 export const mockTaxBrackets = [
   {
     bracket_id: 1,
-    country: 'US',
+    country: "US",
     income_min: 0,
     income_max: 10000,
     tax_rate: 0.1,
   },
   {
     bracket_id: 2,
-    country: 'US',
+    country: "US",
     income_min: 10000,
     income_max: 50000,
     tax_rate: 0.15,
   },
   {
     bracket_id: 3,
-    country: 'US',
+    country: "US",
     income_min: 50000,
     income_max: 100000,
     tax_rate: 0.22,
@@ -61,13 +61,13 @@ export const mockTaxBrackets = [
 export const mockPeople = [
   {
     person_id: 1,
-    name: 'Alice Smith',
+    name: "Alice Smith",
     percentage: 50,
     revenue_assigned: 5000,
   },
   {
     person_id: 2,
-    name: 'Bob Johnson',
+    name: "Bob Johnson",
     percentage: 50,
     revenue_assigned: 5000,
   },
@@ -88,12 +88,12 @@ export const mockReports = {
   },
   top_people: [
     {
-      name: 'Alice Smith',
+      name: "Alice Smith",
       total_revenue: 30000,
       total_net_income: 24000,
     },
     {
-      name: 'Bob Johnson',
+      name: "Bob Johnson",
       total_revenue: 25000,
       total_net_income: 20000,
     },
@@ -126,13 +126,13 @@ export function mockGetReports() {
   mockedAxios.get.mockResolvedValueOnce({ data: mockReports });
 }
 
-export function mockCreateProject(data: any) {
+export function mockCreateProject(data: Record<string, unknown>) {
   mockedAxios.post.mockResolvedValueOnce({ data });
 }
 
 export function mockGetErrors() {
   mockedAxios.get.mockRejectedValueOnce({
-    response: { status: 404, data: { detail: 'Not found' } },
+    response: { status: 404, data: { detail: "Not found" } },
   });
 }
 
