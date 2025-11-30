@@ -1,7 +1,7 @@
 # Multi-stage build for MoneySplit frontend
 
 # Stage 1: Build
-FROM node:18-alpine as builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app/frontend
 
@@ -15,8 +15,10 @@ RUN npm install --legacy-peer-deps
 COPY frontend/src ./src
 COPY frontend/public ./public
 COPY frontend/tsconfig.json ./tsconfig.json
+COPY frontend/.eslintrc.json ./.eslintrc.json
 
-# Build application
+# Set CI environment and build application
+ENV CI=true
 RUN npm run build
 
 # Stage 2: Serve with nginx

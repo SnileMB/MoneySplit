@@ -46,6 +46,10 @@ jobs:
         run: |
           mypy api/ --ignore-missing-imports || true
 
+      - name: Initialize test database
+        run: |
+          python -c "from DB.setup import init_db, seed_default_brackets; init_db(); seed_default_brackets()"
+
       - name: Run tests
         run: |
           pytest tests/ -v --tb=short
@@ -113,7 +117,7 @@ jobs:
       - name: Run frontend tests
         run: |
           cd frontend
-          npm test -- --coverage --watchAll=false
+          CI=true npm test -- --coverage --watchAll=false
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
